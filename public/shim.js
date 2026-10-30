@@ -75,6 +75,24 @@
     return w.current.id;
   }
 
+  // Convierte un error técnico en un mensaje claro para la persona, según la causa.
+  function friendly(kind, e) {
+    const foto = kind === "foto";
+    const txt = String((e && (e.message || e.error)) || "") + " " + String((e && (e.statusCode || e.status || e.code)) || "");
+    if (typeof navigator !== "undefined" && navigator.onLine === false) return "No hay conexión. Revisa tu internet e intenta de nuevo.";
+    if (/row-level|security policy|permission|not allowed|unauthori[sz]ed|\b403\b|42501/i.test(txt))
+      return foto ? "No tienes permiso para subir fotos todavía. Avísale a la administradora."
+                  : "No tienes permiso para hacer este cambio. Avísale a la administradora.";
+    if (/exceed|too large|maximum allowed size|payload|\b413\b/i.test(txt))
+      return foto ? "La foto pesa más de 5 MB. Elige una más liviana." : "El archivo pesa más de 50 MB. Elige uno más liviano.";
+    if (/mime|content.?type|not supported|invalid.*type/i.test(txt))
+      return foto ? "Ese archivo no es una imagen. Usa una foto JPG o PNG." : "Ese tipo de archivo no se puede subir.";
+    if (/failed to fetch|network|timeout|timed out|load failed/i.test(txt))
+      return "No hay conexión. Revisa tu internet e intenta de nuevo.";
+    return foto ? "No pudimos subir tu foto. Intenta de nuevo en un momento; si sigue fallando, avísale a la administradora."
+                : "No se pudo guardar. Intenta de nuevo en un momento.";
+  }
+
   function toError(e) {
     const err = new Error(e.message || "Error");
     const txt = (e.message || "") + " " + (e.code || "");
@@ -248,8 +266,8 @@
       const path = (await wsId()) + "/" + s.user.id + "/" + (crypto.randomUUID ? crypto.randomUUID() : randomId()) + "-" + safeName;
       const { error } = await sb.storage.from("files").upload(path, file, { contentType: type, upsert: false });
       if (error) {
-        const err = new Error(error.message);
-        err.code = /size|large|exceed/i.test(error.message) ? "too_large" : "upstream_error";
+        const err = new Error(friendly("archivo", error));
+        err.code = /size|large|exceed/i.test(error.message) ? "too_large" : "friendly";
         throw err;
       }
       const { data } = sb.storage.from("files").getPublicUrl(path);
@@ -294,11 +312,11 @@
       const s = await session();
       if (name) {
         const { error } = await sb.from("profiles").update({ name }).eq("id", s.user.id);
-        if (error) throw new Error("No se pudo guardar el nombre: " + error.message);
+        if (error) throw new Error(friendly("perfil", error));
       }
       if (password) {
         const { error } = await sb.auth.updateUser({ password });
-        if (error) throw new Error("No se pudo cambiar la contraseña: " + error.message);
+        if (error) throw new Error(/password|weak|short/i.test(error.message) ? "Esa contraseña no sirve. Usa al menos 8 caracteres y que no sea igual a la anterior." : friendly("perfil", error));
       }
     },
     // Sube una foto de perfil (ya recortada) y la deja en el perfil. Con null, la quita.
@@ -310,12 +328,14 @@
       let url = null;
       if (blob) {
         const path = folder + "/" + Date.now() + ".jpg";
-        const { error } = await sb.storage.from("avatars").upload(path, blob, { contentType: "image/jpeg", upsert: true });
-        if (error) throw new Error("No se pudo subir la foto: " + error.message);
+        let error;
+        try { ({ error } = await sb.storage.from("avatars").upload(path, blob, { contentType: "image/jpeg", upsert: false })); }
+        catch (e) { error = e; }
+        if (error) throw new Error(friendly("foto", error));
         url = sb.storage.from("avatars").getPublicUrl(path).data.publicUrl;
       }
       const { error } = await sb.from("profiles").update({ avatar_url: url }).eq("id", s.user.id);
-      if (error) throw new Error("No se pudo guardar la foto: " + error.message);
+      if (error) throw new Error(friendly("foto", error));
       const stale = (old || []).map((f) => folder + "/" + f.name).filter((n) => !url || !url.endsWith(n));
       if (stale.length) await sb.storage.from("avatars").remove(stale);
       return url;

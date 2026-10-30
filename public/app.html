@@ -681,8 +681,8 @@ document.addEventListener("error",e=>{const t=e.target;if(t&&t.tagName==="IMG"&&
 function avColor(id){let h=0;const k=String(id||"");for(let i=0;i<k.length;i++)h=(h*31+k.charCodeAt(i))>>>0;return h%8}
 function av(id,cls=""){
   const p=prof(id);
-  if(p&&p.avatarUrl)return `<img class="av ${cls}" src="${esc(p.avatarUrl)}" alt="" loading="lazy" data-i="${esc(cls?initials(nm(id)):(initials(nm(id))[0]||"?"))}" data-c="${avColor(id)}">`;
-  const ini=cls?initials(nm(id)):(initials(nm(id))[0]||"?");
+  if(p&&p.avatarUrl)return `<img class="av ${cls}" src="${esc(p.avatarUrl)}" alt="" loading="lazy" data-i="${esc(initials(nm(id))[0]||"?")}" data-c="${avColor(id)}">`;
+  const ini=initials(nm(id))[0]||"?";
   return `<span class="av av-c${avColor(id)} ${cls}" aria-hidden="true">${esc(ini)}</span>`;
 }
 async function loadProfiles(ids){
@@ -702,7 +702,8 @@ function errMsg(e){
   if(c==="invalid_argument")return"No tienes permiso para hacer este cambio.";
   if(c==="quota_exceeded")return"Se llenó el espacio de la herramienta. Borra tareas o archivos viejos.";
   if(c==="resource_exhausted"||c==="rate_limited")return"Demasiados cambios seguidos. Espera unos segundos.";
-  if(c==="too_large")return"El archivo pesa más de 20 MB.";
+  if(c==="friendly")return e.message;
+  if(c==="too_large")return"El archivo pesa más de 50 MB. Elige uno más liviano.";
   if(c==="unsupported_type")return"Ese tipo de archivo no se puede subir. Agrégalo como enlace.";
   if(c==="revoked")return"Perdiste el acceso a la herramienta.";
   return"No se pudo guardar. Intenta de nuevo.";
@@ -1441,7 +1442,7 @@ function squareJpeg(file){
       const c=document.createElement("canvas");c.width=c.height=size;
       c.getContext("2d").drawImage(img,(img.naturalWidth-side)/2,(img.naturalHeight-side)/2,side,side,0,0,size,size);
       URL.revokeObjectURL(url);c.toBlob(b=>b?resolve(b):reject(new Error("No se pudo leer la imagen.")),"image/jpeg",0.86)};
-    img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error("Ese archivo no es una imagen que se pueda abrir."))};
+    img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error("Ese archivo no es una imagen. Usa una foto JPG o PNG."))};
     img.src=url;
   });
 }
