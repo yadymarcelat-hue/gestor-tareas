@@ -83,10 +83,14 @@
     const email = $("reset-email").value.trim();
     if (!email) { msg.className = "msg err"; msg.textContent = "Escribe tu correo."; msg.hidden = false; return; }
     $("reset-btn").disabled = true;
-    const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + "/aceptar" });
+    let error = "";
+    try {
+      const r = await fetch("/api/reset", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email }) });
+      if (!r.ok) error = (await r.json().catch(() => ({}))).error || "No pudimos enviar el correo. Intenta de nuevo en unos minutos.";
+    } catch (e) { error = "No hay conexión. Revisa tu internet e intenta de nuevo."; }
     $("reset-btn").disabled = false;
     msg.className = error ? "msg err" : "msg ok";
-    msg.textContent = error ? "No se pudo enviar el correo. Intenta de nuevo en unos minutos." : "Listo. Si el correo está registrado, te llegará el enlace en unos minutos.";
+    msg.textContent = error || "Listo. Si el correo está registrado, te llegará el enlace en unos minutos. Revisa también spam.";
     msg.hidden = false;
   });
 })();

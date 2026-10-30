@@ -1054,7 +1054,7 @@ function openEmpresa(){
 }
 function empModal(){
   const f=S.emp.form,r=S.emp.result;
-  const body=r?`<div class="notice">${ico("check","sm")}<span><b>${esc(r.name)} quedó creada.</b> ${r.link?`Envíale este enlace a ${esc(r.adminName)} para que cree su contraseña y entre como administradora. Vence en 24 horas.`:r.existing?`${esc(r.adminName)} ya tenía cuenta: puede entrar con su contraseña de siempre en esta dirección y verá la empresa nueva.`:"Ya puedes abrirla desde el menú de empresas."}</span></div>
+  const body=r?`${r.mailError?`<p class="err">${esc(r.mailError)}</p>`:""}<div class="notice">${ico("check","sm")}<span><b>${esc(r.name)} quedó creada.</b> ${r.emailed?`Le enviamos la invitación por correo a ${esc(r.adminName)}. Si no le llega en unos minutos, mándale este enlace:`:r.link?`Envíale este enlace a ${esc(r.adminName)} para que cree su contraseña y entre como administradora. Vence en 24 horas.`:r.existing?`${esc(r.adminName)} ya tenía cuenta: puede entrar con su contraseña de siempre en esta dirección y verá la empresa nueva.`:"Ya puedes abrirla desde el menú de empresas."}</span></div>
       ${r.link||r.existing?`<div class="linkcopy"><input class="inp" type="text" readonly value="${esc(r.link||r.loginUrl)}" aria-label="Enlace"><button class="btn primary" data-act="copy-text" data-text="${esc(r.link||r.loginUrl)}">Copiar enlace</button></div>`:""}`
     :`<div class="field"><label for="emp-name">Nombre de la empresa</label><input id="emp-name" type="text" placeholder="Ej: Café La Esquina" value="${esc(f.name)}"></div>
       <div class="field"><label for="emp-admin-name">Nombre de quien la administra</label><input id="emp-admin-name" type="text" placeholder="Nombre y apellido" value="${esc(f.adminName)}"></div>
@@ -1524,7 +1524,9 @@ function openInvite(){
 }
 function invModal(){
   const inv=S.inv;
-  const body=inv.link?`<div class="notice">${ico("check","sm")}<span>${inv.existing?`<b>${esc(inv.forName||inv.email)} ya tiene cuenta</b> y quedó agregada a esta empresa. Puede entrar con su correo y su contraseña de siempre en esta dirección:`:`<b>Invitación lista para ${esc(inv.forName||inv.email)}.</b> Envíale este enlace por WhatsApp o correo. Al abrirlo crea su contraseña y entra. El enlace vence en 24 horas.`}</span></div>
+  const body=inv.link?inv.emailed?`<div class="notice">${ico("check","sm")}<span><b>${inv.existing?`Le avisamos por correo a ${esc(inv.forName||inv.email)}`:`Le enviamos la invitación a ${esc(inv.forName||inv.email)}`}</b> al correo ${esc(inv.email)}. Si no le llega en unos minutos (que revise también spam), mándale este enlace por WhatsApp:</span></div>
+      <div class="linkcopy"><input id="inv-link" class="inp" type="text" readonly value="${esc(inv.link)}" aria-label="Enlace de invitación"><button class="btn" data-act="inv-copy">Copiar enlace</button></div>`
+    :`${inv.mailError?`<p class="err">${esc(inv.mailError)}</p>`:""}<div class="notice">${ico("check","sm")}<span>${inv.existing?`<b>${esc(inv.forName||inv.email)} ya tiene cuenta</b> y quedó agregada a esta empresa. Puede entrar con su correo y su contraseña de siempre en esta dirección:`:`<b>Invitación lista para ${esc(inv.forName||inv.email)}.</b> Envíale este enlace por WhatsApp o correo. Al abrirlo crea su contraseña y entra. El enlace vence en 24 horas.`}</span></div>
       <div class="linkcopy"><input id="inv-link" class="inp" type="text" readonly value="${esc(inv.link)}" aria-label="Enlace de invitación"><button class="btn primary" data-act="inv-copy">Copiar enlace</button></div>`
     :`<div class="field"><label for="inv-email">Correo</label><input id="inv-email" type="text" inputmode="email" autocomplete="off" placeholder="nombre@empresa.com" value="${esc(inv.email)}"></div>
       <div class="field"><label for="inv-name">Nombre</label><input id="inv-name" type="text" placeholder="Nombre y apellido" value="${esc(inv.name)}"></div>
@@ -1534,7 +1536,7 @@ function invModal(){
   const foot=inv.link?`<button class="btn ghost" data-act="inv-new">${ico("plus","sm")}Invitar a otra persona</button><span class="grow"></span><button class="btn primary" data-act="modal-close">Listo</button>`
     :`<span class="grow"></span><button class="btn" data-act="modal-close">Cancelar</button><button class="btn primary" data-act="inv-add" ${inv.busy?"disabled":""}>${inv.busy?"Creando invitación…":"Crear invitación"}</button>`;
   return `<div class="overlay" data-act="modal-bg"><div class="modal narrow" role="dialog" aria-modal="true" aria-labelledby="m-title"><div class="m-main">
-  <div class="m-head">${ico("users")}<h2 id="m-title">${inv.link&&!inv.email?"Enlace de acceso":"Invitar persona"}</h2><button class="icon-btn" data-act="modal-close" aria-label="Cerrar">${ico("x")}</button></div>
+  <div class="m-head">${ico("users")}<h2 id="m-title">${inv.resend?"Enlace de acceso":"Invitar persona"}</h2><button class="icon-btn" data-act="modal-close" aria-label="Cerrar">${ico("x")}</button></div>
   <div class="m-body">${body}</div>
   <div class="m-foot">${foot}</div>
   </div></div></div>`;
@@ -1557,7 +1559,7 @@ async function addMember(){
   inv.busy=true;rrInv();
   try{
     const j=await callInvite({email,name:inv.name.trim(),title:inv.title.trim(),projects:inv.projects});
-    inv.link=j.link||j.loginUrl;inv.existing=!j.link&&j.existing;inv.forName=inv.name.trim();
+    inv.link=j.link||j.loginUrl;inv.existing=!j.link&&j.existing;inv.forName=inv.name.trim();inv.emailed=!!j.emailed;inv.mailError=j.mailError||"";
   }catch(e){inv.err=e.message}
   inv.busy=false;rrInv();
 }
@@ -1566,7 +1568,7 @@ async function resendInvite(id){
   if(!email){toast("No tengo el correo de esta persona.",true);return}
   try{
     const j=await callInvite({email,resend:true});
-    S.inv={email:"",name:"",title:"",projects:[],link:j.link||j.loginUrl,existing:!j.link,forName:nm(id),err:"",busy:false};
+    S.inv={email,name:"",title:"",projects:[],link:j.link||j.loginUrl,existing:!j.link,forName:nm(id),err:"",busy:false,resend:true,emailed:!!j.emailed,mailError:j.mailError||""};
     S.modal={kind:"inv",id:"inv",draft:{},err:""};renderModal();toast("Enlace nuevo listo");
   }catch(e){toast(e.message,true)}
 }

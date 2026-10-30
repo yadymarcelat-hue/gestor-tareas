@@ -1,5 +1,5 @@
 // Empresas de la plataforma. Solo la dueña de la plataforma (superadmin) puede verlas todas y crearlas.
-import { adminClient, caller, appOrigin, prepareAccess, addMember, isWorkspaceAdmin, fail } from "../../../lib/server";
+import { adminClient, caller, appOrigin, prepareAccess, addMember, isWorkspaceAdmin, notifyAccess, fail } from "../../../lib/server";
 
 export const dynamic = "force-dynamic";
 
@@ -80,12 +80,18 @@ export async function POST(req) {
     }
   }
 
+  const loginUrl = appOrigin(req) + "/login";
+  const mail = access
+    ? await notifyAccess(admin, { workspaceId: id, inviterId: who.user.id, email: adminEmail, name: adminName, access, loginUrl })
+    : { emailed: false, mailError: null };
+
   return Response.json({
     id,
     name,
     link: access ? access.link : null,
     existing: access ? access.existing : false,
-    loginUrl: appOrigin(req) + "/login",
+    loginUrl,
+    ...mail,
   });
 }
 

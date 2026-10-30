@@ -1,5 +1,5 @@
 // Invita a una persona a una empresa. Solo puede llamarlo una administradora de esa empresa.
-import { adminClient, caller, isWorkspaceAdmin, appOrigin, prepareAccess, addMember, fail } from "../../../lib/server";
+import { adminClient, caller, isWorkspaceAdmin, appOrigin, prepareAccess, addMember, notifyAccess, fail } from "../../../lib/server";
 
 export const dynamic = "force-dynamic";
 
@@ -55,5 +55,7 @@ export async function POST(req) {
     }
   }
 
-  return Response.json({ userId: access.userId, link: access.link, existing: access.existing, loginUrl: appOrigin(req) + "/login" });
+  const loginUrl = appOrigin(req) + "/login";
+  const mail = await notifyAccess(admin, { workspaceId, inviterId: who.user.id, email, name, access, loginUrl });
+  return Response.json({ userId: access.userId, link: access.link, existing: access.existing, loginUrl, ...mail });
 }
