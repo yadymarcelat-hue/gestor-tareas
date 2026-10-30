@@ -25,6 +25,14 @@
 
     <div id="loading"><p class="sub">Revisando tu enlace…</p></div>
 
+    <div id="other" hidden>
+      <h1>Este enlace es para otra persona</h1>
+      <p class="sub" id="other-msg">Tienes una sesión abierta en este navegador. Si abres el enlace aquí, saldrás de tu cuenta y entrarás con la de la persona invitada.</p>
+      <p class="sub">Si eres tú quien envía la invitación, copia el enlace y mándaselo a la persona. Si quieres probarlo, ábrelo en una ventana de incógnito.</p>
+      <a class="primary" href="/" style="display:grid;place-items:center;text-decoration:none">Volver a mi cuenta</a>
+      <button class="link" type="button" id="continue" style="margin-top:14px">Soy la persona invitada, continuar</button>
+    </div>
+
     <div id="expired" hidden>
       <h1>El enlace ya no sirve</h1>
       <p class="sub">Venció o ya se usó. Pídele a la administradora un enlace nuevo, o recupera tu contraseña desde la página de ingreso.</p>
@@ -47,7 +55,7 @@
 <script>
 (async function () {
   const $ = (id) => document.getElementById(id);
-  const show = (id) => { ["loading", "expired", "form-view"].forEach((v) => { $(v).hidden = v !== id; }); };
+  const show = (id) => { ["loading", "other", "expired", "form-view"].forEach((v) => { $(v).hidden = v !== id; }); };
   const hashErr = /error/.test(location.hash) || /error/.test(location.search);
   let sb;
   try { sb = await window.appAuth.client(); } catch (e) { show("expired"); return; }
@@ -55,6 +63,14 @@
   // Enlace de invitación de la app: /aceptar?token_hash=...&type=invite
   const qs = new URLSearchParams(location.search);
   if (qs.get("token_hash")) {
+    // Si ya hay alguien con sesión abierta, avisar antes de cambiar de cuenta.
+    const current = (await sb.auth.getSession()).data.session;
+    if (current) {
+      $("other-msg").textContent = "Tienes abierta la sesión de " + current.user.email + ". Si abres el enlace aquí, saldrás de esa cuenta y entrarás con la de la persona invitada.";
+      show("other");
+      await new Promise((resolve) => { $("continue").onclick = resolve; });
+      show("loading");
+    }
     await sb.auth.signOut().catch(() => {});
     const { error } = await sb.auth.verifyOtp({ token_hash: qs.get("token_hash"), type: qs.get("type") || "invite" });
     if (error) { show("expired"); return; }
