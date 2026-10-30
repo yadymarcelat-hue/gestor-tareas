@@ -106,6 +106,7 @@ create policy "editar mi perfil" on public.profiles for update to authenticated
 -- Cada persona solo puede cambiar su nombre (no su correo ni si es dueña de la plataforma).
 revoke update on public.profiles from authenticated;
 grant update (name) on public.profiles to authenticated;
+-- (4-fotos-de-perfil.sql agrega avatar_url y permite cambiar la foto)
 
 alter table public.workspaces enable row level security;
 create policy "ver espacios" on public.workspaces for select to authenticated

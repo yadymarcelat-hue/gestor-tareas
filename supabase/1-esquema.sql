@@ -104,6 +104,7 @@ create policy "editar mi perfil" on public.profiles for update to authenticated
 -- Cada persona solo puede cambiar su nombre (no su correo ni si es dueña de la plataforma).
 revoke update on public.profiles from authenticated;
 grant update (name) on public.profiles to authenticated;
+-- (4-fotos-de-perfil.sql agrega avatar_url y permite cambiar la foto)
 
 alter table public.workspaces enable row level security;
 create policy "ver espacios" on public.workspaces for select to authenticated
@@ -162,3 +163,5 @@ create policy "miembros suben archivos" on storage.objects for insert to authent
   with check (bucket_id = 'files' and public.is_member(split_part(name, '/', 1)));
 create policy "miembros borran archivos" on storage.objects for delete to authenticated
   using (bucket_id = 'files' and public.is_member(split_part(name, '/', 1)));
+
+-- 7. Fotos de perfil: corre también 4-fotos-de-perfil.sql

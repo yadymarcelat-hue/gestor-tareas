@@ -29,6 +29,7 @@
   --scrim:rgba(20,24,33,.38);
   --font:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   --r:10px; --r-lg:16px;
+  --av0-bg:#dbe8ff;--av0-fg:#1d4fd8;--av1-bg:#fdf0c8;--av1-fg:#a15c00;--av2-bg:#d3f5ef;--av2-fg:#0f766e;--av3-bg:#fde2e7;--av3-fg:#be123c;--av4-bg:#ebe4ff;--av4-fg:#6d28d9;--av5-bg:#dcf5e3;--av5-fg:#15803d;--av6-bg:#ffe6d5;--av6-fg:#c2410c;--av7-bg:#e2e8f0;--av7-fg:#334155;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#0f1115; --surface:#171a20; --surface-2:#1d2128; --hover:#232832; --line:#292e37; --line-2:#343a45;
@@ -40,6 +41,7 @@
   --p-alta-bg:#3e1d20; --p-alta-fg:#ff8d8d; --p-media-bg:#3a2d10; --p-media-fg:#f2c25c; --p-baja-bg:#262a32; --p-baja-fg:#b7bdc7;
   --danger:#ff6b6f; --danger-soft:#3e1d20; --ok:#4fd389; --ok-soft:#173523; --warn:#f2c25c; --warn-soft:#3a2d10;
   --shadow:0 1px 2px rgba(0,0,0,.4); --shadow-lg:0 24px 60px -12px rgba(0,0,0,.7); --scrim:rgba(0,0,0,.55);
+  --av0-bg:#1c2f55;--av0-fg:#9cc0ff;--av1-bg:#3d3112;--av1-fg:#f6cd6b;--av2-bg:#123a36;--av2-fg:#6ee0cf;--av3-bg:#43202a;--av3-fg:#ff9bb0;--av4-bg:#2f2650;--av4-fg:#c4b2ff;--av5-bg:#173523;--av5-fg:#7ee0a0;--av6-bg:#43281a;--av6-fg:#ffb38a;--av7-bg:#283040;--av7-fg:#c3cbd8;
   color-scheme:dark;
 }}
 :root[data-theme="dark"]{
@@ -52,6 +54,7 @@
   --p-alta-bg:#3e1d20; --p-alta-fg:#ff8d8d; --p-media-bg:#3a2d10; --p-media-fg:#f2c25c; --p-baja-bg:#262a32; --p-baja-fg:#b7bdc7;
   --danger:#ff6b6f; --danger-soft:#3e1d20; --ok:#4fd389; --ok-soft:#173523; --warn:#f2c25c; --warn-soft:#3a2d10;
   --shadow:0 1px 2px rgba(0,0,0,.4); --shadow-lg:0 24px 60px -12px rgba(0,0,0,.7); --scrim:rgba(0,0,0,.55);
+  --av0-bg:#1c2f55;--av0-fg:#9cc0ff;--av1-bg:#3d3112;--av1-fg:#f6cd6b;--av2-bg:#123a36;--av2-fg:#6ee0cf;--av3-bg:#43202a;--av3-fg:#ff9bb0;--av4-bg:#2f2650;--av4-fg:#c4b2ff;--av5-bg:#173523;--av5-fg:#7ee0a0;--av6-bg:#43281a;--av6-fg:#ffb38a;--av7-bg:#283040;--av7-fg:#c3cbd8;
   color-scheme:dark;
 }
 html,body{height:100%}
@@ -192,6 +195,13 @@ h1,h2,h3{text-wrap:balance;margin:0}
 .person{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);min-width:0}
 .av{width:22px;height:22px;border-radius:50%;flex:none;object-fit:cover;display:inline-grid;place-items:center;font-size:10.5px;font-weight:600;color:var(--accent);background:var(--accent-soft);overflow:hidden}
 .av.md{width:30px;height:30px;font-size:12px}
+.av.xl{width:84px;height:84px;font-size:28px}
+.av-c0{background:var(--av0-bg);color:var(--av0-fg)}.av-c1{background:var(--av1-bg);color:var(--av1-fg)}
+.av-c2{background:var(--av2-bg);color:var(--av2-fg)}.av-c3{background:var(--av3-bg);color:var(--av3-fg)}
+.av-c4{background:var(--av4-bg);color:var(--av4-fg)}.av-c5{background:var(--av5-bg);color:var(--av5-fg)}
+.av-c6{background:var(--av6-bg);color:var(--av6-fg)}.av-c7{background:var(--av7-bg);color:var(--av7-fg)}
+.photo-row{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.photo-row .acts{display:flex;gap:8px;flex-wrap:wrap}
 .av.lg{width:36px;height:36px;font-size:13px}
 .add-card{display:flex;align-items:center;justify-content:center;gap:6px;height:36px;border-radius:9px;border:1px dashed var(--line-2);color:var(--muted);font-size:13.5px;background:color-mix(in srgb,var(--surface) 60%,transparent)}
 .add-card:hover{background:var(--surface);color:var(--fg)}
@@ -636,10 +646,14 @@ const prof=id=>S.profiles[id]||null;
 const nm=id=>{if(!id)return"Alguien";if(id===S.me.id&&!(prof(id)&&prof(id).name))return S.me.name||"Tú";const p=prof(id);return(p&&p.name)||"Alguien"};
 const first=id=>nm(id).split(/\s+/)[0];
 const initials=n=>n.split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0]).join("").toUpperCase()||"?";
+// Color fijo por persona para las iniciales: el mismo id siempre da el mismo color.
+// Si una foto no carga, se muestran las iniciales en su lugar.
+document.addEventListener("error",e=>{const t=e.target;if(t&&t.tagName==="IMG"&&t.classList.contains("av")&&t.dataset.i){const sp=document.createElement("span");sp.className=t.className.replace(/\bav\b/,"av av-c"+t.dataset.c);sp.setAttribute("aria-hidden","true");sp.textContent=t.dataset.i;t.replaceWith(sp)}},true);
+function avColor(id){let h=0;const k=String(id||"");for(let i=0;i<k.length;i++)h=(h*31+k.charCodeAt(i))>>>0;return h%8}
 function av(id,cls=""){
   const p=prof(id);
-  if(p&&p.avatarUrl)return `<img class="av ${cls}" src="${esc(p.avatarUrl)}" alt="">`;
-  return `<span class="av ${cls}" aria-hidden="true">${esc(initials(nm(id)))}</span>`;
+  if(p&&p.avatarUrl)return `<img class="av ${cls}" src="${esc(p.avatarUrl)}" alt="" loading="lazy" data-i="${esc(initials(nm(id)))}" data-c="${avColor(id)}">`;
+  return `<span class="av av-c${avColor(id)} ${cls}" aria-hidden="true">${esc(initials(nm(id)))}</span>`;
 }
 async function loadProfiles(ids){
   if(S.demo||!S.user)return;
@@ -1373,6 +1387,7 @@ function meModal(){
   return `<div class="overlay" data-act="modal-bg"><div class="modal narrow" role="dialog" aria-modal="true" aria-labelledby="m-title"><div class="m-main">
   <div class="m-head">${av(S.me.id,"md")}<h2 id="m-title">Mi perfil</h2><button class="icon-btn" data-act="modal-close" aria-label="Cerrar">${ico("x")}</button></div>
   <div class="m-body">
+    <div class="field"><span class="flabel">Foto</span><div class="photo-row">${av(S.me.id,"xl")}<div class="acts">${S.demo||window.appAuth?`<label class="btn sm" for="me-photo">${ico("upload","sm")}${prof(S.me.id)&&prof(S.me.id).avatarUrl?"Cambiar foto":"Subir foto"}</label><input id="me-photo" type="file" accept="image/*" hidden>${prof(S.me.id)&&prof(S.me.id).avatarUrl?`<button class="btn ghost sm" data-act="me-photo-del">Quitar foto</button>`:""}`:""}</div></div>${m.photoBusy?`<span class="hint">Subiendo foto…</span>`:`<span class="hint">Si no subes foto, se muestran tus iniciales.</span>`}</div>
     <div class="field"><label for="me-name">Nombre</label><input id="me-name" type="text" data-mf="name" value="${esc(d.name)}" autocomplete="name"></div>
     ${S.isOwner?`<div class="field"><label for="me-title">Cargo</label><input id="me-title" type="text" data-mf="title" value="${esc(d.title)}" placeholder="Ej: Gerente"></div>`:d.title?`<div class="field"><span class="flabel">Cargo</span><span>${esc(d.title)}</span><span class="hint">Lo cambia la administradora de la empresa.</span></div>`:""}
     <div class="field"><span class="flabel">Correo</span><span>${esc(S.me.email||"")}</span></div>
@@ -1398,6 +1413,30 @@ async function saveMe(){
   }catch(e){m.err=e.message||"No se pudo guardar.";renderModal();return}
   S.me.name=name;S.profiles[S.me.id]=Object.assign({},S.profiles[S.me.id]||{},{name});
   toast(d.pw1?"Perfil y contraseña actualizados":"Perfil actualizado");closeModal(true);
+}
+// Recorta la imagen al centro en un cuadrado de 320 px y la convierte a JPEG liviano.
+function squareJpeg(file){
+  return new Promise((resolve,reject)=>{
+    const img=new Image();const url=URL.createObjectURL(file);
+    img.onload=()=>{const side=Math.min(img.naturalWidth,img.naturalHeight),size=Math.min(320,side);
+      const c=document.createElement("canvas");c.width=c.height=size;
+      c.getContext("2d").drawImage(img,(img.naturalWidth-side)/2,(img.naturalHeight-side)/2,side,side,0,0,size,size);
+      URL.revokeObjectURL(url);c.toBlob(b=>b?resolve(b):reject(new Error("No se pudo leer la imagen.")),"image/jpeg",0.86)};
+    img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error("Ese archivo no es una imagen que se pueda abrir."))};
+    img.src=url;
+  });
+}
+async function setPhoto(file){
+  const m=S.modal;if(!m||m.kind!=="me")return;
+  m.err="";m.photoBusy=true;renderModal();
+  try{
+    let url=null;
+    if(file){const blob=await squareJpeg(file);url=S.demo?URL.createObjectURL(blob):await window.appAuth.setAvatar(blob)}
+    else if(!S.demo)await window.appAuth.setAvatar(null);
+    S.profiles[S.me.id]=Object.assign({},S.profiles[S.me.id]||{},{avatarUrl:url||""});
+    toast(file?"Foto actualizada":"Foto quitada");
+  }catch(e){m.err=e.message||"No se pudo cambiar la foto."}
+  m.photoBusy=false;render();renderModal();
 }
 function openWsRename(id,name){
   closeMenus();
@@ -1602,6 +1641,7 @@ document.addEventListener("click",async e=>{
     case "emp-create":createEmpresa();break;
     case "my-profile":openMe();break;
     case "me-save":saveMe();break;
+    case "me-photo-del":setPhoto(null);break;
     case "ws-rename":openWsRename(id,el.dataset.name);break;
     case "ws-save":saveWsName();break;
     case "emp-join":joinEmpresa(id);break;
@@ -1622,6 +1662,7 @@ document.addEventListener("click",async e=>{
 document.addEventListener("change",e=>{
   const t=e.target;const m=S.modal;
   if(t.id==="f-file"&&t.files&&t.files.length){uploadFiles([...t.files]);t.value="";return}
+  if(t.id==="me-photo"&&t.files&&t.files[0]){setPhoto(t.files[0]);t.value="";return}
   if(t.id==="emp-me"){S.emp.form.includeMe=t.checked;return}
   if(t.dataset.act==="inv-proj"){const a=S.inv.projects;t.checked?a.includes(t.value)||a.push(t.value):S.inv.projects=a.filter(x=>x!==t.value);return}
   if(t.dataset.act==="p-hitos"&&m){m.draft.useHitos=t.checked;renderModal();return}

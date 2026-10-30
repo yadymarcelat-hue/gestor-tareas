@@ -201,14 +201,14 @@
         const sb = await client();
         const uid = s.user.id;
         const w = await workspace();
-        const { data: profile } = await sb.from("profiles").select("id,name,email").eq("id", uid).maybeSingle();
+        const { data: profile } = await sb.from("profiles").select("id,name,email,avatar_url").eq("id", uid).maybeSingle();
         const isAdmin = !!(w.current && w.current.role === "admin");
         return {
           id: uid,
           name: (profile && profile.name) || s.user.email,
           email: s.user.email,
-          avatarUrl: "",
-          color: "#1667ff",
+          avatarUrl: (profile && profile.avatar_url) || "",
+          color: "",
           isOwner: isAdmin,
           canEdit: isAdmin,
         };
@@ -230,11 +230,11 @@
       const list = [...new Set([].concat(ids).filter(Boolean))];
       const me = await getMe();
       const out = {};
-      list.forEach((id) => { out[id] = { id, name: "", email: null, avatarUrl: "", color: "#1667ff", isMe: id === me.id, guest: false }; });
+      list.forEach((id) => { out[id] = { id, name: "", email: null, avatarUrl: "", color: "", isMe: id === me.id, guest: false }; });
       if (!list.length) return out;
       const sb = await client();
-      const { data } = await sb.from("profiles").select("id,name,email").in("id", list);
-      (data || []).forEach((p) => { out[p.id] = Object.assign(out[p.id], { name: p.name || p.email || "", email: p.email }); });
+      const { data } = await sb.from("profiles").select("id,name,email,avatar_url").in("id", list);
+      (data || []).forEach((p) => { out[p.id] = Object.assign(out[p.id], { name: p.name || p.email || "", email: p.email, avatarUrl: p.avatar_url || "" }); });
       return out;
     },
   };
@@ -300,6 +300,25 @@
         const { error } = await sb.auth.updateUser({ password });
         if (error) throw new Error("No se pudo cambiar la contraseña: " + error.message);
       }
+    },
+    // Sube una foto de perfil (ya recortada) y la deja en el perfil. Con null, la quita.
+    async setAvatar(blob) {
+      const sb = await client();
+      const s = await session();
+      const folder = s.user.id;
+      const { data: old } = await sb.storage.from("avatars").list(folder);
+      let url = null;
+      if (blob) {
+        const path = folder + "/" + Date.now() + ".jpg";
+        const { error } = await sb.storage.from("avatars").upload(path, blob, { contentType: "image/jpeg", upsert: true });
+        if (error) throw new Error("No se pudo subir la foto: " + error.message);
+        url = sb.storage.from("avatars").getPublicUrl(path).data.publicUrl;
+      }
+      const { error } = await sb.from("profiles").update({ avatar_url: url }).eq("id", s.user.id);
+      if (error) throw new Error("No se pudo guardar la foto: " + error.message);
+      const stale = (old || []).map((f) => folder + "/" + f.name).filter((n) => !url || !url.endsWith(n));
+      if (stale.length) await sb.storage.from("avatars").remove(stale);
+      return url;
     },
     async signOut() {
       const sb = await client();
