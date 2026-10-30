@@ -3,6 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#171a20" media="(prefers-color-scheme: dark)">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Proyectos">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="/shim.js"></script>
@@ -104,6 +113,21 @@ h1,h2,h3{text-wrap:balance;margin:0}
 .me .who b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .me .who small{color:var(--muted);font-size:12.5px}
 .main{min-width:0;min-height:0;overflow:auto;display:flex;flex-direction:column}
+.shell{transition:grid-template-columns .18s ease}
+.side-tog{flex:none}
+@media (min-width:901px){
+  .shell.side-collapsed{grid-template-columns:72px minmax(0,1fr)}
+  .side-collapsed .side{padding-left:12px;padding-right:12px;align-items:stretch}
+  .side-collapsed .ws{justify-content:center;padding-left:12px;padding-right:12px}
+  .side-collapsed .ws-wrap{display:none}
+  .side-collapsed .nav a,.side-collapsed .nav button{justify-content:center;padding:10px 0}
+  .side-collapsed .nav button>span{display:none}
+  .side-collapsed .nav-sec{font-size:0;padding:0;height:1px;background:var(--line);margin:10px 6px}
+  .side-collapsed .me{flex-direction:column;padding-left:0;padding-right:0;gap:6px;align-items:center}
+  .side-collapsed .me-btn{flex:none;margin:0;justify-content:center}
+  .side-collapsed .me-btn .who{display:none}
+}
+@media (max-width:900px){.side-tog{display:none}}
 .scrim{display:none}
 
 /* Page head */
@@ -609,6 +633,7 @@ const P={
   upload:'<path d="M12 16V4M7 9l5-5 5 5M4 20h16"/>',
   info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>',
   building:'<path d="M4 21V5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v16M15 9h4a1 1 0 0 1 1 1v11M3 21h18M8 8h3M8 12h3M8 16h3"/>',
+  panel:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/>',
   logout:'<path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 16l-4-4 4-4M6 12h10"/>',
   lock:'<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>'
 };
@@ -639,6 +664,7 @@ const S={
   membersReady:false, projectsReady:false, ownerWritten:false,
   profiles:{}, view:"tablero", projectId:null, person:null, q:"", showArchived:false,
   menu:null, navOpen:false, calStart:null, modal:null, inv:{email:"",name:"",title:"",projects:[],link:"",forName:"",err:"",busy:false},
+  sideCollapsed:(()=>{try{return localStorage.getItem("pj-side")==="1"}catch(e){return false}})(),
   ws:null, emp:{list:null,loading:false,err:"",busy:false,result:null,form:{name:"",adminName:"",adminEmail:"",includeMe:false}},
   unTasks:null, unCom:null, subHidden:new Set((()=>{try{return JSON.parse(localStorage.getItem("pj-subhidden")||"[]")}catch(e){return[]}})())
 };
@@ -740,7 +766,7 @@ function render(){
   if(noWs&&!S.ws.isSuperadmin){app.innerHTML=gateNoAccess();return}
   if(noWs&&S.ws.isSuperadmin)S.view="empresas";
   if(!noWs&&!S.demo&&!S.isOwner&&S.membersReady&&!S.members[S.me.id]){app.innerHTML=gateNoAccess();return}
-  app.innerHTML=`<div class="shell ${S.navOpen?"nav-open":""}">${sidebar()}<main class="main" id="main">${S.demo?demoBanner():""}${view()}</main><div class="scrim" data-act="nav-close"></div></div>`;
+  app.innerHTML=`<div class="shell ${S.navOpen?"nav-open":""} ${S.sideCollapsed?"side-collapsed":""}">${sidebar()}<main class="main" id="main">${S.demo?demoBanner():""}${view()}</main><div class="scrim" data-act="nav-close"></div></div>`;
   bindBoard();
   restoreFocus(f);
 }
@@ -770,12 +796,13 @@ function wsPop(){
   ${S.ws.current&&(S.ws.current.role==="admin"||S.ws.isSuperadmin)?`<hr><button data-act="ws-rename" data-id="${esc(S.ws.current.id)}">${ico("edit","sm")}<span>Cambiar nombre de la empresa</span></button>`:""}
   ${S.ws.isSuperadmin?`<hr><button data-act="go" data-v="empresas">${ico("building","sm")}<span>Administrar empresas</span></button>`:""}</div>`;
 }
+function toggleSide(){S.sideCollapsed=!S.sideCollapsed;try{localStorage.setItem("pj-side",S.sideCollapsed?"1":"0")}catch(e){}S.menu=null;render()}
 function sidebar(){
   const v=S.view;
-  const a=(id,label,ic,cls,sub)=>`<button class="${v===id||(id==="tablero"&&TASKV.includes(v))?"on":""} ${sub?"sub":""}" data-act="go" data-v="${id}">${ico(ic,cls)}<span>${label}</span></button>`;
+  const a=(id,label,ic,cls,sub)=>`<button class="${v===id||(id==="tablero"&&TASKV.includes(v))?"on":""} ${sub?"sub":""}" data-act="go" data-v="${id}" title="${label}">${ico(ic,cls)}<span>${label}</span></button>`;
   const role=S.isOwner?"Administradora":((S.members[S.me.id]&&S.members[S.me.id].title)||"Miembro");
   return `<aside class="side" aria-label="Navegación">
-    <div class="ws"><div class="menu-wrap ws-wrap"><button class="ws-btn" data-act="menu" data-m="ws" aria-expanded="${S.menu==="ws"}"><span class="ws-name"><b>${esc(wsName())}</b><small>Proyectos</small></span>${S.demo||(S.ws&&(S.ws.list.length>1||S.ws.isSuperadmin))?ico("down","sm"):""}</button>${S.menu==="ws"?wsPop():""}</div><button class="icon-btn menu-btn" data-act="nav-close" aria-label="Cerrar menú">${ico("x")}</button></div>
+    <div class="ws"><div class="menu-wrap ws-wrap"><button class="ws-btn" data-act="menu" data-m="ws" aria-expanded="${S.menu==="ws"}"><span class="ws-name"><b>${esc(wsName())}</b><small>Proyectos</small></span>${S.demo||(S.ws&&(S.ws.list.length>1||S.ws.isSuperadmin))?ico("down","sm"):""}</button>${S.menu==="ws"?wsPop():""}</div><button class="icon-btn side-tog" data-act="side-toggle" aria-label="${S.sideCollapsed?"Expandir menú":"Colapsar menú"}" title="${S.sideCollapsed?"Expandir menú":"Colapsar menú"} (Ctrl+B)">${ico("panel")}</button><button class="icon-btn menu-btn" data-act="nav-close" aria-label="Cerrar menú">${ico("x")}</button></div>
     <nav class="nav">
       ${a("inicio","Inicio","home","ic-home")}
       ${a("tablero","Tareas","tasks","ic-task")}
@@ -973,22 +1000,10 @@ function viewCrono(){
 
 function viewEquipo(){
   const can=S.isOwner||S.demo;
-  const h=head("Equipo","users","");
+  const h=head("Equipo","users",can?`<button class="btn primary" data-act="inv-open">${ico("plus","sm")}<span>Invitar persona</span></button>`:"");
   const ids=memberIds().sort((a,b)=>(S.members[a].addedAt||0)-(S.members[b].addedAt||0));
   const projOf=id=>Object.entries(S.projects).filter(([pid,p])=>!p.archived&&((p.memberIds||[]).includes(id)||p.ownerId===id)).map(([pid,p])=>p.name);
-  const inv=S.inv;
-  const invite=can?`<section class="panel"><div class="panel-h"><h2>Invitar a una persona</h2></div><div class="panel-b" style="display:flex;flex-direction:column;gap:14px">
-    ${inv.link?`<div class="notice">${ico("check","sm")}<span>${inv.existing?`<b>${esc(inv.forName||inv.email)} ya tiene cuenta</b> y quedó agregada a esta empresa. Puede entrar con su correo y su contraseña de siempre en esta dirección:`:`<b>Invitación lista para ${esc(inv.forName||inv.email)}.</b> Envíale este enlace por WhatsApp o correo. Al abrirlo crea su contraseña y entra. El enlace vence en 24 horas.`}</span></div>
-      <div class="linkcopy"><input id="inv-link" class="inp" type="text" readonly value="${esc(inv.link)}" aria-label="Enlace de invitación"><button class="btn primary" data-act="inv-copy">Copiar enlace</button></div>
-      <div><button class="btn ghost sm" data-act="inv-new">${ico("plus","sm")}Invitar a otra persona</button></div>`
-    :`<div class="grid-2"><div class="field"><label for="inv-email">Correo</label><input id="inv-email" type="text" inputmode="email" autocomplete="off" placeholder="nombre@empresa.com" value="${esc(inv.email)}"></div>
-      <div class="field"><label for="inv-name">Nombre</label><input id="inv-name" type="text" placeholder="Nombre y apellido" value="${esc(inv.name)}"></div></div>
-      <div class="field"><label for="inv-title">Cargo</label><input id="inv-title" type="text" placeholder="Ej: Desarrollador" value="${esc(inv.title)}"></div>
-      <div class="field"><span class="flabel">Proyectos donde participa</span><div class="checks">${visibleProjects().map(p=>`<label><input type="checkbox" data-act="inv-proj" value="${p.id}" ${inv.projects.includes(p.id)?"checked":""}>${esc(p.name)}</label>`).join("")||`<span class="hint">Crea un proyecto primero.</span>`}</div></div>
-      ${inv.err?`<p class="err">${esc(inv.err)}</p>`:""}
-      <div><button class="btn primary" data-act="inv-add" ${inv.busy?"disabled":""}>${ico("plus","sm")}${inv.busy?"Creando invitación…":"Crear invitación"}</button></div>`}
-  </div></section>`:"";
-  return h+`<div class="content">${invite}
+  return h+`<div class="content">
   <section class="panel"><div class="panel-h"><h2>Personas</h2><span class="hint">${ids.length}</span></div>
   <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Persona</th><th>Proyectos</th><th>Agregada</th><th></th></tr></thead><tbody>
   ${ids.map(id=>{const m=S.members[id];const isOwnerRow=m.role==="admin";
@@ -1167,7 +1182,7 @@ function renderModal(){
   const mo=root.querySelector(".modal"),msc=mo?mo.scrollTop:0,ov=root.querySelector(".overlay"),osc=ov?ov.scrollTop:0,had=!!ov;
   const cl=root.querySelector("#c-list"),csc=cl?cl.scrollTop:0;
   const f=document.activeElement&&root.contains(document.activeElement)&&document.activeElement.id?{id:document.activeElement.id,s:document.activeElement.selectionStart,e:document.activeElement.selectionEnd}:null;
-  let html=m.kind==="task"?taskModal():m.kind==="hito"?hitoModal():m.kind==="project"?projectModal():m.kind==="me"?meModal():m.kind==="ws"?wsModal():m.kind==="emp"?empModal():memberModal();
+  let html=m.kind==="task"?taskModal():m.kind==="hito"?hitoModal():m.kind==="project"?projectModal():m.kind==="me"?meModal():m.kind==="ws"?wsModal():m.kind==="emp"?empModal():m.kind==="inv"?invModal():memberModal();
   if(had)html=html.replace('class="overlay"','class="overlay still"');
   root.innerHTML=html;
   const nb=root.querySelector(".m-body");if(nb)nb.scrollTop=sc;
@@ -1500,6 +1515,30 @@ async function saveMember(){
   if(!await safe(()=>wupd("members",m.id,{title:m.draft.title.trim(),role:m.draft.role})))return;
   if(m.draft.role==="admin"||await setProjectsFor(m.id,m.draft.projects)){toast("Persona actualizada");closeModal(true)}
 }
+function openInvite(){
+  closeMenus();
+  S.inv={email:"",name:"",title:"",projects:S.projectId?[S.projectId]:[],link:"",forName:"",err:"",busy:false};
+  S.modal={kind:"inv",id:"inv",draft:{},err:""};
+  renderModal();setTimeout(()=>{const x=$("#inv-email");if(x)x.focus()},30);
+}
+function invModal(){
+  const inv=S.inv;
+  const body=inv.link?`<div class="notice">${ico("check","sm")}<span>${inv.existing?`<b>${esc(inv.forName||inv.email)} ya tiene cuenta</b> y quedó agregada a esta empresa. Puede entrar con su correo y su contraseña de siempre en esta dirección:`:`<b>Invitación lista para ${esc(inv.forName||inv.email)}.</b> Envíale este enlace por WhatsApp o correo. Al abrirlo crea su contraseña y entra. El enlace vence en 24 horas.`}</span></div>
+      <div class="linkcopy"><input id="inv-link" class="inp" type="text" readonly value="${esc(inv.link)}" aria-label="Enlace de invitación"><button class="btn primary" data-act="inv-copy">Copiar enlace</button></div>`
+    :`<div class="field"><label for="inv-email">Correo</label><input id="inv-email" type="text" inputmode="email" autocomplete="off" placeholder="nombre@empresa.com" value="${esc(inv.email)}"></div>
+      <div class="field"><label for="inv-name">Nombre</label><input id="inv-name" type="text" placeholder="Nombre y apellido" value="${esc(inv.name)}"></div>
+      <div class="field"><label for="inv-title">Cargo</label><input id="inv-title" type="text" placeholder="Ej: Desarrollador" value="${esc(inv.title)}"></div>
+      <div class="field"><span class="flabel">Proyectos donde participa</span><div class="checks">${visibleProjects().map(p=>`<label><input type="checkbox" data-act="inv-proj" value="${p.id}" ${inv.projects.includes(p.id)?"checked":""}>${esc(p.name)}</label>`).join("")||`<span class="hint">Crea un proyecto primero.</span>`}</div></div>
+      ${inv.err?`<p class="err">${esc(inv.err)}</p>`:""}`;
+  const foot=inv.link?`<button class="btn ghost" data-act="inv-new">${ico("plus","sm")}Invitar a otra persona</button><span class="grow"></span><button class="btn primary" data-act="modal-close">Listo</button>`
+    :`<span class="grow"></span><button class="btn" data-act="modal-close">Cancelar</button><button class="btn primary" data-act="inv-add" ${inv.busy?"disabled":""}>${inv.busy?"Creando invitación…":"Crear invitación"}</button>`;
+  return `<div class="overlay" data-act="modal-bg"><div class="modal narrow" role="dialog" aria-modal="true" aria-labelledby="m-title"><div class="m-main">
+  <div class="m-head">${ico("users")}<h2 id="m-title">${inv.link&&!inv.email?"Enlace de acceso":"Invitar persona"}</h2><button class="icon-btn" data-act="modal-close" aria-label="Cerrar">${ico("x")}</button></div>
+  <div class="m-body">${body}</div>
+  <div class="m-foot">${foot}</div>
+  </div></div></div>`;
+}
+function rrInv(){render();if(S.modal&&S.modal.kind==="inv")renderModal()}
 async function callInvite(body){
   const token=await window.appAuth.token();
   body=Object.assign({workspaceId:S.ws&&S.ws.current?S.ws.current.id:""},body);
@@ -1511,23 +1550,23 @@ async function callInvite(body){
 async function addMember(){
   const inv=S.inv;inv.err="";
   const email=inv.email.trim().toLowerCase();
-  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){inv.err="Escribe un correo válido.";render();return}
-  if(!inv.name.trim()){inv.err="Escribe el nombre de la persona.";render();return}
-  if(S.demo){inv.link=location.origin+"/aceptar#ejemplo";inv.forName=inv.name;render();return}
-  inv.busy=true;render();
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){inv.err="Escribe un correo válido.";rrInv();return}
+  if(!inv.name.trim()){inv.err="Escribe el nombre de la persona.";rrInv();return}
+  if(S.demo){inv.link=location.origin+"/aceptar#ejemplo";inv.forName=inv.name;rrInv();return}
+  inv.busy=true;rrInv();
   try{
     const j=await callInvite({email,name:inv.name.trim(),title:inv.title.trim(),projects:inv.projects});
     inv.link=j.link||j.loginUrl;inv.existing=!j.link&&j.existing;inv.forName=inv.name.trim();
   }catch(e){inv.err=e.message}
-  inv.busy=false;render();
+  inv.busy=false;rrInv();
 }
 async function resendInvite(id){
   const p=prof(id);const email=p&&p.email;
   if(!email){toast("No tengo el correo de esta persona.",true);return}
   try{
     const j=await callInvite({email,resend:true});
-    S.inv={email,name:"",title:"",projects:[],link:j.link||j.loginUrl,existing:!j.link,forName:nm(id),err:"",busy:false};
-    go("equipo");toast("Enlace nuevo listo");
+    S.inv={email:"",name:"",title:"",projects:[],link:j.link||j.loginUrl,existing:!j.link,forName:nm(id),err:"",busy:false};
+    S.modal={kind:"inv",id:"inv",draft:{},err:""};renderModal();toast("Enlace nuevo listo");
   }catch(e){toast(e.message,true)}
 }
 async function removeMember(id){
@@ -1639,7 +1678,9 @@ document.addEventListener("click",async e=>{
     case "proj-arch-yes":m.draft.archived=true;await saveProject();ensureProject();break;
     case "unarchive-project":await safe(()=>wupd("projects",id,{archived:false,updatedAt:Date.now()}),"Proyecto restaurado");break;
     case "inv-copy":{const x=$("#inv-link");try{await navigator.clipboard.writeText(S.inv.link);toast("Enlace copiado")}catch(e){if(x){x.focus();x.select()}toast("Selecciona el enlace y cópialo",true)}break}
-    case "inv-new":S.inv={email:"",name:"",title:"",projects:S.projectId?[S.projectId]:[],link:"",forName:"",err:"",busy:false};render();break;
+    case "inv-new":openInvite();break;
+    case "inv-open":openInvite();break;
+    case "side-toggle":toggleSide();break;
     case "inv-resend":resendInvite(id);break;
     case "ws-switch":if(window.appWorkspace&&!(S.ws&&S.ws.current&&S.ws.current.id===id))window.appWorkspace.switchTo(id);else{S.menu=null;render()}break;
     case "emp-create":createEmpresa();break;
@@ -1714,6 +1755,7 @@ document.addEventListener("keydown",e=>{
     if(S.modal){closeModal(false);return}
     if(S.navOpen){S.navOpen=false;render()}
   }
+  if((e.metaKey||e.ctrlKey)&&(e.key==="b"||e.key==="B")&&!S.modal&&window.innerWidth>900){e.preventDefault();toggleSide();return}
   if(e.key==="Enter"&&e.target.id==="f-title"){e.preventDefault();return}
   if(e.key==="Enter"&&e.target.classList&&e.target.classList.contains("card")){openTask(e.target.dataset.id)}
   if((e.key==="Enter"||e.key===" ")&&e.target.dataset&&e.target.dataset.act==="sub-tog"){e.preventDefault();e.stopPropagation();e.target.click()}
@@ -1794,5 +1836,6 @@ start();
 })();
 </script>
 
+<script>if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{}));</script>
 </body>
 </html>
