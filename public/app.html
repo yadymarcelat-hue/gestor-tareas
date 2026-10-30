@@ -72,6 +72,9 @@ h1,h2,h3{text-wrap:balance;margin:0}
 .ws{display:flex;align-items:center;justify-content:space-between;padding:6px 8px 14px;border-bottom:1px solid var(--line);margin:0 -12px 10px;padding-left:20px;padding-right:16px}
 .ws b{font-size:17px;font-weight:700;letter-spacing:-.01em}
 .ws-wrap{flex:1;min-width:0}
+.me-btn{display:flex;align-items:center;gap:10px;flex:1;min-width:0;text-align:left;border-radius:10px;padding:4px;margin:-4px}
+.me-btn:hover{background:var(--hover)}
+.me-btn .who{min-width:0;display:block}
 .ws-btn{display:flex;align-items:center;gap:8px;text-align:left;border-radius:9px;padding:4px 6px;margin:-4px -6px;max-width:100%}
 .ws-btn:hover{background:var(--hover)}
 .ws-name{min-width:0;display:block}
@@ -743,6 +746,7 @@ function wsName(){return S.demo?"Ingenio SAS":(S.ws&&S.ws.current?S.ws.current.n
 function wsPop(){
   if(!S.ws)return"";
   return `<div class="pop" role="menu">${S.ws.list.map(w=>`<button class="${S.ws.current&&w.id===S.ws.current.id?"on":""}" data-act="ws-switch" data-id="${esc(w.id)}">${ico("building","sm")}<span>${esc(w.name)}</span>${S.ws.current&&w.id===S.ws.current.id?`<span class="ck">${ico("check","sm")}</span>`:""}</button>`).join("")||`<div class="hint" style="padding:10px">Aún no perteneces a ninguna empresa.</div>`}
+  ${S.ws.current&&(S.ws.current.role==="admin"||S.ws.isSuperadmin)?`<hr><button data-act="ws-rename" data-id="${esc(S.ws.current.id)}">${ico("edit","sm")}<span>Cambiar nombre de la empresa</span></button>`:""}
   ${S.ws.isSuperadmin?`<hr><button data-act="go" data-v="empresas">${ico("building","sm")}<span>Administrar empresas</span></button>`:""}</div>`;
 }
 function sidebar(){
@@ -759,7 +763,7 @@ function sidebar(){
       ${a("proyectos","Proyectos","folder","ic-proj")}
       ${S.ws&&S.ws.isSuperadmin?a("empresas","Empresas","building","ic-emp"):""}
     </nav>
-    <div class="me">${av(S.me.id,"lg")}<div class="who" style="flex:1"><b>${esc(S.me.id?nm(S.me.id):(S.me.name||"Invitado"))}</b><small>${esc(S.demo?"Ejemplo":role)}</small></div><button class="icon-btn" data-act="logout" aria-label="Cerrar sesión" title="Cerrar sesión">${ico("logout")}</button></div>
+    <div class="me"><button class="me-btn" data-act="my-profile" title="Editar mi perfil">${av(S.me.id,"lg")}<span class="who"><b>${esc(S.me.id?nm(S.me.id):(S.me.name||"Invitado"))}</b><small>${esc(S.demo?"Ejemplo":role)}</small></span></button><button class="icon-btn" data-act="logout" aria-label="Cerrar sesión" title="Cerrar sesión">${ico("logout")}</button></div>
   </aside>`;
 }
 function head(title,ic,actions=""){
@@ -965,12 +969,12 @@ function viewEquipo(){
   </div></section>`:"";
   return h+`<div class="content">${invite}
   <section class="panel"><div class="panel-h"><h2>Personas</h2><span class="hint">${ids.length}</span></div>
-  <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Persona</th><th>Proyectos</th><th>Agregada</th>${can?"<th></th>":""}</tr></thead><tbody>
+  <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Persona</th><th>Proyectos</th><th>Agregada</th><th></th></tr></thead><tbody>
   ${ids.map(id=>{const m=S.members[id];const isOwnerRow=m.role==="admin";
     return `<tr><td><div class="who-cell">${av(id,"md")}<div><b>${esc(nm(id))}${id===S.me.id?" (tú)":""}</b><small>${esc(isOwnerRow?"Administradora":(m.title||"Miembro"))}</small></div></div></td>
     <td><div class="chips">${isOwnerRow?`<span class="tag neutral">Todos</span>`:projOf(id).map(n=>`<span class="tag hito">${esc(n)}</span>`).join("")||`<span class="hint">Ninguno</span>`}</div></td>
     <td class="hint">${m.addedAt?esc(fmtTime(m.addedAt).split(",")[0]):""}</td>
-    ${can?`<td style="text-align:right;white-space:nowrap">${isOwnerRow?"":(S.confirmRemove===id?`<span class="confirm">¿Quitar?<button class="btn danger sm" data-act="mem-remove-yes" data-id="${id}">Quitar</button><button class="btn sm" data-act="mem-remove-no">No</button></span>`:`<button class="btn ghost sm" data-act="inv-resend" data-id="${id}">${ico("link","sm")}Enlace</button><button class="btn ghost sm" data-act="edit-member" data-id="${id}">${ico("edit","sm")}Editar</button><button class="btn danger-t sm" data-act="mem-remove" data-id="${id}">Quitar</button>`)}</td>`:""}</tr>`}).join("")||`<tr><td colspan="4"><div class="empty"><p>Aún no hay personas en el equipo.</p></div></td></tr>`}
+    ${can||id===S.me.id?`<td style="text-align:right;white-space:nowrap">${id===S.me.id?`<button class="btn ghost sm" data-act="my-profile">${ico("edit","sm")}Mi perfil</button>`:isOwnerRow?`<button class="btn ghost sm" data-act="edit-member" data-id="${id}">${ico("edit","sm")}Editar</button>`:(S.confirmRemove===id?`<span class="confirm">¿Quitar?<button class="btn danger sm" data-act="mem-remove-yes" data-id="${id}">Quitar</button><button class="btn sm" data-act="mem-remove-no">No</button></span>`:`<button class="btn ghost sm" data-act="inv-resend" data-id="${id}">${ico("link","sm")}Enlace</button><button class="btn ghost sm" data-act="edit-member" data-id="${id}">${ico("edit","sm")}Editar</button><button class="btn danger-t sm" data-act="mem-remove" data-id="${id}">Quitar</button>`)}</td>`:""}</tr>`}).join("")||`<tr><td colspan="4"><div class="empty"><p>Aún no hay personas en el equipo.</p></div></td></tr>`}
   </tbody></table></div></section></div>`;
 }
 
@@ -1024,7 +1028,7 @@ function viewEmpresas(){
     <section class="panel"><div class="panel-h"><h2>Nueva empresa</h2></div><div class="panel-b" style="display:flex;flex-direction:column;gap:14px">${form}</div></section>
     <section class="panel"><div class="panel-h"><h2>Empresas en la plataforma</h2><button class="btn ghost sm" data-act="emp-reload">Actualizar</button></div><div class="panel-b">
       ${list===null||S.emp.loading?`<p class="hint">Cargando…</p>`:list.length?list.map(w=>`<div class="emp-row"><b>${esc(w.name)}</b>
-        <div class="acts">${w.iAmMember?(S.ws.current&&S.ws.current.id===w.id?`<span class="tag hito">Abierta</span>`:`<button class="btn sm" data-act="ws-switch" data-id="${esc(w.id)}">Abrir</button>`):`<button class="btn ghost sm" data-act="emp-join" data-id="${esc(w.id)}">Entrar como administradora</button>`}</div>
+        <div class="acts"><button class="icon-btn" data-act="ws-rename" data-id="${esc(w.id)}" data-name="${esc(w.name)}" aria-label="Cambiar nombre">${ico("edit","sm")}</button>${w.iAmMember?(S.ws.current&&S.ws.current.id===w.id?`<span class="tag hito">Abierta</span>`:`<button class="btn sm" data-act="ws-switch" data-id="${esc(w.id)}">Abrir</button>`):`<button class="btn ghost sm" data-act="emp-join" data-id="${esc(w.id)}">Entrar como administradora</button>`}</div>
         <span class="s">${w.people} ${w.people===1?"persona":"personas"} · Administra: ${w.admins.map(a=>esc(a.name||a.email||"Sin nombre")).join(", ")||"nadie"}</span></div>`).join(""):`<p class="hint">Todavía no hay empresas.</p>`}
       ${S.emp.err&&list&&!list.length?`<p class="err">${esc(S.emp.err)}</p>`:""}
     </div></section>
@@ -1128,7 +1132,7 @@ function renderModal(){
   const mo=root.querySelector(".modal"),msc=mo?mo.scrollTop:0,ov=root.querySelector(".overlay"),osc=ov?ov.scrollTop:0,had=!!ov;
   const cl=root.querySelector("#c-list"),csc=cl?cl.scrollTop:0;
   const f=document.activeElement&&root.contains(document.activeElement)&&document.activeElement.id?{id:document.activeElement.id,s:document.activeElement.selectionStart,e:document.activeElement.selectionEnd}:null;
-  let html=m.kind==="task"?taskModal():m.kind==="hito"?hitoModal():m.kind==="project"?projectModal():memberModal();
+  let html=m.kind==="task"?taskModal():m.kind==="hito"?hitoModal():m.kind==="project"?projectModal():m.kind==="me"?meModal():m.kind==="ws"?wsModal():memberModal();
   if(had)html=html.replace('class="overlay"','class="overlay still"');
   root.innerHTML=html;
   const nb=root.querySelector(".m-body");if(nb)nb.scrollTop=sc;
@@ -1341,10 +1345,73 @@ async function saveProject(){
     closeModal(true);
   }
 }
+function openMe(){
+  closeMenus();S.navOpen=false;
+  const mem=S.members[S.me.id]||{};
+  S.modal={kind:"me",id:S.me.id,draft:{name:nm(S.me.id)==="Alguien"?(S.me.name||""):nm(S.me.id),title:mem.title||"",pw1:"",pw2:""},err:""};
+  renderModal();
+}
+function meModal(){
+  const m=S.modal,d=m.draft;
+  return `<div class="overlay" data-act="modal-bg"><div class="modal narrow" role="dialog" aria-modal="true" aria-labelledby="m-title"><div class="m-main">
+  <div class="m-head">${av(S.me.id,"md")}<h2 id="m-title">Mi perfil</h2><button class="icon-btn" data-act="modal-close" aria-label="Cerrar">${ico("x")}</button></div>
+  <div class="m-body">
+    <div class="field"><label for="me-name">Nombre</label><input id="me-name" type="text" data-mf="name" value="${esc(d.name)}" autocomplete="name"></div>
+    ${S.isOwner?`<div class="field"><label for="me-title">Cargo</label><input id="me-title" type="text" data-mf="title" value="${esc(d.title)}" placeholder="Ej: Gerente"></div>`:d.title?`<div class="field"><span class="flabel">Cargo</span><span>${esc(d.title)}</span><span class="hint">Lo cambia la administradora de la empresa.</span></div>`:""}
+    <div class="field"><span class="flabel">Correo</span><span>${esc(S.me.email||"")}</span></div>
+    <div class="field"><span class="flabel">Cambiar contraseña</span><span class="hint">Déjalo vacío si no la quieres cambiar.</span>
+      <input id="me-pw1" class="inp" type="password" data-mf="pw1" autocomplete="new-password" placeholder="Contraseña nueva (mínimo 8 caracteres)">
+      <input id="me-pw2" class="inp" type="password" data-mf="pw2" autocomplete="new-password" placeholder="Repite la contraseña nueva"></div>
+    ${m.err?`<p class="err">${esc(m.err)}</p>`:""}
+  </div>
+  <div class="m-foot"><span class="grow"></span><button class="btn" data-act="modal-close">Cancelar</button><button class="btn primary" data-act="me-save">Guardar</button></div>
+  </div></div></div>`;
+}
+async function saveMe(){
+  const m=S.modal,d=m.draft;m.err="";
+  const name=d.name.trim();
+  if(!name){m.err="Escribe tu nombre.";renderModal();return}
+  if(d.pw1||d.pw2){
+    if(d.pw1.length<8){m.err="La contraseña debe tener al menos 8 caracteres.";renderModal();return}
+    if(d.pw1!==d.pw2){m.err="Las contraseñas no coinciden.";renderModal();return}
+  }
+  try{
+    if(!S.demo&&window.appAuth)await window.appAuth.updateProfile({name,password:d.pw1||null});
+    if(S.isOwner&&S.members[S.me.id]&&d.title.trim()!==(S.members[S.me.id].title||""))await wupd("members",S.me.id,{title:d.title.trim()});
+  }catch(e){m.err=e.message||"No se pudo guardar.";renderModal();return}
+  S.me.name=name;S.profiles[S.me.id]=Object.assign({},S.profiles[S.me.id]||{},{name});
+  toast(d.pw1?"Perfil y contraseña actualizados":"Perfil actualizado");closeModal(true);
+}
+function openWsRename(id,name){
+  closeMenus();
+  const cur=(S.ws&&S.ws.list.find(w=>w.id===id))||{};
+  S.modal={kind:"ws",id,draft:{name:name||cur.name||""},err:""};
+  renderModal();
+}
+function wsModal(){
+  const m=S.modal,d=m.draft;
+  return `<div class="overlay" data-act="modal-bg"><div class="modal narrow" role="dialog" aria-modal="true" aria-labelledby="m-title"><div class="m-main">
+  <div class="m-head">${ico("building")}<h2 id="m-title">Nombre de la empresa</h2><button class="icon-btn" data-act="modal-close" aria-label="Cerrar">${ico("x")}</button></div>
+  <div class="m-body">
+    <div class="field"><label for="ws-name">Nombre</label><input id="ws-name" type="text" data-mf="name" value="${esc(d.name)}"></div>
+    <span class="hint">Así aparece arriba a la izquierda para todas las personas de la empresa.</span>
+    ${m.err?`<p class="err">${esc(m.err)}</p>`:""}
+  </div>
+  <div class="m-foot"><span class="grow"></span><button class="btn" data-act="modal-close">Cancelar</button><button class="btn primary" data-act="ws-save">Guardar</button></div>
+  </div></div></div>`;
+}
+async function saveWsName(){
+  const m=S.modal,name=m.draft.name.trim();m.err="";
+  if(!name){m.err="Escribe el nombre de la empresa.";renderModal();return}
+  try{if(!S.demo)await apiCall("/api/workspaces","PATCH",{id:m.id,name})}catch(e){m.err=e.message;renderModal();return}
+  if(S.ws){S.ws.list.forEach(w=>{if(w.id===m.id)w.name=name});if(S.ws.current&&S.ws.current.id===m.id)S.ws.current.name=name}
+  if(S.emp.list)S.emp.list.forEach(w=>{if(w.id===m.id)w.name=name});
+  toast("Nombre de la empresa actualizado");closeModal(true);
+}
 function openMember(id){
   closeMenus();
   const mem=S.members[id];
-  S.modal={kind:"member",id,draft:{title:mem.title||"",projects:Object.entries(S.projects).filter(([,p])=>(p.memberIds||[]).includes(id)).map(([pid])=>pid)},err:""};
+  S.modal={kind:"member",id,draft:{title:mem.title||"",role:mem.role==="admin"?"admin":"member",projects:Object.entries(S.projects).filter(([,p])=>(p.memberIds||[]).includes(id)).map(([pid])=>pid)},err:""};
   renderModal();
 }
 function memberModal(){
@@ -1353,7 +1420,8 @@ function memberModal(){
   <div class="m-head">${av(m.id,"md")}<h2 id="m-title">${esc(nm(m.id))}</h2><button class="icon-btn" data-act="modal-close" aria-label="Cerrar">${ico("x")}</button></div>
   <div class="m-body">
     <div class="field"><label for="mm-title">Cargo</label><input id="mm-title" type="text" data-mm="title" value="${esc(d.title)}" placeholder="Ej: Desarrollador"></div>
-    <div class="field"><span class="flabel">Proyectos donde participa</span><div class="checks">${visibleProjects().map(p=>`<label><input type="checkbox" data-act="mm-proj" value="${p.id}" ${d.projects.includes(p.id)?"checked":""}>${esc(p.name)}</label>`).join("")||`<span class="hint">No hay proyectos activos.</span>`}</div></div>
+    <div class="field"><label for="mm-role">Rol</label><select id="mm-role" class="pill-select" data-mm="role"><option value="member" ${d.role!=="admin"?"selected":""}>Miembro: trabaja en las tareas</option><option value="admin" ${d.role==="admin"?"selected":""}>Administradora: crea proyectos e invita personas</option></select></div>
+    ${d.role==="admin"?`<p class="hint">Las administradoras ven todos los proyectos de la empresa.</p>`:`<div class="field"><span class="flabel">Proyectos donde participa</span><div class="checks">${visibleProjects().map(p=>`<label><input type="checkbox" data-act="mm-proj" value="${p.id}" ${d.projects.includes(p.id)?"checked":""}>${esc(p.name)}</label>`).join("")||`<span class="hint">No hay proyectos activos.</span>`}</div></div>`}
   </div>
   <div class="m-foot"><span class="grow"></span><button class="btn" data-act="modal-close">Cancelar</button><button class="btn primary" data-act="mm-save">Guardar</button></div>
   </div></div></div>`;
@@ -1369,8 +1437,8 @@ async function setProjectsFor(id,want){
 }
 async function saveMember(){
   const m=S.modal;
-  if(!await safe(()=>wupd("members",m.id,{title:m.draft.title.trim()})))return;
-  if(await setProjectsFor(m.id,m.draft.projects)){toast("Persona actualizada");closeModal(true)}
+  if(!await safe(()=>wupd("members",m.id,{title:m.draft.title.trim(),role:m.draft.role})))return;
+  if(m.draft.role==="admin"||await setProjectsFor(m.id,m.draft.projects)){toast("Persona actualizada");closeModal(true)}
 }
 async function callInvite(body){
   const token=await window.appAuth.token();
@@ -1515,6 +1583,10 @@ document.addEventListener("click",async e=>{
     case "inv-resend":resendInvite(id);break;
     case "ws-switch":if(window.appWorkspace&&!(S.ws&&S.ws.current&&S.ws.current.id===id))window.appWorkspace.switchTo(id);else{S.menu=null;render()}break;
     case "emp-create":createEmpresa();break;
+    case "my-profile":openMe();break;
+    case "me-save":saveMe();break;
+    case "ws-rename":openWsRename(id,el.dataset.name);break;
+    case "ws-save":saveWsName();break;
     case "emp-join":joinEmpresa(id);break;
     case "emp-new":S.emp.result=null;S.emp.form={name:"",adminName:"",adminEmail:"",includeMe:false};render();break;
     case "emp-reload":S.emp.list=null;render();break;
@@ -1539,6 +1611,7 @@ document.addEventListener("change",e=>{
   if(t.dataset.act==="p-noend"&&m){m.draft.noEnd=t.checked;if(t.checked)m.draft.end="";renderModal();return}
   if(t.dataset.act==="p-mem"&&m){const a=m.draft.memberIds;t.checked?a.includes(t.value)||a.push(t.value):m.draft.memberIds=a.filter(x=>x!==t.value);return}
   if(t.dataset.act==="mm-proj"&&m){const a=m.draft.projects;t.checked?a.includes(t.value)||a.push(t.value):m.draft.projects=a.filter(x=>x!==t.value);return}
+  if(m&&m.kind==="member"&&t.id==="mm-role"){m.draft.role=t.value;renderModal();return}
   if(m&&t.dataset.f&&t.tagName==="SELECT"){setDraftField(t.dataset.f,t.value);if(t.dataset.f==="milestoneId"&&m.err==="hito")m.err="";renderModal();return}
   if(m&&t.dataset.f&&t.type==="date"){setDraftField(t.dataset.f,t.value);if(m.err==="dates")m.err="";return}
 });
@@ -1553,6 +1626,7 @@ document.addEventListener("input",e=>{
   if(m&&m.kind==="hito"&&t.dataset.h){m.draft[t.dataset.h]=t.value;return}
   if(m&&m.kind==="project"&&t.dataset.p){m.draft[t.dataset.p]=t.value;return}
   if(m&&m.kind==="member"&&t.dataset.mm){m.draft[t.dataset.mm]=t.value;return}
+  if(m&&(m.kind==="me"||m.kind==="ws")&&t.dataset.mf){m.draft[t.dataset.mf]=t.value;return}
   if(t.id==="q"){S.q=t.value;S.hitoOnly=null;render();return}
   if(t.id==="inv-title"){S.inv.title=t.value;return}
   if(t.id==="inv-email"){S.inv.email=t.value;return}

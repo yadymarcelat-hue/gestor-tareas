@@ -288,6 +288,19 @@
       const { data } = await sb.auth.getSession();
       return data.session ? data.session.access_token : "";
     },
+    // Cambia el nombre de la persona y, si viene, su contraseña.
+    async updateProfile({ name, password }) {
+      const sb = await client();
+      const s = await session();
+      if (name) {
+        const { error } = await sb.from("profiles").update({ name }).eq("id", s.user.id);
+        if (error) throw new Error("No se pudo guardar el nombre: " + error.message);
+      }
+      if (password) {
+        const { error } = await sb.auth.updateUser({ password });
+        if (error) throw new Error("No se pudo cambiar la contraseña: " + error.message);
+      }
+    },
     async signOut() {
       const sb = await client();
       await sb.auth.signOut();

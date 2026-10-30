@@ -1,5 +1,5 @@
 // Empresas de la plataforma. Solo la dueña de la plataforma (superadmin) puede verlas todas y crearlas.
-import { adminClient, caller, appOrigin, prepareAccess, addMember, fail } from "../../../lib/server";
+import { adminClient, caller, appOrigin, prepareAccess, addMember, isWorkspaceAdmin, fail } from "../../../lib/server";
 
 export const dynamic = "force-dynamic";
 
@@ -87,4 +87,25 @@ export async function POST(req) {
     existing: access ? access.existing : false,
     loginUrl: appOrigin(req) + "/login",
   });
+}
+
+// Cambia el nombre de una empresa. Puede hacerlo su administradora o la dueña de la plataforma.
+export async function PATCH(req) {
+  const admin = adminClient();
+  if (!admin) return fail(500, "Falta configurar SUPABASE_SERVICE_ROLE_KEY en Vercel.");
+  const who = await caller(admin, req);
+  if (!who) return fail(401, "Tu sesión venció. Vuelve a ingresar.");
+
+  let body;
+  try { body = await req.json(); } catch { return fail(400, "Solicitud inválida."); }
+  const id = String(body.id || "");
+  const name = String(body.name || "").trim();
+  if (!id) return fail(400, "Falta la empresa.");
+  if (!name) return fail(400, "Escribe el nombre de la empresa.");
+  if (!who.isSuperadmin && !(await isWorkspaceAdmin(admin, id, who.user.id))) {
+    return fail(403, "Solo la administradora de esta empresa puede cambiarle el nombre.");
+  }
+  const { error } = await admin.from("workspaces").update({ name }).eq("id", id);
+  if (error) return fail(500, "No se pudo cambiar el nombre: " + error.message);
+  return Response.json({ id, name });
 }
