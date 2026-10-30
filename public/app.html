@@ -80,11 +80,14 @@ h1,h2,h3{text-wrap:balance;margin:0}
 .ws-name{min-width:0;display:block}
 .ws-name b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .nav .ic-emp{color:#c2410c}
-.emp-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 14px;align-items:center;padding:14px 0;border-bottom:1px solid var(--line)}
+.emp-row{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--line)}
 .emp-row:last-child{border-bottom:0}
+.emp-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
 .emp-row b{font-size:15.5px}
 .emp-row .s{color:var(--muted);font-size:13px}
-.emp-row .acts{display:flex;gap:8px;grid-row:1 / span 2;grid-column:2}
+.emp-row .acts{display:flex;align-items:center;gap:6px;flex:none}
+.emp-row .acts .tag{height:30px;padding:0 10px}
+@media (max-width:600px){.emp-row{flex-wrap:wrap}.emp-row .acts{width:100%;justify-content:flex-end}}
 .ws small{display:block;color:var(--faint);font-size:12px;font-weight:500}
 .nav{display:flex;flex-direction:column;gap:2px;overflow:auto;flex:1}
 .nav-sec{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);padding:14px 10px 6px}
@@ -992,44 +995,58 @@ async function loadEmpresas(){
 }
 async function createEmpresa(){
   const f=S.emp.form;S.emp.err="";
-  if(!f.name.trim()){S.emp.err="Escribe el nombre de la empresa.";render();return}
+  const rr=()=>{render();if(S.modal&&S.modal.kind==="emp")renderModal()};
+  if(!f.name.trim()){S.emp.err="Escribe el nombre de la empresa.";rr();return}
   const email=f.adminEmail.trim().toLowerCase();
-  if(email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){S.emp.err="El correo de la administradora no es válido.";render();return}
-  if(!email&&!f.includeMe){S.emp.err="Escribe el correo de quien administra la empresa, o márcate a ti como administradora.";render();return}
-  S.emp.busy=true;render();
+  if(email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){S.emp.err="El correo de la administradora no es válido.";rr();return}
+  if(!email&&!f.includeMe){S.emp.err="Escribe el correo de quien administra la empresa, o márcate a ti como administradora.";rr();return}
+  S.emp.busy=true;rr();
   try{
     const j=await apiCall("/api/workspaces","POST",{name:f.name.trim(),adminEmail:email,adminName:f.adminName.trim(),includeMe:f.includeMe});
     S.emp.result=Object.assign({adminName:f.adminName.trim()||email},j);S.emp.list=null;
     if(f.includeMe)S.ws.list.push({id:j.id,name:j.name,role:"admin"});
   }catch(e){S.emp.err=e.message}
-  S.emp.busy=false;render();
+  S.emp.busy=false;render();if(S.modal&&S.modal.kind==="emp")renderModal();
 }
 async function joinEmpresa(id){
   try{await apiCall("/api/workspaces","POST",{action:"join",id});toast("Ya eres administradora de esa empresa");window.appWorkspace.switchTo(id)}
   catch(e){toast(e.message,true)}
 }
-function viewEmpresas(){
-  const h=head("Empresas","building","");
-  if(!S.ws||!S.ws.isSuperadmin)return h+`<div class="content"><div class="panel"><div class="empty"><p>Solo la dueña de la plataforma administra las empresas.</p></div></div></div>`;
-  if(S.emp.list===null&&!S.emp.loading)setTimeout(loadEmpresas,0);
+function openEmpresa(){
+  closeMenus();
+  S.emp.result=null;S.emp.err="";S.emp.form={name:"",adminName:"",adminEmail:"",includeMe:false};
+  S.modal={kind:"emp",id:"emp",draft:{},err:""};
+  renderModal();setTimeout(()=>{const x=$("#emp-name");if(x)x.focus()},30);
+}
+function empModal(){
   const f=S.emp.form,r=S.emp.result;
-  const form=r?`<div class="notice">${ico("check","sm")}<span><b>${esc(r.name)} quedó creada.</b> ${r.link?`Envíale este enlace a ${esc(r.adminName)} para que cree su contraseña y entre como administradora. Vence en 24 horas.`:r.existing?`${esc(r.adminName)} ya tenía cuenta: puede entrar con su contraseña de siempre en esta dirección y verá la empresa nueva.`:"Ya puedes abrirla desde el menú de empresas."}</span></div>
-      ${r.link||r.existing?`<div class="linkcopy"><input class="inp" type="text" readonly value="${esc(r.link||r.loginUrl)}" aria-label="Enlace"><button class="btn primary" data-act="copy-text" data-text="${esc(r.link||r.loginUrl)}">Copiar enlace</button></div>`:""}
-      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost sm" data-act="emp-new">${ico("plus","sm")}Crear otra empresa</button>${S.ws.list.some(w=>w.id===r.id)?`<button class="btn sm" data-act="ws-switch" data-id="${esc(r.id)}">Abrir ${esc(r.name)}</button>`:""}</div>`
+  const body=r?`<div class="notice">${ico("check","sm")}<span><b>${esc(r.name)} quedó creada.</b> ${r.link?`Envíale este enlace a ${esc(r.adminName)} para que cree su contraseña y entre como administradora. Vence en 24 horas.`:r.existing?`${esc(r.adminName)} ya tenía cuenta: puede entrar con su contraseña de siempre en esta dirección y verá la empresa nueva.`:"Ya puedes abrirla desde el menú de empresas."}</span></div>
+      ${r.link||r.existing?`<div class="linkcopy"><input class="inp" type="text" readonly value="${esc(r.link||r.loginUrl)}" aria-label="Enlace"><button class="btn primary" data-act="copy-text" data-text="${esc(r.link||r.loginUrl)}">Copiar enlace</button></div>`:""}`
     :`<div class="field"><label for="emp-name">Nombre de la empresa</label><input id="emp-name" type="text" placeholder="Ej: Café La Esquina" value="${esc(f.name)}"></div>
-      <div class="grid-2"><div class="field"><label for="emp-admin-name">Nombre de quien la administra</label><input id="emp-admin-name" type="text" placeholder="Nombre y apellido" value="${esc(f.adminName)}"></div>
-      <div class="field"><label for="emp-admin-email">Correo de quien la administra</label><input id="emp-admin-email" type="text" inputmode="email" placeholder="nombre@empresa.com" value="${esc(f.adminEmail)}"></div></div>
-      <label class="inline-check"><input id="emp-me" type="checkbox" class="cb" ${f.includeMe?"checked":""}>Incluirme también como administradora</label>
-      <span class="hint">Si no te incluyes, no verás los proyectos de esa empresa. La administradora invita a su propio equipo desde Equipo.</span>
-      ${S.emp.err?`<p class="err">${esc(S.emp.err)}</p>`:""}
-      <div><button class="btn primary" data-act="emp-create" ${S.emp.busy?"disabled":""}>${ico("plus","sm")}${S.emp.busy?"Creando…":"Crear empresa"}</button></div>`;
+      <div class="field"><label for="emp-admin-name">Nombre de quien la administra</label><input id="emp-admin-name" type="text" placeholder="Nombre y apellido" value="${esc(f.adminName)}"></div>
+      <div class="field"><label for="emp-admin-email">Correo de quien la administra</label><input id="emp-admin-email" type="text" inputmode="email" placeholder="nombre@empresa.com" value="${esc(f.adminEmail)}"></div>
+      <div class="field"><label class="inline-check"><input id="emp-me" type="checkbox" class="cb" ${f.includeMe?"checked":""}>Incluirme también como administradora</label>
+      <span class="hint">Si no te incluyes, no verás los proyectos de esa empresa. La administradora invita a su propio equipo desde Equipo.</span></div>
+      ${S.emp.err?`<p class="err">${esc(S.emp.err)}</p>`:""}`;
+  const foot=r?`<span class="grow"></span>${S.ws&&S.ws.list.some(w=>w.id===r.id)?`<button class="btn" data-act="ws-switch" data-id="${esc(r.id)}">Abrir ${esc(r.name)}</button>`:""}<button class="btn primary" data-act="modal-close">Listo</button>`
+    :`<span class="grow"></span><button class="btn" data-act="modal-close">Cancelar</button><button class="btn primary" data-act="emp-create" ${S.emp.busy?"disabled":""}>${S.emp.busy?"Creando…":"Crear empresa"}</button>`;
+  return `<div class="overlay" data-act="modal-bg"><div class="modal narrow" role="dialog" aria-modal="true" aria-labelledby="m-title"><div class="m-main">
+  <div class="m-head">${ico("building")}<h2 id="m-title">Nueva empresa</h2><button class="icon-btn" data-act="modal-close" aria-label="Cerrar">${ico("x")}</button></div>
+  <div class="m-body">${body}</div>
+  <div class="m-foot">${foot}</div>
+  </div></div></div>`;
+}
+function viewEmpresas(){
+  const sup=S.ws&&S.ws.isSuperadmin;
+  const h=head("Empresas","building",sup?`<button class="btn primary" data-act="emp-open">${ico("plus","sm")}<span>Nueva empresa</span></button>`:"");
+  if(!sup)return h+`<div class="content"><div class="panel"><div class="empty"><p>Solo la dueña de la plataforma administra las empresas.</p></div></div></div>`;
+  if(S.emp.list===null&&!S.emp.loading)setTimeout(loadEmpresas,0);
   const list=S.emp.list;
   return h+`<div class="content">
-    <section class="panel"><div class="panel-h"><h2>Nueva empresa</h2></div><div class="panel-b" style="display:flex;flex-direction:column;gap:14px">${form}</div></section>
     <section class="panel"><div class="panel-h"><h2>Empresas en la plataforma</h2><button class="btn ghost sm" data-act="emp-reload">Actualizar</button></div><div class="panel-b">
-      ${list===null||S.emp.loading?`<p class="hint">Cargando…</p>`:list.length?list.map(w=>`<div class="emp-row"><b>${esc(w.name)}</b>
-        <div class="acts"><button class="icon-btn" data-act="ws-rename" data-id="${esc(w.id)}" data-name="${esc(w.name)}" aria-label="Cambiar nombre">${ico("edit","sm")}</button>${w.iAmMember?(S.ws.current&&S.ws.current.id===w.id?`<span class="tag hito">Abierta</span>`:`<button class="btn sm" data-act="ws-switch" data-id="${esc(w.id)}">Abrir</button>`):`<button class="btn ghost sm" data-act="emp-join" data-id="${esc(w.id)}">Entrar como administradora</button>`}</div>
-        <span class="s">${w.people} ${w.people===1?"persona":"personas"} · Administra: ${w.admins.map(a=>esc(a.name||a.email||"Sin nombre")).join(", ")||"nadie"}</span></div>`).join(""):`<p class="hint">Todavía no hay empresas.</p>`}
+      ${list===null||S.emp.loading?`<p class="hint">Cargando…</p>`:list.length?list.map(w=>`<div class="emp-row"><div class="emp-info"><b>${esc(w.name)}</b>
+        <span class="s">${w.people} ${w.people===1?"persona":"personas"} · Administra: ${w.admins.map(a=>esc(a.name||a.email||"Sin nombre")).join(", ")||"nadie"}</span></div>
+        <div class="acts">${w.iAmMember?(S.ws.current&&S.ws.current.id===w.id?`<span class="tag hito">Abierta</span>`:`<button class="btn sm" data-act="ws-switch" data-id="${esc(w.id)}">Abrir</button>`):`<button class="btn ghost sm" data-act="emp-join" data-id="${esc(w.id)}">Entrar como administradora</button>`}<button class="icon-btn" data-act="ws-rename" data-id="${esc(w.id)}" data-name="${esc(w.name)}" aria-label="Cambiar nombre de ${esc(w.name)}" title="Cambiar nombre">${ico("edit","sm")}</button></div></div>`).join(""):`<div class="empty"><p>Todavía no hay empresas.</p><button class="btn primary" data-act="emp-open">${ico("plus","sm")}Crear la primera empresa</button></div>`}
       ${S.emp.err&&list&&!list.length?`<p class="err">${esc(S.emp.err)}</p>`:""}
     </div></section>
   </div>`;
@@ -1132,7 +1149,7 @@ function renderModal(){
   const mo=root.querySelector(".modal"),msc=mo?mo.scrollTop:0,ov=root.querySelector(".overlay"),osc=ov?ov.scrollTop:0,had=!!ov;
   const cl=root.querySelector("#c-list"),csc=cl?cl.scrollTop:0;
   const f=document.activeElement&&root.contains(document.activeElement)&&document.activeElement.id?{id:document.activeElement.id,s:document.activeElement.selectionStart,e:document.activeElement.selectionEnd}:null;
-  let html=m.kind==="task"?taskModal():m.kind==="hito"?hitoModal():m.kind==="project"?projectModal():m.kind==="me"?meModal():m.kind==="ws"?wsModal():memberModal();
+  let html=m.kind==="task"?taskModal():m.kind==="hito"?hitoModal():m.kind==="project"?projectModal():m.kind==="me"?meModal():m.kind==="ws"?wsModal():m.kind==="emp"?empModal():memberModal();
   if(had)html=html.replace('class="overlay"','class="overlay still"');
   root.innerHTML=html;
   const nb=root.querySelector(".m-body");if(nb)nb.scrollTop=sc;
@@ -1588,7 +1605,7 @@ document.addEventListener("click",async e=>{
     case "ws-rename":openWsRename(id,el.dataset.name);break;
     case "ws-save":saveWsName();break;
     case "emp-join":joinEmpresa(id);break;
-    case "emp-new":S.emp.result=null;S.emp.form={name:"",adminName:"",adminEmail:"",includeMe:false};render();break;
+    case "emp-open":openEmpresa();break;
     case "emp-reload":S.emp.list=null;render();break;
     case "copy-text":{const t=el.dataset.text;const x=el.previousElementSibling;try{await navigator.clipboard.writeText(t);toast("Copiado")}catch(e){if(x&&x.select){x.focus();x.select()}toast("Selecciona el texto y cópialo",true)}break}
     case "logout":if(window.appAuth)window.appAuth.signOut();break;
