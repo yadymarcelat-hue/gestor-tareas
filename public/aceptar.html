@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Crear contraseña · Proyectos Ingenio SAS</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="/auth.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="/shim.js"></script>
+</head>
+<body>
+<main class="wrap">
+  <section class="card">
+    <div class="brand"><b>Ingenio SAS</b>Proyectos</div>
+
+    <div id="loading"><p class="sub">Revisando tu enlace…</p></div>
+
+    <div id="expired" hidden>
+      <h1>El enlace ya no sirve</h1>
+      <p class="sub">Venció o ya se usó. Pídele a la administradora un enlace nuevo, o recupera tu contraseña desde la página de ingreso.</p>
+      <a class="primary" href="/login" style="display:grid;place-items:center;text-decoration:none">Ir a ingresar</a>
+    </div>
+
+    <div id="form-view" hidden>
+      <h1>Crea tu contraseña</h1>
+      <p class="sub" id="who">Con esto entrarás a la plataforma.</p>
+      <form id="pw-form" novalidate>
+        <label>Tu nombre<input id="name" type="text" autocomplete="name" required></label>
+        <label>Contraseña<input id="pw1" type="password" autocomplete="new-password" minlength="8" required></label>
+        <label>Repite la contraseña<input id="pw2" type="password" autocomplete="new-password" required></label>
+        <div id="msg" class="msg err" hidden></div>
+        <button class="primary" id="save" type="submit">Guardar y entrar</button>
+      </form>
+    </div>
+  </section>
+</main>
+<script>
+(async function () {
+  const $ = (id) => document.getElementById(id);
+  const show = (id) => { ["loading", "expired", "form-view"].forEach((v) => { $(v).hidden = v !== id; }); };
+  const hashErr = /error/.test(location.hash) || /error/.test(location.search);
+  let sb;
+  try { sb = await window.appAuth.client(); } catch (e) { show("expired"); return; }
+
+  // El cliente procesa el token del enlace al crearse; esperamos la sesión un momento.
+  let session = (await sb.auth.getSession()).data.session;
+  if (!session && !hashErr) {
+    session = await new Promise((resolve) => {
+      const t = setTimeout(() => resolve(null), 2500);
+      sb.auth.onAuthStateChange((_e, s) => { if (s) { clearTimeout(t); resolve(s); } });
+    });
+  }
+  if (!session) { show("expired"); return; }
+
+  const u = session.user;
+  $("who").textContent = "Entrarás como " + u.email + ".";
+  const { data: profile } = await sb.from("profiles").select("name").eq("id", u.id).maybeSingle();
+  $("name").value = (profile && profile.name) || (u.user_metadata && u.user_metadata.name) || "";
+  history.replaceState(null, "", "/aceptar");
+  show("form-view");
+
+  $("pw-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const msg = $("msg"); msg.hidden = true;
+    const name = $("name").value.trim(), p1 = $("pw1").value, p2 = $("pw2").value;
+    const fail = (t) => { msg.textContent = t; msg.hidden = false; };
+    if (!name) return fail("Escribe tu nombre.");
+    if (p1.length < 8) return fail("La contraseña debe tener al menos 8 caracteres.");
+    if (p1 !== p2) return fail("Las contraseñas no coinciden.");
+    $("save").disabled = true; $("save").textContent = "Guardando…";
+    const { error } = await sb.auth.updateUser({ password: p1, data: { name } });
+    if (error) { $("save").disabled = false; $("save").textContent = "Guardar y entrar"; return fail("No se pudo guardar: " + error.message); }
+    await sb.from("profiles").update({ name }).eq("id", u.id);
+    location.replace("/");
+  });
+})();
+</script>
+</body>
+</html>
