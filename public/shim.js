@@ -10,7 +10,9 @@
   let clientPromise = null;
   let sessionPromise = null;
   let mePromise = null;
+  let workspacePromise = null;
   const listeners = {}; // colección -> Set de funciones que recargan
+  const WS_KEY = "pj-workspace";
 
   function client() {
     if (!clientPromise) {
@@ -41,6 +43,38 @@
     return sessionPromise;
   }
 
+  // Empresas a las que pertenece la persona y cuál está activa.
+  function workspace() {
+    if (!workspacePromise) {
+      workspacePromise = session().then(async (s) => {
+        const sb = await client();
+        const uid = s.user.id;
+        const [{ data: rows }, { data: profile }] = await Promise.all([
+          sb.from("docs").select("workspace_id,data").eq("collection", "members").eq("id", uid),
+          sb.from("profiles").select("is_superadmin").eq("id", uid).maybeSingle(),
+        ]);
+        const ids = (rows || []).map((r) => r.workspace_id);
+        const { data: spaces } = ids.length
+          ? await sb.from("workspaces").select("id,name").in("id", ids)
+          : { data: [] };
+        const list = (spaces || [])
+          .map((w) => ({ id: w.id, name: w.name, role: ((rows || []).find((r) => r.workspace_id === w.id) || {}).data?.role || "member" }))
+          .sort((a, b) => a.name.localeCompare(b.name));
+        let saved = null;
+        try { saved = localStorage.getItem(WS_KEY); } catch (e) {}
+        const current = list.find((w) => w.id === saved) || list[0] || null;
+        return { list, current, isSuperadmin: !!(profile && profile.is_superadmin) };
+      });
+    }
+    return workspacePromise;
+  }
+
+  async function wsId() {
+    const w = await workspace();
+    if (!w.current) throw Object.assign(new Error("Sin empresa"), { code: "invalid_argument" });
+    return w.current.id;
+  }
+
   function toError(e) {
     const err = new Error(e.message || "Error");
     const txt = (e.message || "") + " " + (e.code || "");
@@ -59,7 +93,9 @@
 
   async function load(collection, filters) {
     const sb = await client();
-    let q = sb.from("docs").select("id,data").eq("collection", collection);
+    const w = await workspace();
+    if (!w.current) return [];
+    let q = sb.from("docs").select("id,data").eq("workspace_id", w.current.id).eq("collection", collection);
     for (const [field, value] of filters) q = q.eq("data->>" + field, String(value));
     const { data, error } = await q.limit(5000);
     if (error) throw toError(error);
@@ -76,7 +112,7 @@
       path: collection + "/" + id,
       async get() {
         const sb = await client();
-        const { data, error } = await sb.from("docs").select("id,data").eq("collection", collection).eq("id", id).maybeSingle();
+        const { data, error } = await sb.from("docs").select("id,data").eq("workspace_id", await wsId()).eq("collection", collection).eq("id", id).maybeSingle();
         if (error) throw toError(error);
         return data
           ? { id, exists: true, data: () => data.data, metadata: META }
@@ -86,19 +122,19 @@
         const sb = await client();
         const { error } = await sb
           .from("docs")
-          .upsert({ collection, id, data: body, updated_at: new Date().toISOString() });
+          .upsert({ workspace_id: await wsId(), collection, id, data: body, updated_at: new Date().toISOString() });
         if (error) throw toError(error);
         bump(collection);
       },
       async update(patch) {
         const sb = await client();
-        const { error } = await sb.rpc("doc_update", { c: collection, i: id, patch });
+        const { error } = await sb.rpc("doc_update", { w: await wsId(), c: collection, i: id, patch });
         if (error) throw toError(error);
         bump(collection);
       },
       async delete() {
         const sb = await client();
-        const { error } = await sb.from("docs").delete().eq("collection", collection).eq("id", id);
+        const { error } = await sb.from("docs").delete().eq("workspace_id", await wsId()).eq("collection", collection).eq("id", id);
         if (error) throw toError(error);
         bump(collection);
       },
@@ -132,11 +168,16 @@
         };
         const soon = () => { clearTimeout(timer); timer = setTimeout(run, 120); };
         (listeners[collection] = listeners[collection] || new Set()).add(soon);
-        client().then((sb) => {
-          if (dead) return;
+        Promise.all([client(), workspace()]).then(([sb, w]) => {
+          if (dead || !w.current) return;
+          // Un solo filtro por canal: se escuchan los cambios de la empresa activa y se filtra la colección aquí.
           channel = sb
             .channel("docs-" + collection + "-" + randomId())
-            .on("postgres_changes", { event: "*", schema: "public", table: "docs", filter: "collection=eq." + collection }, soon)
+            .on("postgres_changes", { event: "*", schema: "public", table: "docs", filter: "workspace_id=eq." + w.current.id },
+              (payload) => {
+                const row = payload.new && payload.new.collection ? payload.new : payload.old;
+                if (!row || !row.collection || row.collection === collection) soon();
+              })
             .subscribe();
         });
         run();
@@ -159,11 +200,9 @@
       mePromise = session().then(async (s) => {
         const sb = await client();
         const uid = s.user.id;
-        const [{ data: profile }, { data: member }] = await Promise.all([
-          sb.from("profiles").select("id,name,email").eq("id", uid).maybeSingle(),
-          sb.from("docs").select("data").eq("collection", "members").eq("id", uid).maybeSingle(),
-        ]);
-        const isAdmin = !!(member && member.data && member.data.role === "admin");
+        const w = await workspace();
+        const { data: profile } = await sb.from("profiles").select("id,name,email").eq("id", uid).maybeSingle();
+        const isAdmin = !!(w.current && w.current.role === "admin");
         return {
           id: uid,
           name: (profile && profile.name) || s.user.email,
@@ -206,7 +245,7 @@
       const sb = await client();
       const type = (options && options.type) || file.type || "application/octet-stream";
       const safeName = file.name.replace(/[^\w.\-]+/g, "_").slice(-120);
-      const path = s.user.id + "/" + (crypto.randomUUID ? crypto.randomUUID() : randomId()) + "-" + safeName;
+      const path = (await wsId()) + "/" + s.user.id + "/" + (crypto.randomUUID ? crypto.randomUUID() : randomId()) + "-" + safeName;
       const { error } = await sb.storage.from("files").upload(path, file, { contentType: type, upsert: false });
       if (error) {
         const err = new Error(error.message);
@@ -231,6 +270,14 @@
       if (name === "user") return user;
       if (name === "assets") return assets;
       return null;
+    },
+  };
+
+  window.appWorkspace = {
+    info: workspace,
+    switchTo(id) {
+      try { localStorage.setItem(WS_KEY, id); } catch (e) {}
+      location.replace("/");
     },
   };
 
