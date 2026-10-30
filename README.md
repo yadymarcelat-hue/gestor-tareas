@@ -1,4 +1,4 @@
-# Proyectos Ingenio SAS
+# Proyectos
 
 Gestor de proyectos y tareas con inicio de sesión propio. Las personas entran con correo y contraseña; solo pueden entrar quienes la administradora invite.
 
@@ -6,23 +6,22 @@ Gestor de proyectos y tareas con inicio de sesión propio. Las personas entran c
 - **Backend:** Next.js en Vercel, solo para dos rutas: `/api/config` y `/api/invite`.
 - **Base de datos, login y archivos:** Supabase.
 
-## Cómo funciona el acceso
+## Empresas y acceso
 
-1. La primera cuenta que se crea queda como **administradora**.
-2. En **Equipo**, la administradora escribe correo, nombre, cargo y proyectos, y pulsa **Crear invitación**. La app genera un enlace.
-3. La administradora le manda ese enlace a la persona por WhatsApp o correo. Vence en 24 horas.
-4. La persona abre el enlace, pone su nombre y su contraseña, y entra.
-5. Desde ahí entra en `/login` con su correo y contraseña. Si la olvida, usa **Olvidé mi contraseña**.
-6. Si el enlace vence, la administradora pulsa **Enlace** junto a la persona en Equipo y genera uno nuevo.
-7. Si la administradora quita a alguien del equipo, esa persona pierde el acceso de inmediato.
+La plataforma tiene **empresas** (espacios de trabajo). Cada empresa tiene sus propios proyectos, hitos, tareas, archivos y equipo, y nadie ve lo de otra empresa. La base de datos lo controla, no solo la pantalla.
 
-Permisos, aplicados en la base de datos:
-
-| Qué | Quién puede cambiarlo |
+| Rol | Qué puede hacer |
 |---|---|
-| Proyectos, hitos, equipo | Solo la administradora |
-| Tareas, subtareas, comentarios, archivos | Cualquier miembro |
-| Ver un proyecto | Miembros agregados a ese proyecto (la administradora ve todos) |
+| **Dueña de la plataforma** (la primera cuenta creada) | Crear empresas e invitar a su primera administradora. Ver la lista de empresas (nombre, número de personas, quién administra). Solo ve los proyectos de una empresa si se incluye en ella. |
+| **Administradora de una empresa** | Crear proyectos e hitos, e invitar y quitar personas de su empresa |
+| **Miembro** | Crear y mover tareas, subtareas, comentarios y archivos en los proyectos donde está |
+
+Cómo se agrega una empresa:
+1. La dueña entra a **Empresas**, escribe el nombre de la empresa y el nombre y correo de quien la administra, y pulsa **Crear empresa**.
+2. La app da un enlace. Se lo envías a esa persona; al abrirlo crea su contraseña y entra como administradora de su empresa.
+3. Ella invita a su equipo desde **Equipo**.
+
+Una persona puede estar en varias empresas. Cambia de una a otra con el nombre de la empresa, arriba a la izquierda. Si ya tenía cuenta, no recibe enlace nuevo: entra con su contraseña de siempre y ve la empresa nueva.
 
 ## Puesta en marcha (unos 20 minutos)
 
@@ -41,11 +40,17 @@ En **Authentication > Sign In / Providers**, desactiva **Allow new users to sign
 
 ### 3. Crear tu usuario de administradora
 En **Authentication > Users > Add user > Create new user**:
-- Correo: `marcelatarazona@squads.ventures`
+- Correo: `yady.marcelat@gmail.com`
 - Contraseña: la que quieras
 - Marca **Auto Confirm User**
 
 Por ser la primera cuenta, queda como administradora.
+
+### Si ya tenías instalada la versión de una sola empresa
+1. En Supabase, abre **SQL Editor**, pega `supabase/3-actualizar-a-empresas.sql` y pulsa **Run**. Tus datos quedan en la empresa "Ingenio SAS" y tú como dueña de la plataforma.
+2. Sube a GitHub los archivos nuevos y cambiados. Vercel publica solo.
+
+Haz los dos pasos seguidos: mientras uno esté hecho y el otro no, la app no carga.
 
 ### 4. Pasar los datos que tenías
 En **SQL Editor**, pega `supabase/2-migracion-datos.sql` y pulsa **Run**. Copia los proyectos Quicktrack y Solucionsoft, sus 4 hitos y sus 8 tareas, y los deja a tu nombre.
