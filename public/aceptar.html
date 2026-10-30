@@ -52,7 +52,15 @@
   let sb;
   try { sb = await window.appAuth.client(); } catch (e) { show("expired"); return; }
 
-  // El cliente procesa el token del enlace al crearse; esperamos la sesión un momento.
+  // Enlace de invitación de la app: /aceptar?token_hash=...&type=invite
+  const qs = new URLSearchParams(location.search);
+  if (qs.get("token_hash")) {
+    await sb.auth.signOut().catch(() => {});
+    const { error } = await sb.auth.verifyOtp({ token_hash: qs.get("token_hash"), type: qs.get("type") || "invite" });
+    if (error) { show("expired"); return; }
+  }
+
+  // Enlaces de Supabase (por ejemplo, recuperar contraseña): el cliente procesa el token al crearse.
   let session = (await sb.auth.getSession()).data.session;
   if (!session && !hashErr) {
     session = await new Promise((resolve) => {
