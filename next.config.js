@@ -5,6 +5,7 @@ module.exports = {
       { source: "/", destination: "/app.html" },
       { source: "/login", destination: "/login.html" },
       { source: "/aceptar", destination: "/aceptar.html" },
+      { source: "/d/:token", destination: "/doc.html" },
     ];
   },
 };

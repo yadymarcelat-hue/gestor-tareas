@@ -14,7 +14,21 @@ La plataforma tiene **empresas** (espacios de trabajo). Cada empresa tiene sus p
 |---|---|
 | **Dueña de la plataforma** (la primera cuenta creada) | Crear empresas e invitar a su primera administradora. Ver la lista de empresas (nombre, número de personas, quién administra). Solo ve los proyectos de una empresa si se incluye en ella. |
 | **Administradora de una empresa** | Crear proyectos e hitos, e invitar y quitar personas de su empresa |
-| **Miembro** | Crear y mover tareas, subtareas, comentarios y archivos en los proyectos donde está |
+| **Miembro** | Crear sus propios proyectos y documentos; crear y mover tareas, subtareas, comentarios y archivos en los proyectos que ve |
+
+### Quién ve cada proyecto
+Cualquier persona puede crear un proyecto y elegir quién lo ve:
+- **Solo yo:** para su propia gestión. Nadie más lo ve, ni las administradoras.
+- **Personas elegidas:** quienes agregue y las administradoras. Los proyectos que ya existían quedan así.
+- **Toda la empresa:** todo el equipo lo ve y trabaja en sus tareas.
+
+Lo edita (nombre, hitos, personas, archivar) quien lo creó, o una administradora si no es privado.
+
+### Docu (documentos)
+Documentos escritos con títulos, listas y pendientes, más archivos o enlaces. Cada uno puede ser **solo mío**, de **toda la empresa** o de las **personas de un proyecto**. Con **"Cualquiera con el enlace puede leerlo"** se comparte con personas de fuera: abren `https://TU-DOMINIO/d/<enlace>` sin cuenta y solo pueden leer. "Cambiar enlace" invalida el anterior.
+
+### Logo de la empresa
+La administradora lo sube en el menú de la empresa (arriba a la izquierda) > **Nombre y logo de la empresa**. Aparece en el menú lateral y en los documentos compartidos.
 
 Cómo se agrega una empresa:
 1. La dueña entra a **Empresas**, escribe el nombre de la empresa y el nombre y correo de quien la administra, y pulsa **Crear empresa**.
@@ -52,6 +66,9 @@ Por ser la primera cuenta, queda como administradora.
 
 Haz los dos pasos seguidos: mientras uno esté hecho y el otro no, la app no carga.
 
+### Proyectos privados, Docu y logo
+En **SQL Editor**, pega `supabase/5-proyectos-privados-y-documentos.sql` y pulsa **Run**. Sin este paso la app carga, pero las personas que no son administradoras no pueden crear proyectos y el logo no se guarda.
+
 ### 4. Pasar los datos que tenías
 En **SQL Editor**, pega `supabase/2-migracion-datos.sql` y pulsa **Run**. Copia los proyectos Quicktrack y Solucionsoft, sus 4 hitos y sus 8 tareas, y los deja a tu nombre.
 
@@ -72,8 +89,14 @@ Para abrirlo en **v0**: importa el mismo repositorio de GitHub desde v0. Las var
 1. Entra a `https://TU-DOMINIO/login` con tu correo y contraseña.
 2. Ve a **Equipo**, invita a alguien y abre el enlace en una ventana de incógnito para ver lo que verá esa persona.
 
-## Correos de "Olvidé mi contraseña"
-Supabase los manda con su servidor de correo de prueba, que solo envía unos pocos por hora. Si el equipo crece, configura un servidor propio en **Authentication > Emails > SMTP Settings**, por ejemplo Resend o el correo de Google Workspace. Las invitaciones no dependen del correo: son enlaces que copias y envías tú.
+## Correos (invitaciones y "Olvidé mi contraseña")
+Los correos salen desde un Gmail. Configúralo una vez:
+1. En tu cuenta de Google activa la **verificación en dos pasos** (myaccount.google.com > Seguridad).
+2. En myaccount.google.com/apppasswords crea una **contraseña de aplicación** llamada "Proyectos". Google te muestra 16 letras.
+3. En Vercel agrega `GMAIL_USER` (tu Gmail), `GMAIL_APP_PASSWORD` (las 16 letras, tipo **Sensitive**) y, si quieres, `MAIL_FROM_NAME`. Luego haz **Redeploy**.
+
+Sin estas variables la app sigue funcionando: muestra el enlace para que lo copies y lo envíes tú.
+Gmail permite unos 500 correos al día.
 
 ## Probar en tu computador
 ```bash
@@ -90,8 +113,12 @@ npm run dev                  # http://localhost:3000
 | `public/login.html`, `public/aceptar.html`, `public/auth.css` | Ingreso y creación de contraseña |
 | `app/api/config/route.js` | Entrega la URL y la llave pública de Supabase al navegador |
 | `app/api/invite/route.js` | Crea invitaciones; solo responde a la administradora |
+| `app/api/workspaces/route.js` | Empresas: crear, unirse, cambiar nombre y logo |
+| `app/api/share/route.js` | Entrega un documento compartido por enlace (sin sesión) |
+| `public/doc.html` | Página pública de un documento compartido (`/d/<enlace>`) |
 | `supabase/1-esquema.sql` | Tablas, permisos, archivos y cambios en vivo |
 | `supabase/2-migracion-datos.sql` | Tus datos actuales |
+| `supabase/5-proyectos-privados-y-documentos.sql` | Proyectos privados, permisos de Docu y logo |
 
 ## Notas
 - Los archivos adjuntos van al bucket `files` de Supabase. Se admite cualquier tipo, hasta 50 MB. Cada archivo se abre con un enlace largo imposible de adivinar, pero quien tenga ese enlace puede abrirlo.

@@ -54,11 +54,15 @@
           sb.from("profiles").select("is_superadmin").eq("id", uid).maybeSingle(),
         ]);
         const ids = (rows || []).map((r) => r.workspace_id);
-        const { data: spaces } = ids.length
-          ? await sb.from("workspaces").select("id,name").in("id", ids)
-          : { data: [] };
-        const list = (spaces || [])
-          .map((w) => ({ id: w.id, name: w.name, role: ((rows || []).find((r) => r.workspace_id === w.id) || {}).data?.role || "member" }))
+        let spaces = [];
+        if (ids.length) {
+          // logo_url llega con 5-proyectos-privados-y-documentos.sql; si aún no se corrió, se piden solo id y nombre.
+          let r = await sb.from("workspaces").select("id,name,logo_url").in("id", ids);
+          if (r.error) r = await sb.from("workspaces").select("id,name").in("id", ids);
+          spaces = r.data || [];
+        }
+        const list = spaces
+          .map((w) => ({ id: w.id, name: w.name, logo: w.logo_url || "", role: ((rows || []).find((r) => r.workspace_id === w.id) || {}).data?.role || "member" }))
           .sort((a, b) => a.name.localeCompare(b.name));
         let saved = null;
         try { saved = localStorage.getItem(WS_KEY); } catch (e) {}
@@ -338,6 +342,32 @@
       if (error) throw new Error(friendly("foto", error));
       const stale = (old || []).map((f) => folder + "/" + f.name).filter((n) => !url || !url.endsWith(n));
       if (stale.length) await sb.storage.from("avatars").remove(stale);
+      return url;
+    },
+    // Sube el logo de la empresa (ya ajustado, en PNG) y lo deja guardado. Con null, lo quita.
+    async setWorkspaceLogo(workspaceId, blob) {
+      const sb = await client();
+      const folder = workspaceId;
+      const { data: old } = await sb.storage.from("logos").list(folder);
+      let url = null;
+      if (blob) {
+        const path = folder + "/" + Date.now() + ".png";
+        let error;
+        try { ({ error } = await sb.storage.from("logos").upload(path, blob, { contentType: "image/png", upsert: false })); }
+        catch (e) { error = e; }
+        if (error) throw new Error(/row-level|policy|403|not allowed/i.test(String(error.message || error)) ? "Solo la administradora de la empresa puede cambiar el logo." : friendly("foto", error).replace("foto", "logo"));
+        url = sb.storage.from("logos").getPublicUrl(path).data.publicUrl;
+      }
+      const { data } = await sb.auth.getSession();
+      const r = await fetch("/api/workspaces", {
+        method: "PATCH",
+        headers: { "content-type": "application/json", authorization: "Bearer " + (data.session ? data.session.access_token : "") },
+        body: JSON.stringify({ id: workspaceId, logoUrl: url }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error || "No se pudo guardar el logo.");
+      const stale = (old || []).map((f) => folder + "/" + f.name).filter((n) => !url || !url.endsWith(n));
+      if (stale.length) await sb.storage.from("logos").remove(stale);
       return url;
     },
     async signOut() {

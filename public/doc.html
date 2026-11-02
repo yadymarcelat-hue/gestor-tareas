@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Documento</title>
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+:root{--bg:#f6f7f9;--surface:#fff;--surface-2:#f2f3f6;--line:#e5e7ec;--line-2:#d9dce3;--fg:#15171c;--muted:#5f6673;--faint:#9399a5;--accent:#1667ff;--accent-soft:#e7efff;--shadow:0 1px 2px rgba(20,24,33,.06),0 1px 1px rgba(20,24,33,.04);color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1115;--surface:#171a20;--surface-2:#1d2128;--line:#292e37;--line-2:#343a45;--fg:#e9ebef;--muted:#a2a9b5;--faint:#727a87;--accent:#4d8dff;--accent-soft:#18284a;--shadow:0 1px 2px rgba(0,0,0,.4);color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.6 "Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+.top{display:flex;align-items:center;gap:12px;padding:14px max(20px,env(safe-area-inset-left));background:var(--surface);border-bottom:1px solid var(--line)}
+.top .logo{width:34px;height:34px;border-radius:8px;border:1px solid var(--line);overflow:hidden;display:grid;place-items:center;background:var(--surface)}
+.top .logo img{width:100%;height:100%;object-fit:contain;padding:3px}
+.top b{font-size:16px;font-weight:700}
+.top small{display:block;color:var(--faint);font-size:12px;font-weight:500}
+.wrap{max-width:820px;margin:28px auto;padding:0 16px 40px}
+.paper{background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:36px 44px}
+h1{font-size:30px;line-height:1.25;letter-spacing:-.015em;margin:0 0 6px;text-wrap:balance}
+.meta{color:var(--muted);font-size:13px;margin-bottom:24px}
+.md{line-height:1.7;font-size:15.5px;overflow-wrap:anywhere}
+.md>*:first-child{margin-top:0}
+.md h2{font-size:22px;margin:24px 0 8px}.md h3{font-size:18px;margin:20px 0 6px}.md h4{font-size:15.5px;margin:16px 0 4px}
+.md p{margin:0 0 12px}.md ul,.md ol{margin:0 0 12px;padding-left:24px}.md li{margin:3px 0}
+.md blockquote{margin:0 0 12px;padding:4px 14px;border-left:3px solid var(--line-2);color:var(--muted)}
+.md code{background:var(--surface-2);border-radius:5px;padding:1px 5px;font-size:14px}
+.md hr{border:0;border-top:1px solid var(--line);margin:18px 0}
+.md a{color:var(--accent)}
+.md .todo-i{list-style:none;margin-left:-20px}
+.files{margin-top:28px;border-top:1px solid var(--line);padding-top:18px;display:flex;flex-direction:column;gap:8px}
+.files h2{font-size:13.5px;font-weight:600;color:var(--muted);margin:0 0 4px}
+.file{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;color:var(--fg);text-decoration:none}
+.file:hover{border-color:var(--accent)}
+.file .ic{width:34px;height:34px;border-radius:8px;display:grid;place-items:center;background:var(--surface-2);color:var(--muted);font-size:10px;font-weight:700;flex:none}
+.file span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
+.file small{margin-left:auto;color:var(--faint);font-size:12.5px;flex:none}
+.foot{text-align:center;color:var(--faint);font-size:12.5px;margin-top:18px}
+.msg{text-align:center;color:var(--muted);padding:60px 20px}
+.msg h1{font-size:22px}
+@media (max-width:600px){.paper{padding:24px 20px;border-radius:12px}h1{font-size:24px}.wrap{margin:16px auto}}
+</style>
+</head>
+<body>
+<header class="top" id="top" hidden><span class="logo" id="logo" hidden><img alt=""></span><div><b id="company"></b><small>Documento compartido</small></div></header>
+<main class="wrap"><div id="out" class="msg"><p>Cargando documento…</p></div></main>
+<script>
+(function(){
+"use strict";
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const MES=["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+const fmtDate=ms=>{const d=new Date(ms);return d.getDate()+" "+MES[d.getMonth()]+" "+d.getFullYear()};
+const fmtSize=b=>!b?"":b<1024?b+" B":b<1048576?(b/1024).toFixed(0)+" KB":(b/1048576).toFixed(1)+" MB";
+function md(src){
+  const inl=t=>esc(t).replace(/`([^`]+)`/g,"<code>$1</code>").replace(/\*\*([^*]+)\*\*/g,"<b>$1</b>").replace(/(^|[^*])\*([^*\s][^*]*)\*/g,"$1<i>$2</i>")
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,'<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
+    .replace(/(^|[\s(])(https?:\/\/[^\s<]+)/g,'$1<a href="$2" target="_blank" rel="noopener noreferrer">$2</a>');
+  const out=[];let list=null,para=[];
+  const flushP=()=>{if(para.length){out.push("<p>"+para.map(inl).join("<br>")+"</p>");para=[]}};
+  const flushL=()=>{if(list){out.push(`<${list.t}>${list.items.join("")}</${list.t}>`);list=null}};
+  String(src||"").split(/\r?\n/).forEach(line=>{
+    let m;
+    if(!line.trim()){flushP();flushL();return}
+    if((m=line.match(/^(#{1,3})\s+(.*)$/))){flushP();flushL();const n=m[1].length+1;out.push(`<h${n}>${inl(m[2])}</h${n}>`);return}
+    if(/^\s*(---|\*\*\*)\s*$/.test(line)){flushP();flushL();out.push("<hr>");return}
+    if((m=line.match(/^>\s?(.*)$/))){flushP();flushL();out.push(`<blockquote>${inl(m[1])}</blockquote>`);return}
+    if((m=line.match(/^\s*[-*]\s+\[( |x|X)\]\s+(.*)$/))){flushP();if(!list||list.t!=="ul"){flushL();list={t:"ul",items:[]}}list.items.push(`<li class="todo-i">${m[1]===" "?"☐":"☑"} ${inl(m[2])}</li>`);return}
+    if((m=line.match(/^\s*[-*]\s+(.*)$/))){flushP();if(!list||list.t!=="ul"){flushL();list={t:"ul",items:[]}}list.items.push(`<li>${inl(m[1])}</li>`);return}
+    if((m=line.match(/^\s*\d+[.)]\s+(.*)$/))){flushP();if(!list||list.t!=="ol"){flushL();list={t:"ol",items:[]}}list.items.push(`<li>${inl(m[1])}</li>`);return}
+    flushL();para.push(line);
+  });
+  flushP();flushL();return out.join("");
+}
+const out=document.getElementById("out");
+const token=decodeURIComponent(location.pathname.split("/").filter(Boolean).pop()||"");
+const fail=msg=>{out.className="msg";out.innerHTML="<h1>No pudimos abrir el documento</h1><p>"+esc(msg)+"</p>"};
+fetch("/api/share?t="+encodeURIComponent(token)).then(r=>r.json().then(j=>({ok:r.ok,j}))).then(({ok,j})=>{
+  if(!ok){fail(j.error||"Este enlace no existe o ya no está disponible.");return}
+  document.title=j.title+(j.company?" · "+j.company:"");
+  if(j.company){document.getElementById("top").hidden=false;document.getElementById("company").textContent=j.company}
+  if(j.logo){const l=document.getElementById("logo");l.hidden=false;l.querySelector("img").src=j.logo}
+  const files=(j.files||[]).map(f=>{const ext=(f.name.split(".").pop()||"").slice(0,4).toUpperCase();return `<a class="file" href="${esc(f.url)}" target="_blank" rel="noopener noreferrer"><span class="ic">${f.kind==="link"?"↗":esc(ext||"DOC")}</span><span>${esc(f.name)}</span><small>${f.kind==="link"?"Enlace":fmtSize(f.size)}</small></a>`}).join("");
+  out.className="";
+  out.innerHTML=`<article class="paper"><h1>${esc(j.title)}</h1><div class="meta">${j.author?"Por "+esc(j.author):""}${j.author&&j.updatedAt?" · ":""}${j.updatedAt?"Actualizado el "+fmtDate(j.updatedAt):""}</div><div class="md">${md(j.content)}</div>${files?`<section class="files"><h2>Archivos</h2>${files}</section>`:""}</article><p class="foot">Solo lectura. Compartido desde Proyectos${j.company?" por "+esc(j.company):""}.</p>`;
+}).catch(()=>fail("Revisa tu conexión a internet e intenta de nuevo."));
+})();
+</script>
+</body>
+</html>

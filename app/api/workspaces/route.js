@@ -95,7 +95,7 @@ export async function POST(req) {
   });
 }
 
-// Cambia el nombre de una empresa. Puede hacerlo su administradora o la dueña de la plataforma.
+// Cambia el nombre o el logo de una empresa. Puede hacerlo su administradora o la dueña de la plataforma.
 export async function PATCH(req) {
   const admin = adminClient();
   if (!admin) return fail(500, "Falta configurar SUPABASE_SERVICE_ROLE_KEY en Vercel.");
@@ -105,13 +105,30 @@ export async function PATCH(req) {
   let body;
   try { body = await req.json(); } catch { return fail(400, "Solicitud inválida."); }
   const id = String(body.id || "");
-  const name = String(body.name || "").trim();
   if (!id) return fail(400, "Falta la empresa.");
-  if (!name) return fail(400, "Escribe el nombre de la empresa.");
   if (!who.isSuperadmin && !(await isWorkspaceAdmin(admin, id, who.user.id))) {
-    return fail(403, "Solo la administradora de esta empresa puede cambiarle el nombre.");
+    return fail(403, "Solo la administradora de esta empresa puede cambiar su nombre o su logo.");
   }
-  const { error } = await admin.from("workspaces").update({ name }).eq("id", id);
-  if (error) return fail(500, "No se pudo cambiar el nombre: " + error.message);
-  return Response.json({ id, name });
+
+  const patch = {};
+  if ("name" in body) {
+    const name = String(body.name || "").trim();
+    if (!name) return fail(400, "Escribe el nombre de la empresa.");
+    patch.name = name;
+  }
+  if ("logoUrl" in body) {
+    const logo = body.logoUrl ? String(body.logoUrl) : null;
+    // Solo se aceptan logos guardados en la carpeta de esta empresa.
+    const base = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || "").replace(/\/rest\/v1\/?$/, "").replace(/\/$/, "");
+    if (logo && !logo.startsWith(base + "/storage/v1/object/public/logos/" + id + "/")) return fail(400, "El logo no es válido.");
+    patch.logo_url = logo;
+  }
+  if (!Object.keys(patch).length) return fail(400, "No hay cambios.");
+
+  const { error } = await admin.from("workspaces").update(patch).eq("id", id);
+  if (error) {
+    if (/logo_url/.test(error.message)) return fail(500, "Falta correr 5-proyectos-privados-y-documentos.sql en Supabase.");
+    return fail(500, "No se pudo guardar: " + error.message);
+  }
+  return Response.json({ id, name: patch.name, logoUrl: patch.logo_url });
 }
