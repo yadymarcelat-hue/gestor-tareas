@@ -1141,14 +1141,14 @@ function viewCrono(){
   };
   const track=inner=>`<div class="tl-track" style="width:${days*DW}px">${inner}</div>`;
   const dia=(m)=>{if(!S.lane||!m.date||m.date<start||m.date>end)return"";const done=hitoStats(m.id).complete;const x=dayIdx(m.date)*DW+DW/2-7;const canH=canManageProj(S.projects[m.projectId]);
-    return `<button class="tl-dia ${done?"done":""}" style="left:${x}px" ${canH?`data-act="edit-hito" data-id="${m.id}"`:""} title="${esc(m.name)} · ${esc(fmt(m.date))}" aria-label="Hito ${esc(m.name)}"></button><span class="tl-dlabel" style="left:${x+20}px">${esc(m.name)}</span>`};
+    const lab=x>days*DW-200?`<span class="tl-dlabel" style="right:${days*DW-x+8}px">${esc(m.name)}</span>`:`<span class="tl-dlabel" style="left:${x+20}px">${esc(m.name)}</span>`;
+    return `<button class="tl-dia ${done?"done":""}" style="left:${x}px" ${canH?`data-act="edit-hito" data-id="${m.id}"`:""} title="${esc(m.name)} · ${esc(fmt(m.date))}" aria-label="Hito ${esc(m.name)}"></button>${lab}`};
   const sortT=(a,b)=>(a.start||a.end||"9").localeCompare(b.start||b.end||"9")||(a.end||"9").localeCompare(b.end||"9")||(a.title||"").localeCompare(b.title||"");
   const qq=S.q.trim().toLowerCase();
   const passes=t=>!t.archived&&!S.stOff.has(t.column||"todo")
     &&(!S.person||(t.assignees||[]).includes(S.person)||(t.subtasks||[]).some(s=>s.assignee===S.person))
     &&(!qq||(t.title||"").toLowerCase().includes(qq)||(t.description||"").toLowerCase().includes(qq));
   // El botón "Hito" de arriba quita o muestra los hitos: la fila de hitos, los rombos y la columna Hito.
-  const showHito=hitosOn()&&S.lane;
   const taskRows=t=>{
     const subsD=(t.subtasks||[]).filter(s=>s.start||s.end);const hid=S.subHidden.has(t.id);
     let r=`<div class="tl-row"><div class="tl-lab">${subsD.length?`<span class="tl-tog ${hid?"":"open"}" role="button" tabindex="0" data-act="sub-tog" data-id="${t.id}" aria-label="${hid?"Mostrar":"Ocultar"} subtareas" title="${hid?"Mostrar":"Ocultar"} subtareas (${subsD.length})">${ico("right","sm")}</span>`:`<span class="tl-tog-sp"></span>`}<button class="tl-name" data-act="open-task" data-id="${t.id}" title="${esc(t.title)}"><span class="t">${esc(t.title||"Sin título")}</span>${subsD.length?`<span class="hint">${(t.subtasks||[]).filter(s=>s.done).length}/${(t.subtasks||[]).length}</span>`:""}</button></div>${track(bar(t,t.start,t.end,t.column||"todo",t.title))}</div>`;
@@ -1160,8 +1160,6 @@ function viewCrono(){
   const isOpen=k=>!S.grpOpen.has(k);// grupos abiertos por defecto; grpOpen guarda los cerrados
   let rows="",count=0;
   if(mode==="tareas"){
-    const ms=projMilestones();
-    if(S.lane&&hitosOn()&&ms.length)rows+=`<div class="tl-row tl-mlane"><div class="tl-lab"><span class="tl-tog-sp"></span><span style="display:flex;align-items:center;gap:8px">${ico("flag","sm")}Hitos</span></div>${track(ms.map(dia).join(""))}</div>`;
     const ts=taskList().filter(passes).sort(sortT);count=ts.length;
     ts.forEach(t=>{rows+=taskRows(t)});
   }else if(mode==="hitos"){
@@ -1188,7 +1186,7 @@ function viewCrono(){
   const todayTag=t0>=start&&t0<=end?`<span class="tl-todaytag" style="left:${dayIdx(t0)*DW+DW/2}px">Hoy</span>`:"";
   const modes=[["tareas","Tareas","tasks"]];if(hitosOn())modes.push(["hitos","Hitos","flag"]);
   const top=`<div class="tl-top">${modes.length>1?`<div class="tl-modes" role="group" aria-label="Ver el cronograma por">${modes.map(([k,l,ic])=>`<button class="lgb mode ${mode===k?"on":""}" data-act="tl-mode" data-v="${k}" aria-pressed="${mode===k}">${ico(ic,"sm")}${l}</button>`).join("")}</div>`:""}
-    <div class="lgb-row" role="group" aria-label="Mostrar u ocultar">${COLS.map(c=>`<button class="lgb ${S.stOff.has(c.id)?"off":""}" data-act="st-tog" data-v="${c.id}" aria-pressed="${!S.stOff.has(c.id)}" title="${S.stOff.has(c.id)?"Mostrar":"Ocultar"} tareas en ${c.name}"><i class="lg-${c.id}"></i>${c.name}</button>`).join("")}${hitosOn()?`<button class="lgb ${S.lane?"":"off"}" data-act="lane-tog" aria-pressed="${S.lane}" title="${S.lane?"Ocultar":"Mostrar"} hitos"><i class="lg-hito"></i>Hito</button>`:""}${S.stOff.size||!S.lane?`<button class="link-btn" data-act="lg-reset">Mostrar todo</button>`:""}</div></div>`;
+    <div class="lgb-row" role="group" aria-label="Mostrar u ocultar">${COLS.map(c=>`<button class="lgb ${S.stOff.has(c.id)?"off":""}" data-act="st-tog" data-v="${c.id}" aria-pressed="${!S.stOff.has(c.id)}" title="${S.stOff.has(c.id)?"Mostrar":"Ocultar"} tareas en ${c.name}"><i class="lg-${c.id}"></i>${c.name}</button>`).join("")}${mode==="hitos"?`<button class="lgb ${S.lane?"":"off"}" data-act="lane-tog" aria-pressed="${S.lane}" title="${S.lane?"Ocultar":"Mostrar"} hitos"><i class="lg-hito"></i>Hito</button>`:""}${S.stOff.size||!S.lane?`<button class="link-btn" data-act="lg-reset">Mostrar todo</button>`:""}</div></div>`;
   const labHead=mode==="tareas"?"Tarea":"Hito / tarea";
   return h+`<div class="content">
   <div class="toolbar">${projectSwitcher()}${personFilter()}${searchBox()}${viewTabs()}<span class="grow"></span>
@@ -1198,7 +1196,7 @@ function viewCrono(){
     <button class="icon-btn" data-act="cal-next" aria-label="Trimestre siguiente">${ico("right")}</button>
     <button class="btn sm" data-act="cal-today">Hoy</button></span></div>
   <div class="tl-box">${top}
-  ${rows?`<div class="tl-wrap"><div class="tl ${showHito?"":"no-hito"}"><div class="tl-grid" style="width:${days*DW}px">${grid}</div><div class="tl-row tl-head"><div class="tl-lab"><span>${labHead}</span></div><div class="tl-scale" style="width:${days*DW}px">${months}${ticks}${todayTag}</div></div>${rows}</div></div>`:`<div class="tl-wrap"><div class="empty"><p>${S.stOff.size||qq||S.person?"Ninguna tarea coincide con lo que elegiste.":"No hay tareas que mostrar. Ponles fechas para verlas en el cronograma."}</p></div></div>`}
+  ${rows?`<div class="tl-wrap"><div class="tl no-hito"><div class="tl-grid" style="width:${days*DW}px">${grid}</div><div class="tl-row tl-head"><div class="tl-lab"><span>${labHead}</span></div><div class="tl-scale" style="width:${days*DW}px">${months}${ticks}${todayTag}</div></div>${rows}</div></div>`:`<div class="tl-wrap"><div class="empty"><p>${S.stOff.size||qq||S.person?"Ninguna tarea coincide con lo que elegiste.":"No hay tareas que mostrar. Ponles fechas para verlas en el cronograma."}</p></div></div>`}
   </div></div>`;
 }
 /* Botones pequeños de estado e hito: un clic abre las opciones y se cambia ahí mismo */
@@ -2045,9 +2043,9 @@ document.addEventListener("click",async e=>{
     case "doc-del-yes":deleteDoc();break;
     case "d-share-new":m.draft.share.token=newToken();renderModal();toast("Enlace nuevo. Guarda para que el anterior deje de funcionar.");break;
     case "chip":if(!el.disabled)openChip(el);break;
-    case "tl-mode":S.tlMode=el.dataset.v;if(S.tlMode==="hitos")S.lane=true;ls.set("pj-tlmode",S.tlMode);closeChip();render();break;
+    case "tl-mode":S.tlMode=el.dataset.v;ls.set("pj-tlmode",S.tlMode);closeChip();render();break;
     case "st-tog":{const v=el.dataset.v;S.stOff.has(v)?S.stOff.delete(v):S.stOff.add(v);if(S.stOff.size===COLS.length)S.stOff.delete(v);render();break}
-    case "lane-tog":S.lane=!S.lane;if(!S.lane&&S.tlMode==="hitos"){S.tlMode="tareas";ls.set("pj-tlmode","tareas")}render();break;
+    case "lane-tog":S.lane=!S.lane;render();break;
     case "lg-reset":S.stOff.clear();S.lane=true;render();break;
     case "grp-tog":{S.grpOpen.has(id)?S.grpOpen.delete(id):S.grpOpen.add(id);render();break}
     case "chip-set":setChip(el.dataset.v);break;
