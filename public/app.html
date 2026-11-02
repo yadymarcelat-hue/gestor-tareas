@@ -1468,7 +1468,6 @@ function viewProyectos(){
     ${pvis(p)==="members"&&(p.memberIds||[]).length?`<div class="stack">${(p.memberIds||[]).slice(0,6).map(id=>av(id,"md")).join("")}</div>`:""}
     <div class="acts">${!p.archived?`<button class="btn sm" data-act="open-project" data-id="${p.id}">Abrir tablero</button>`:""}${canManageProj(p)?`<button class="btn ghost sm" data-act="edit-project" data-id="${p.id}">${ico("edit","sm")}Editar</button>`:""}${canManageProj(p)&&p.archived?`<button class="btn ghost sm" data-act="unarchive-project" data-id="${p.id}">Restaurar</button>`:""}</div></article>`;
   return h+`<div class="content">
-    <div class="notice">${ico("info","sm")}<span>Cualquier persona puede crear proyectos. <b>Solo yo</b>: nadie más lo ve, ni las administradoras. <b>Personas elegidas</b>: quienes agregues y las administradoras. <b>Toda la empresa</b>: todo el equipo.</span></div>
     ${act.length?`<div class="projs">${act.map(pc).join("")}</div>`:noProject().replace('<div class="content">',"").replace(/<\/div>$/,"")}
     ${arch.length?`<h2 style="font-size:15px;color:var(--muted);margin-top:8px">Archivados</h2><div class="projs">${arch.map(pc).join("")}</div>`:""}
   </div>`;
