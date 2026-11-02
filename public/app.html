@@ -587,10 +587,9 @@ button.tl-lab:hover .t{color:var(--accent)}
 .logo-prev img{width:100%;height:100%;object-fit:contain;padding:8px}
 
 /* Cronograma estilo Notion: tabla a la izquierda, línea de tiempo a la derecha */
-.tl{--lab:560px;position:relative}
-.tl.no-hito{--lab:430px}
-.tl .tl-lab{width:var(--lab);padding:0 10px 0 12px;display:grid;grid-template-columns:20px minmax(0,1fr) 112px 140px;gap:8px;align-items:center;border-right:1px solid var(--line);border-bottom:1px solid color-mix(in srgb,var(--line) 70%,transparent)}
-.tl.no-hito .tl-lab{grid-template-columns:20px minmax(0,1fr) 116px}
+.tl{--lab:340px;position:relative}
+.tl.no-hito{--lab:340px}
+.tl .tl-lab{width:var(--lab);padding:0 12px;display:grid;grid-template-columns:20px minmax(0,1fr);gap:8px;align-items:center;border-right:1px solid var(--line);border-bottom:1px solid color-mix(in srgb,var(--line) 70%,transparent)}
 .tl .tl-row{min-height:40px;align-items:stretch}
 .tl .tl-row:hover>.tl-lab{background:var(--hover)}
 .tl .tl-row:hover>.tl-track{background:color-mix(in srgb,var(--hover) 55%,transparent)}
@@ -602,7 +601,7 @@ button.tl-lab:hover .t{color:var(--accent)}
 .tl .tl-lab.subt .tl-name{grid-column:2 / -1;padding-left:16px;font-weight:400;color:var(--muted);font-size:13px}
 .tl .tl-lab.subt .tl-name .i{color:var(--faint)}
 .tl-head .tl-lab{font-size:12px;color:var(--faint);font-weight:600;text-transform:uppercase;letter-spacing:.05em;align-items:end;padding-bottom:9px}
-.tl-head .tl-lab span:first-child{grid-column:1 / 3}
+.tl-head .tl-lab span:first-child{grid-column:1 / -1}
 .tl .tl-head{min-height:54px}
 .tl-grid{position:absolute;top:54px;bottom:0;left:var(--lab);pointer-events:none;z-index:0}
 .tl-grid .we{position:absolute;top:0;bottom:0;background:color-mix(in srgb,var(--surface-2) 70%,transparent)}
@@ -626,10 +625,8 @@ button.tl-lab:hover .t{color:var(--accent)}
 .tl-top{display:flex;align-items:center;gap:10px 16px;flex-wrap:wrap;padding:10px 12px;background:var(--surface);border:1px solid var(--line);border-bottom:0;border-radius:14px 14px 0 0}
 .tl-box .tl-wrap{border-top-left-radius:0;border-top-right-radius:0}
 .tl-box .tl-wrap .empty{padding:40px 18px}
-.tl-seg{display:inline-flex;gap:2px;padding:3px;border-radius:10px;background:var(--surface-2)}
-.tl-seg button{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 11px;border-radius:8px;font-size:13px;font-weight:500;color:var(--muted)}
-.tl-seg button:hover{color:var(--fg)}
-.tl-seg button.on{background:var(--surface);color:var(--fg);font-weight:600;box-shadow:var(--shadow)}
+.tl-modes{display:flex;gap:6px;flex-wrap:wrap;padding-right:10px;border-right:1px solid var(--line)}
+.lgb.mode.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:600}
 .lgb-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .lgb{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:7px;border:1px solid var(--line);font-size:13px;color:var(--muted);background:var(--surface)}
 .lgb:hover{border-color:var(--line-2);color:var(--fg)}
@@ -696,8 +693,8 @@ button.chip:disabled{cursor:default;filter:none;border-color:transparent}
 .share-box h4{font-size:14px;font-weight:600;margin:0;display:flex;align-items:center;gap:8px}
 .m-side .share-scroll{overflow:auto;flex:1}
 
-@media (max-width:900px){.tl{--lab:300px}.tl.no-hito{--lab:250px}.tl .tl-lab{grid-template-columns:20px minmax(0,1fr) 108px}.tl .tl-lab .chip.hi,.tl .tl-lab .hcol{display:none}.tl.no-hito .tl-lab{grid-template-columns:20px minmax(0,1fr) 108px}}
-@media (max-width:600px){.tl-top{padding:10px}.tl-seg{width:100%}.tl-seg button{flex:1;justify-content:center}.tabs.dtabs{display:flex;flex-wrap:wrap}.tabs.dtabs .pill{padding:0 12px}.tl,.tl.no-hito{--lab:170px}.tl .tl-lab,.tl.no-hito .tl-lab{grid-template-columns:20px minmax(0,1fr);padding:0 8px}.tl .tl-lab .chip,.tl .tl-lab .scol{display:none}.doc-list .tags{display:none}}
+@media (max-width:900px){.tl,.tl.no-hito{--lab:260px}}
+@media (max-width:600px){.tl-top{padding:10px}.tl-modes{border-right:0;padding-right:0}.tabs.dtabs{display:flex;flex-wrap:wrap}.tabs.dtabs .pill{padding:0 12px}.tl,.tl.no-hito{--lab:170px}.tl .tl-lab{padding:0 8px}.doc-list .tags{display:none}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 
@@ -970,13 +967,12 @@ function sidebar(){
   const grp=(key,id,label,icon,open,activeIn)=>`<button class="${activeIn&&!open?"on":""} nav-grp" data-act="nav-grp" data-k="${key}" data-v="${id}" aria-expanded="${open}" title="${label}">${icon}<span>${label}</span><span class="chev">${ico(open?"down":"right","sm")}</span></button>`;
   const role=S.isOwner?"Administradora":((S.members[S.me.id]&&S.members[S.me.id].title)||"Miembro");
   const logo=wsLogo();
-  const tOpen=S.navTasks&&!S.sideCollapsed,dOpen=S.navDocs&&!S.sideCollapsed;
+  const dOpen=S.navDocs&&!S.sideCollapsed;
   return `<aside class="side" aria-label="Navegación">
     <div class="ws"><div class="menu-wrap ws-wrap"><button class="ws-btn" data-act="menu" data-m="ws" aria-expanded="${S.menu==="ws"}">${logo?`<span class="ws-logo"><img src="${esc(logo)}" alt=""></span>`:""}<span class="ws-name"><b>${esc(wsName())}</b><small>Proyectos</small></span>${S.demo||(S.ws&&(S.ws.list.length>1||S.ws.isSuperadmin||(S.ws.current&&S.ws.current.role==="admin")))?ico("down","sm"):""}</button>${S.menu==="ws"?wsPop():""}</div><button class="icon-btn side-tog" data-act="side-toggle" aria-label="${S.sideCollapsed?"Expandir menú":"Colapsar menú"}" title="${S.sideCollapsed?"Expandir menú":"Colapsar menú"} (Ctrl+B)">${ico("panel")}</button><button class="icon-btn menu-btn" data-act="nav-close" aria-label="Cerrar menú">${ico("x")}</button></div>
     <nav class="nav">
       ${a("inicio","Inicio",NAVI.home)}
-      ${grp("tasks","tablero","Tareas",NAVI.tasks,tOpen,TASKV.includes(v))}
-      ${tOpen?a("tablero","Tablero",NAVI.board,true)+a("cronograma","Cronograma",NAVI.cal,true)+(hitosOn()?a("hitos","Hitos",NAVI.flag,true):""):""}
+      <button class="${TASKV.includes(v)?"on":""}" data-act="go" data-v="${TASKV.includes(v)?v:"tablero"}" title="Tareas">${NAVI.tasks}<span>Tareas</span></button>
       ${grp("docs","documentos","Docu",NAVI.docu,dOpen,v==="documentos")}
       ${dOpen?[["all","Todos"],["mine","Míos"],["company","De la empresa"],["public","Con enlace público"]].map(([f,l])=>`<button class="sub ${v==="documentos"&&S.docF===f?"on":""}" data-act="doc-f" data-f="${f}">${ico(f==="public"?"globe":f==="mine"?"lock":f==="company"?"building":"doc","sm")}<span>${l}</span></button>`).join(""):""}
       <div class="nav-sec">Organización</div>
@@ -1153,11 +1149,9 @@ function viewCrono(){
     &&(!qq||(t.title||"").toLowerCase().includes(qq)||(t.description||"").toLowerCase().includes(qq));
   // El botón "Hito" de arriba quita o muestra los hitos: la fila de hitos, los rombos y la columna Hito.
   const showHito=hitosOn()&&S.lane;
-  const stChip=t=>{const c=t.column||"todo";return `<button class="chip st ${c} ${S.chip&&S.chip.k==="st"&&S.chip.id===t.id?"open":""}" data-act="chip" data-k="st" data-id="${t.id}" ${canEd?"":"disabled"} title="Cambiar estado"><i class="dot"></i><span>${esc(COLNAME[c])}</span></button>`};
-  const hiChip=t=>{const ms=msOf(t.projectId);if(!ms.length)return `<span></span>`;const m=t.milestoneId&&S.milestones[t.milestoneId];return `<button class="chip hi ${m?"":"none"} ${S.chip&&S.chip.k==="hi"&&S.chip.id===t.id?"open":""}" data-act="chip" data-k="hi" data-id="${t.id}" ${canEd?"":"disabled"} title="${m?"Cambiar hito":"Elegir hito"}">${ico("flag","sm")}<span>${esc(m?m.name:"Sin hito")}</span></button>`};
   const taskRows=t=>{
     const subsD=(t.subtasks||[]).filter(s=>s.start||s.end);const hid=S.subHidden.has(t.id);
-    let r=`<div class="tl-row"><div class="tl-lab">${subsD.length?`<span class="tl-tog ${hid?"":"open"}" role="button" tabindex="0" data-act="sub-tog" data-id="${t.id}" aria-label="${hid?"Mostrar":"Ocultar"} subtareas" title="${hid?"Mostrar":"Ocultar"} subtareas (${subsD.length})">${ico("right","sm")}</span>`:`<span class="tl-tog-sp"></span>`}<button class="tl-name" data-act="open-task" data-id="${t.id}" title="${esc(t.title)}"><span class="t">${esc(t.title||"Sin título")}</span>${subsD.length?`<span class="hint">${(t.subtasks||[]).filter(s=>s.done).length}/${(t.subtasks||[]).length}</span>`:""}</button>${stChip(t)}${showHito?hiChip(t):""}</div>${track(bar(t,t.start,t.end,t.column||"todo",t.title))}</div>`;
+    let r=`<div class="tl-row"><div class="tl-lab">${subsD.length?`<span class="tl-tog ${hid?"":"open"}" role="button" tabindex="0" data-act="sub-tog" data-id="${t.id}" aria-label="${hid?"Mostrar":"Ocultar"} subtareas" title="${hid?"Mostrar":"Ocultar"} subtareas (${subsD.length})">${ico("right","sm")}</span>`:`<span class="tl-tog-sp"></span>`}<button class="tl-name" data-act="open-task" data-id="${t.id}" title="${esc(t.title)}"><span class="t">${esc(t.title||"Sin título")}</span>${subsD.length?`<span class="hint">${(t.subtasks||[]).filter(s=>s.done).length}/${(t.subtasks||[]).length}</span>`:""}</button></div>${track(bar(t,t.start,t.end,t.column||"todo",t.title))}</div>`;
     if(!hid)subsD.forEach(s=>{r+=`<div class="tl-row"><div class="tl-lab subt"><button class="tl-name" data-act="open-task" data-id="${t.id}">${ico("sub","sm")}<span class="t">${esc(s.title||"Subtarea")}</span>${s.done?`<span class="hint">Hecha</span>`:""}</button></div>${track(bar(t,s.start,s.end,s.done?"done":(t.column||"todo"),s.title,true))}</div>`});
     return r;
   };
@@ -1193,7 +1187,7 @@ function viewCrono(){
   if(t0>=start&&t0<=end)grid+=`<span class="tl-today" style="left:${dayIdx(t0)*DW+DW/2-1}px"></span>`;
   const todayTag=t0>=start&&t0<=end?`<span class="tl-todaytag" style="left:${dayIdx(t0)*DW+DW/2}px">Hoy</span>`:"";
   const modes=[["tareas","Tareas","tasks"]];if(hitosOn())modes.push(["hitos","Hitos","flag"]);
-  const top=`<div class="tl-top">${modes.length>1?`<div class="tl-seg" role="group" aria-label="Ver el cronograma por">${modes.map(([k,l,ic])=>`<button class="${mode===k?"on":""}" data-act="tl-mode" data-v="${k}" aria-pressed="${mode===k}">${ico(ic,"sm")}${l}</button>`).join("")}</div>`:""}
+  const top=`<div class="tl-top">${modes.length>1?`<div class="tl-modes" role="group" aria-label="Ver el cronograma por">${modes.map(([k,l,ic])=>`<button class="lgb mode ${mode===k?"on":""}" data-act="tl-mode" data-v="${k}" aria-pressed="${mode===k}">${ico(ic,"sm")}${l}</button>`).join("")}</div>`:""}
     <div class="lgb-row" role="group" aria-label="Mostrar u ocultar">${COLS.map(c=>`<button class="lgb ${S.stOff.has(c.id)?"off":""}" data-act="st-tog" data-v="${c.id}" aria-pressed="${!S.stOff.has(c.id)}" title="${S.stOff.has(c.id)?"Mostrar":"Ocultar"} tareas en ${c.name}"><i class="lg-${c.id}"></i>${c.name}</button>`).join("")}${hitosOn()?`<button class="lgb ${S.lane?"":"off"}" data-act="lane-tog" aria-pressed="${S.lane}" title="${S.lane?"Ocultar":"Mostrar"} hitos"><i class="lg-hito"></i>Hito</button>`:""}${S.stOff.size||!S.lane?`<button class="link-btn" data-act="lg-reset">Mostrar todo</button>`:""}</div></div>`;
   const labHead=mode==="tareas"?"Tarea":"Hito / tarea";
   return h+`<div class="content">
@@ -1204,7 +1198,7 @@ function viewCrono(){
     <button class="icon-btn" data-act="cal-next" aria-label="Trimestre siguiente">${ico("right")}</button>
     <button class="btn sm" data-act="cal-today">Hoy</button></span></div>
   <div class="tl-box">${top}
-  ${rows?`<div class="tl-wrap"><div class="tl ${showHito?"":"no-hito"}"><div class="tl-grid" style="width:${days*DW}px">${grid}</div><div class="tl-row tl-head"><div class="tl-lab"><span>${labHead}</span><span class="scol">Estado</span>${showHito?`<span class="hcol">Hito</span>`:""}</div><div class="tl-scale" style="width:${days*DW}px">${months}${ticks}${todayTag}</div></div>${rows}</div></div>`:`<div class="tl-wrap"><div class="empty"><p>${S.stOff.size||qq||S.person?"Ninguna tarea coincide con lo que elegiste.":"No hay tareas que mostrar. Ponles fechas para verlas en el cronograma."}</p></div></div>`}
+  ${rows?`<div class="tl-wrap"><div class="tl ${showHito?"":"no-hito"}"><div class="tl-grid" style="width:${days*DW}px">${grid}</div><div class="tl-row tl-head"><div class="tl-lab"><span>${labHead}</span></div><div class="tl-scale" style="width:${days*DW}px">${months}${ticks}${todayTag}</div></div>${rows}</div></div>`:`<div class="tl-wrap"><div class="empty"><p>${S.stOff.size||qq||S.person?"Ninguna tarea coincide con lo que elegiste.":"No hay tareas que mostrar. Ponles fechas para verlas en el cronograma."}</p></div></div>`}
   </div></div>`;
 }
 /* Botones pequeños de estado e hito: un clic abre las opciones y se cambia ahí mismo */
