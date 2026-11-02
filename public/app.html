@@ -197,7 +197,7 @@ h1,h2,h3{text-wrap:balance;margin:0}
 .c-doing{background:var(--col-doing)}.c-doing .dot{background:var(--dot-doing)}
 .c-review{background:var(--col-review)}.c-review .dot{background:var(--dot-review)}
 .c-done{background:var(--col-done)}.c-done .dot{background:var(--dot-done)}
-.col-body{display:flex;flex-direction:column;gap:10px;min-height:120px;border-radius:12px;padding:2px;transition:background .12s}
+.col-body{display:flex;flex-direction:column;gap:10px;min-height:120px;border-radius:12px;padding:0;transition:background .12s}
 .col-body.over{background:var(--surface-2);outline:2px dashed var(--line-2);outline-offset:2px}
 .drop-line{height:3px;border-radius:3px;background:var(--accent);margin:-6px 4px}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:13px 14px 12px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:9px;cursor:pointer;text-align:left;width:100%}
@@ -328,7 +328,7 @@ button.tl-lab:hover .t{color:var(--accent)}
 .tl-bar.thin{border-width:1px}
 .st-dot{width:8px;height:8px;border-radius:50%;flex:none}
 .st-dot.todo{background:var(--dot-todo)}.st-dot.doing{background:var(--dot-doing)}.st-dot.review{background:var(--dot-review)}.st-dot.done{background:var(--dot-done)}
-.legend i.lg-todo{background:color-mix(in srgb,var(--dot-todo) 38%,var(--surface));border:1.5px solid var(--dot-todo)}.legend i.lg-doing{background:color-mix(in srgb,var(--dot-doing) 38%,var(--surface));border:1.5px solid var(--dot-doing)}.legend i.lg-review{background:color-mix(in srgb,var(--dot-review) 42%,var(--surface));border:1.5px solid var(--dot-review)}.legend i.lg-done{background:color-mix(in srgb,var(--dot-done) 38%,var(--surface));border:1.5px solid var(--dot-done)}
+.legend i.lg-todo,.lgb i.lg-todo{background:color-mix(in srgb,var(--dot-todo) 38%,var(--surface));border:1.5px solid var(--dot-todo)}.legend i.lg-doing,.lgb i.lg-doing{background:color-mix(in srgb,var(--dot-doing) 38%,var(--surface));border:1.5px solid var(--dot-doing)}.legend i.lg-review,.lgb i.lg-review{background:color-mix(in srgb,var(--dot-review) 42%,var(--surface));border:1.5px solid var(--dot-review)}.legend i.lg-done,.lgb i.lg-done{background:color-mix(in srgb,var(--dot-done) 38%,var(--surface));border:1.5px solid var(--dot-done)}
 .tl-dia{position:absolute;top:11px;width:14px;height:14px;transform:rotate(45deg);background:var(--accent);border-radius:3px;z-index:2}
 .tl-dia.done{background:var(--dot-done)}
 .q-label{font-size:15px;font-variant-numeric:tabular-nums;min-width:64px;text-align:center}
@@ -621,6 +621,29 @@ button.tl-lab:hover .t{color:var(--accent)}
 .tl-mlane .tl-lab .i{color:var(--accent)}
 .tl .tl-dia{top:13px;cursor:pointer;border:0;padding:0}
 .tl-dlabel{position:absolute;top:0;height:40px;display:flex;align-items:center;font-size:12px;font-weight:500;color:var(--muted);white-space:nowrap;pointer-events:none}
+/* Barra superior del cronograma: ver por y leyenda clicable, pegada al cuadro de abajo */
+.tl-box{display:flex;flex-direction:column}
+.tl-top{display:flex;align-items:center;gap:10px 16px;flex-wrap:wrap;padding:10px 12px;background:var(--surface);border:1px solid var(--line);border-bottom:0;border-radius:14px 14px 0 0}
+.tl-box .tl-wrap{border-top-left-radius:0;border-top-right-radius:0}
+.tl-box .tl-wrap .empty{padding:40px 18px}
+.tl-seg{display:inline-flex;gap:2px;padding:3px;border-radius:10px;background:var(--surface-2)}
+.tl-seg button{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 11px;border-radius:8px;font-size:13px;font-weight:500;color:var(--muted)}
+.tl-seg button:hover{color:var(--fg)}
+.tl-seg button.on{background:var(--surface);color:var(--fg);font-weight:600;box-shadow:var(--shadow)}
+.lgb-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.lgb{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:7px;border:1px solid var(--line);font-size:13px;color:var(--muted);background:var(--surface)}
+.lgb:hover{border-color:var(--line-2);color:var(--fg)}
+.lgb i{width:12px;height:12px;border-radius:3px;display:inline-block}
+.lgb i.lg-hito{background:var(--accent);transform:rotate(45deg) scale(.8)}
+.lgb.off{opacity:.5;text-decoration:line-through;background:none}
+.tl .tl-row.gh>.tl-lab{background:color-mix(in srgb,var(--surface-2) 55%,var(--surface))}
+.tl .tl-row.gh .tl-name{font-weight:600}
+.tl .tl-row.gh .tl-name .i{color:var(--accent)}
+.tl .tl-row.gh .tl-lab{grid-template-columns:20px minmax(0,1fr)}
+.pdot{width:10px;height:10px;border-radius:3px;background:var(--accent);flex:none}
+.tl .tl-bar.proj{background:var(--accent-soft);border:1.5px solid var(--accent);padding:0 9px;position:absolute;overflow:hidden}
+.tl .tl-bar.proj .pfill{position:absolute;left:0;top:0;bottom:0;background:color-mix(in srgb,var(--accent) 22%,transparent)}
+.tl .tl-bar.proj .bt{position:relative;font-weight:600;color:var(--accent)}
 /* Estado e hito: botones pequeños, cada uno se cambia con un clic */
 .chip{display:inline-flex;align-items:center;gap:6px;height:24px;max-width:100%;min-width:0;padding:0 8px;border-radius:6px;font-size:12.5px;font-weight:500;border:1px solid transparent;white-space:nowrap;justify-self:start}
 .chip span{overflow:hidden;text-overflow:ellipsis;min-width:0}
@@ -674,7 +697,7 @@ button.chip:disabled{cursor:default;filter:none;border-color:transparent}
 .m-side .share-scroll{overflow:auto;flex:1}
 
 @media (max-width:900px){.tl{--lab:300px}.tl.no-hito{--lab:250px}.tl .tl-lab{grid-template-columns:20px minmax(0,1fr) 108px}.tl .tl-lab .chip.hi,.tl .tl-lab .hcol{display:none}.tl.no-hito .tl-lab{grid-template-columns:20px minmax(0,1fr) 108px}}
-@media (max-width:600px){.tabs.dtabs{display:flex;flex-wrap:wrap}.tabs.dtabs .pill{padding:0 12px}.tl,.tl.no-hito{--lab:170px}.tl .tl-lab,.tl.no-hito .tl-lab{grid-template-columns:20px minmax(0,1fr);padding:0 8px}.tl .tl-lab .chip,.tl .tl-lab .scol{display:none}.doc-list .tags{display:none}}
+@media (max-width:600px){.tl-top{padding:10px}.tl-seg{width:100%}.tl-seg button{flex:1;justify-content:center}.tabs.dtabs{display:flex;flex-wrap:wrap}.tabs.dtabs .pill{padding:0 12px}.tl,.tl.no-hito{--lab:170px}.tl .tl-lab,.tl.no-hito .tl-lab{grid-template-columns:20px minmax(0,1fr);padding:0 8px}.tl .tl-lab .chip,.tl .tl-lab .scol{display:none}.doc-list .tags{display:none}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 
@@ -777,7 +800,7 @@ const ls={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k
 const S={
   boot:true, demo:false, demoReason:"", db:null, user:null, assets:null,
   me:{id:null,name:"",avatarUrl:"",isOwner:false}, isOwner:false, canWrite:true,
-  members:{}, projects:{}, milestones:{}, tasks:{}, comments:{}, documents:{}, docQ:"", docF:"all", chip:null, navTasks:true, navDocs:false,
+  members:{}, projects:{}, milestones:{}, tasks:{}, comments:{}, documents:{}, docQ:"", docF:"all", chip:null, tlMode:(()=>{try{return localStorage.getItem("pj-tlmode")||"tareas"}catch(e){return"tareas"}})(), stOff:new Set(), lane:true, grpOpen:new Set(), navTasks:true, navDocs:false,
   membersReady:false, projectsReady:false, ownerWritten:false,
   profiles:{}, view:"tablero", projectId:null, person:null, q:"", showArchived:false,
   menu:null, navOpen:false, calStart:null, modal:null, inv:{email:"",name:"",title:"",projects:[],link:"",forName:"",err:"",busy:false},
@@ -1097,8 +1120,11 @@ function viewHitos(){
   </div>`;
 }
 
+const msOf=pid=>!projHitosOn(pid,S.projects[pid])?[]:Object.entries(S.milestones).map(([id,m])=>({id,...m})).filter(m=>m.projectId===pid).sort((a,b)=>(a.date||"9").localeCompare(b.date||"9"));
+const taskById=id=>S.tasks[id]||null;
 function viewCrono(){
   const h=head("Tareas","tasks",curProject()?newTaskBtn():"");
+  const mode=S.tlMode==="hitos"&&hitosOn()?"hitos":"tareas";
   if(!curProject())return h+noProject();
   if(!S.calQ){const d=new Date();S.calQ={y:d.getFullYear(),q:Math.floor(d.getMonth()/3)}}
   const {y,q}=S.calQ;
@@ -1106,38 +1132,55 @@ function viewCrono(){
   const days=diffDays(start,end)+1;
   const DW=11;
   const dayIdx=s=>diffDays(start,s);
-  const hon=hitosOn();
   const canEd=S.canWrite;
+  const span=(a,b)=>{a=a||b;b=b||a;if(b<start||a>end)return null;const i=Math.max(0,dayIdx(a)),j=Math.min(days-1,dayIdx(b));return{x:i*DW,w:Math.max(DW,(j-i+1)*DW)}};
+  const offHint=(a,b)=>{a=a||b;b=b||a;return b<start?`<span class="tl-off" style="left:8px">${ico("left","sm")}${esc(fmtRange(a,b))}</span>`:`<span class="tl-off" style="right:8px">${esc(fmtRange(a,b))}${ico("right","sm")}</span>`};
   const bar=(t,a,b,cls,label,thin)=>{
     if(!a&&!b)return `<span class="tl-nodate">Sin fechas</span>`;
-    a=a||b;b=b||a;
-    if(b<start)return `<span class="tl-off" style="left:8px">${ico("left","sm")}${esc(fmtRange(a,b))}</span>`;
-    if(a>end)return `<span class="tl-off" style="right:8px">${esc(fmtRange(a,b))}${ico("right","sm")}</span>`;
-    const i=Math.max(0,dayIdx(a)),j=Math.min(days-1,dayIdx(b));
-    const w=Math.max(DW,(j-i+1)*DW);
-    const tip=`${esc(label)} · ${esc(fmtRange(a,b))}`;
-    if(thin)return `<button class="tl-bar ${cls} thin" style="left:${i*DW}px;width:${w}px" data-act="open-task" data-id="${t.id}" title="${tip}" aria-label="${esc(label)}"></button><span class="tl-blabel" style="left:${i*DW+w+8}px">${esc(label)}</span>`;
-    const who=(t.assignees||[])[0];
-    const inside=w>=130;
-    return `<button class="tl-bar ${cls} ${who?"":"bare"}" style="left:${i*DW}px;width:${w}px${who?"":";padding-left:8px"}" data-act="open-task" data-id="${t.id}" title="${tip}" aria-label="${esc(label)}">${who&&w>=30?av(who):""}${inside?`<span class="bt">${esc(label)}</span>`:""}</button>${inside?"":`<span class="tl-blabel" style="left:${i*DW+w+8}px">${esc(label)}</span>`}`;
+    const sp=span(a,b);if(!sp)return offHint(a,b);
+    const tip=`${esc(label)} · ${esc(fmtRange(a||b,b||a))}`;
+    if(thin)return `<button class="tl-bar ${cls} thin" style="left:${sp.x}px;width:${sp.w}px" data-act="open-task" data-id="${t.id}" title="${tip}" aria-label="${esc(label)}"></button><span class="tl-blabel" style="left:${sp.x+sp.w+8}px">${esc(label)}</span>`;
+    const who=(t.assignees||[])[0];const inside=sp.w>=130;
+    return `<button class="tl-bar ${cls} ${who?"":"bare"}" style="left:${sp.x}px;width:${sp.w}px${who?"":";padding-left:8px"}" data-act="open-task" data-id="${t.id}" title="${tip}" aria-label="${esc(label)}">${who&&sp.w>=30?av(who):""}${inside?`<span class="bt">${esc(label)}</span>`:""}</button>${inside?"":`<span class="tl-blabel" style="left:${sp.x+sp.w+8}px">${esc(label)}</span>`}`;
   };
   const track=inner=>`<div class="tl-track" style="width:${days*DW}px">${inner}</div>`;
-  const ts=filteredTasks().filter(t=>!t.archived).sort((a,b)=>(a.start||a.end||"9").localeCompare(b.start||b.end||"9")||(a.end||"9").localeCompare(b.end||"9")||(a.title||"").localeCompare(b.title||""));
-  const ms=projMilestones();
+  const dia=(m)=>{if(!S.lane||!m.date||m.date<start||m.date>end)return"";const done=hitoStats(m.id).complete;const x=dayIdx(m.date)*DW+DW/2-7;const canH=canManageProj(S.projects[m.projectId]);
+    return `<button class="tl-dia ${done?"done":""}" style="left:${x}px" ${canH?`data-act="edit-hito" data-id="${m.id}"`:""} title="${esc(m.name)} · ${esc(fmt(m.date))}" aria-label="Hito ${esc(m.name)}"></button><span class="tl-dlabel" style="left:${x+20}px">${esc(m.name)}</span>`};
+  const sortT=(a,b)=>(a.start||a.end||"9").localeCompare(b.start||b.end||"9")||(a.end||"9").localeCompare(b.end||"9")||(a.title||"").localeCompare(b.title||"");
+  const qq=S.q.trim().toLowerCase();
+  const passes=t=>!t.archived&&!S.stOff.has(t.column||"todo")
+    &&(!S.person||(t.assignees||[]).includes(S.person)||(t.subtasks||[]).some(s=>s.assignee===S.person))
+    &&(!qq||(t.title||"").toLowerCase().includes(qq)||(t.description||"").toLowerCase().includes(qq));
+  // El botón "Hito" de arriba quita o muestra los hitos: la fila de hitos, los rombos y la columna Hito.
+  const showHito=hitosOn()&&S.lane;
   const stChip=t=>{const c=t.column||"todo";return `<button class="chip st ${c} ${S.chip&&S.chip.k==="st"&&S.chip.id===t.id?"open":""}" data-act="chip" data-k="st" data-id="${t.id}" ${canEd?"":"disabled"} title="Cambiar estado"><i class="dot"></i><span>${esc(COLNAME[c])}</span></button>`};
-  const hiChip=t=>{const m=t.milestoneId&&S.milestones[t.milestoneId];return `<button class="chip hi ${m?"":"none"} ${S.chip&&S.chip.k==="hi"&&S.chip.id===t.id?"open":""}" data-act="chip" data-k="hi" data-id="${t.id}" ${canEd&&ms.length?"":"disabled"} title="${m?"Cambiar hito":"Elegir hito"}">${ico("flag","sm")}<span>${esc(m?m.name:"Sin hito")}</span></button>`};
-  let rows="";
-  if(hon&&ms.length){
-    const canH=canManageProj(curProject());
-    rows+=`<div class="tl-row tl-mlane"><div class="tl-lab"><span class="tl-tog-sp"></span><span style="display:flex;align-items:center;gap:8px">${ico("flag","sm")}Hitos</span></div>${track(ms.filter(m=>m.date&&m.date>=start&&m.date<=end).map(m=>{const done=hitoStats(m.id).complete;const x=dayIdx(m.date)*DW+DW/2-7;return `<button class="tl-dia ${done?"done":""}" style="left:${x}px" ${canH?`data-act="edit-hito" data-id="${m.id}"`:""} title="${esc(m.name)} · ${esc(fmt(m.date))}" aria-label="Hito ${esc(m.name)}"></button><span class="tl-dlabel" style="left:${x+20}px">${esc(m.name)}</span>`}).join(""))}</div>`;
-  }
-  ts.forEach(t=>{
+  const hiChip=t=>{const ms=msOf(t.projectId);if(!ms.length)return `<span></span>`;const m=t.milestoneId&&S.milestones[t.milestoneId];return `<button class="chip hi ${m?"":"none"} ${S.chip&&S.chip.k==="hi"&&S.chip.id===t.id?"open":""}" data-act="chip" data-k="hi" data-id="${t.id}" ${canEd?"":"disabled"} title="${m?"Cambiar hito":"Elegir hito"}">${ico("flag","sm")}<span>${esc(m?m.name:"Sin hito")}</span></button>`};
+  const taskRows=t=>{
     const subsD=(t.subtasks||[]).filter(s=>s.start||s.end);const hid=S.subHidden.has(t.id);
-    rows+=`<div class="tl-row"><div class="tl-lab">${subsD.length?`<span class="tl-tog ${hid?"":"open"}" role="button" tabindex="0" data-act="sub-tog" data-id="${t.id}" aria-label="${hid?"Mostrar":"Ocultar"} subtareas" title="${hid?"Mostrar":"Ocultar"} subtareas (${subsD.length})">${ico("right","sm")}</span>`:`<span class="tl-tog-sp"></span>`}<button class="tl-name" data-act="open-task" data-id="${t.id}" title="${esc(t.title)}"><span class="t">${esc(t.title||"Sin título")}</span>${subsD.length?`<span class="hint">${(t.subtasks||[]).filter(s=>s.done).length}/${(t.subtasks||[]).length}</span>`:""}</button>${stChip(t)}${hon?hiChip(t):""}</div>${track(bar(t,t.start,t.end,t.column||"todo",t.title))}</div>`;
-    if(!hid)subsD.forEach(s=>{
-      rows+=`<div class="tl-row"><div class="tl-lab subt"><button class="tl-name" data-act="open-task" data-id="${t.id}">${ico("sub","sm")}<span class="t">${esc(s.title||"Subtarea")}</span>${s.done?`<span class="hint">Hecha</span>`:""}</button></div>${track(bar(t,s.start,s.end,s.done?"done":(t.column||"todo"),s.title,true))}</div>`;
+    let r=`<div class="tl-row"><div class="tl-lab">${subsD.length?`<span class="tl-tog ${hid?"":"open"}" role="button" tabindex="0" data-act="sub-tog" data-id="${t.id}" aria-label="${hid?"Mostrar":"Ocultar"} subtareas" title="${hid?"Mostrar":"Ocultar"} subtareas (${subsD.length})">${ico("right","sm")}</span>`:`<span class="tl-tog-sp"></span>`}<button class="tl-name" data-act="open-task" data-id="${t.id}" title="${esc(t.title)}"><span class="t">${esc(t.title||"Sin título")}</span>${subsD.length?`<span class="hint">${(t.subtasks||[]).filter(s=>s.done).length}/${(t.subtasks||[]).length}</span>`:""}</button>${stChip(t)}${showHito?hiChip(t):""}</div>${track(bar(t,t.start,t.end,t.column||"todo",t.title))}</div>`;
+    if(!hid)subsD.forEach(s=>{r+=`<div class="tl-row"><div class="tl-lab subt"><button class="tl-name" data-act="open-task" data-id="${t.id}">${ico("sub","sm")}<span class="t">${esc(s.title||"Subtarea")}</span>${s.done?`<span class="hint">Hecha</span>`:""}</button></div>${track(bar(t,s.start,s.end,s.done?"done":(t.column||"todo"),s.title,true))}</div>`});
+    return r;
+  };
+  // Encabezado de grupo (hito o proyecto), se abre y se cierra con un clic.
+  const grpRow=(key,icon,label,hint,inner,open)=>`<div class="tl-row gh"><div class="tl-lab"><span class="tl-tog ${open?"open":""}" role="button" tabindex="0" data-act="grp-tog" data-id="${esc(key)}" aria-label="${open?"Cerrar":"Abrir"} grupo">${ico("right","sm")}</span><button class="tl-name" data-act="grp-tog" data-id="${esc(key)}">${icon}<span class="t">${esc(label)}</span>${hint?`<span class="hint">${esc(hint)}</span>`:""}</button></div>${track(inner)}</div>`;
+  const isOpen=k=>!S.grpOpen.has(k);// grupos abiertos por defecto; grpOpen guarda los cerrados
+  let rows="",count=0;
+  if(mode==="tareas"){
+    const ms=projMilestones();
+    if(S.lane&&hitosOn()&&ms.length)rows+=`<div class="tl-row tl-mlane"><div class="tl-lab"><span class="tl-tog-sp"></span><span style="display:flex;align-items:center;gap:8px">${ico("flag","sm")}Hitos</span></div>${track(ms.map(dia).join(""))}</div>`;
+    const ts=taskList().filter(passes).sort(sortT);count=ts.length;
+    ts.forEach(t=>{rows+=taskRows(t)});
+  }else if(mode==="hitos"){
+    const ts=taskList().filter(passes).sort(sortT);count=ts.length;
+    const groups=projMilestones().map(m=>({m,ts:ts.filter(t=>t.milestoneId===m.id)}));
+    const orphan=ts.filter(t=>!t.milestoneId||!S.milestones[t.milestoneId]);
+    if(orphan.length)groups.push({m:null,ts:orphan});
+    groups.filter(g=>g.ts.length||!(qq||S.person||S.stOff.size)).forEach(g=>{
+      const key="h:"+(g.m?g.m.id:"none");const open=isOpen(key);const st=g.m?hitoStats(g.m.id):null;
+      rows+=grpRow(key,ico("flag","sm"),g.m?g.m.name:"Sin hito",g.m?(g.m.date?fmt(g.m.date)+" · ":"")+st.done+"/"+st.total:g.ts.length+"",g.m?dia(g.m):"",open);
+      if(open)g.ts.forEach(t=>{rows+=taskRows(t)});
     });
-  });
+  }
   const MESL=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
   const months=[0,1,2].map(k=>{const ms2=iso(new Date(y,q*3+k,1)),me=iso(new Date(y,q*3+k+1,0));return `<span class="tl-month" style="left:${dayIdx(ms2)*DW}px;width:${(diffDays(ms2,me)+1)*DW}px">${MESL[q*3+k]}</span>`}).join("");
   let ticks="",grid="";
@@ -1149,27 +1192,31 @@ function viewCrono(){
   }
   if(t0>=start&&t0<=end)grid+=`<span class="tl-today" style="left:${dayIdx(t0)*DW+DW/2-1}px"></span>`;
   const todayTag=t0>=start&&t0<=end?`<span class="tl-todaytag" style="left:${dayIdx(t0)*DW+DW/2}px">Hoy</span>`:"";
+  const modes=[["tareas","Tareas","tasks"]];if(hitosOn())modes.push(["hitos","Hitos","flag"]);
+  const top=`<div class="tl-top">${modes.length>1?`<div class="tl-seg" role="group" aria-label="Ver el cronograma por">${modes.map(([k,l,ic])=>`<button class="${mode===k?"on":""}" data-act="tl-mode" data-v="${k}" aria-pressed="${mode===k}">${ico(ic,"sm")}${l}</button>`).join("")}</div>`:""}
+    <div class="lgb-row" role="group" aria-label="Mostrar u ocultar">${COLS.map(c=>`<button class="lgb ${S.stOff.has(c.id)?"off":""}" data-act="st-tog" data-v="${c.id}" aria-pressed="${!S.stOff.has(c.id)}" title="${S.stOff.has(c.id)?"Mostrar":"Ocultar"} tareas en ${c.name}"><i class="lg-${c.id}"></i>${c.name}</button>`).join("")}${hitosOn()?`<button class="lgb ${S.lane?"":"off"}" data-act="lane-tog" aria-pressed="${S.lane}" title="${S.lane?"Ocultar":"Mostrar"} hitos"><i class="lg-hito"></i>Hito</button>`:""}${S.stOff.size||!S.lane?`<button class="link-btn" data-act="lg-reset">Mostrar todo</button>`:""}</div></div>`;
+  const labHead=mode==="tareas"?"Tarea":"Hito / tarea";
   return h+`<div class="content">
   <div class="toolbar">${projectSwitcher()}${personFilter()}${searchBox()}${viewTabs()}<span class="grow"></span>
-    ${(()=>{const ids=ts.filter(t=>(t.subtasks||[]).some(s=>s.start||s.end)).map(t=>t.id);if(!ids.length)return"";const allHid=ids.every(i=>S.subHidden.has(i));return `<button class="btn sm" data-act="sub-tog-all" data-hide="${allHid?0:1}">${ico("sub","sm")}${allHid?"Mostrar subtareas":"Ocultar subtareas"}</button>`})()}
+    ${(()=>{const ids=taskList().filter(t=>(t.subtasks||[]).some(s=>s.start||s.end)).map(t=>t.id);if(!ids.length)return"";const allHid=ids.every(i=>S.subHidden.has(i));return `<button class="btn sm" data-act="sub-tog-all" data-hide="${allHid?0:1}">${ico("sub","sm")}${allHid?"Mostrar subtareas":"Ocultar subtareas"}</button>`})()}
     <span class="qnav"><button class="icon-btn" data-act="cal-prev" aria-label="Trimestre anterior">${ico("left")}</button>
     <b class="q-label">Q${q+1} ${y}</b>
     <button class="icon-btn" data-act="cal-next" aria-label="Trimestre siguiente">${ico("right")}</button>
     <button class="btn sm" data-act="cal-today">Hoy</button></span></div>
-  <div class="legend"><span><i class="lg-todo"></i>Sin empezar</span><span><i class="lg-doing"></i>En progreso</span><span><i class="lg-review"></i>En revisión</span><span><i class="lg-done"></i>Hecho</span>${hon?`<span><i style="background:var(--accent);transform:rotate(45deg) scale(.8)"></i>Hito</span>`:""}</div>
-  ${ts.length||(hon&&ms.length)?`<div class="tl-wrap"><div class="tl ${hon?"":"no-hito"}"><div class="tl-grid" style="width:${days*DW}px">${grid}</div><div class="tl-row tl-head"><div class="tl-lab"><span>Tarea</span><span class="scol">Estado</span>${hon?`<span class="hcol">Hito</span>`:""}</div><div class="tl-scale" style="width:${days*DW}px">${months}${ticks}${todayTag}</div></div>${rows}</div></div>`:`<div class="panel"><div class="empty"><p>No hay tareas que mostrar. Ponles fechas para verlas en el cronograma.</p></div></div>`}
-  </div>`;
+  <div class="tl-box">${top}
+  ${rows?`<div class="tl-wrap"><div class="tl ${showHito?"":"no-hito"}"><div class="tl-grid" style="width:${days*DW}px">${grid}</div><div class="tl-row tl-head"><div class="tl-lab"><span>${labHead}</span><span class="scol">Estado</span>${showHito?`<span class="hcol">Hito</span>`:""}</div><div class="tl-scale" style="width:${days*DW}px">${months}${ticks}${todayTag}</div></div>${rows}</div></div>`:`<div class="tl-wrap"><div class="empty"><p>${S.stOff.size||qq||S.person?"Ninguna tarea coincide con lo que elegiste.":"No hay tareas que mostrar. Ponles fechas para verlas en el cronograma."}</p></div></div>`}
+  </div></div>`;
 }
 /* Botones pequeños de estado e hito: un clic abre las opciones y se cambia ahí mismo */
 function chipPop(){
   const c=S.chip;if(!c)return"";
-  const t=S.tasks[c.id];if(!t)return"";
+  const t=taskById(c.id);if(!t)return"";
   const style=`left:${Math.min(c.x,window.innerWidth-240)}px;top:${c.y}px`;
   if(c.k==="st"){
     const cur=t.column||"todo";
     return `<div class="fpop" style="${style}" role="menu"><div class="ttl">Estado</div>${COLS.map(o=>`<button class="${o.id===cur?"on":""}" data-act="chip-set" data-v="${o.id}"><span class="chip st ${o.id}"><i class="dot"></i><span>${o.name}</span></span>${o.id===cur?`<span class="ck">${ico("check","sm")}</span>`:""}</button>`).join("")}</div>`;
   }
-  const ms=projMilestones();
+  const ms=msOf(t.projectId);
   return `<div class="fpop" style="${style}" role="menu"><div class="ttl">Hito</div>${ms.map(m=>`<button class="${m.id===t.milestoneId?"on":""}" data-act="chip-set" data-v="${m.id}"><span class="chip hi">${ico("flag","sm")}<span>${esc(m.name)}</span></span>${m.date?`<span class="hint">${esc(fmt(m.date))}</span>`:""}${m.id===t.milestoneId?`<span class="ck">${ico("check","sm")}</span>`:""}</button>`).join("")}</div>`;
 }
 function renderChip(){let r=$("#float-root");if(!r){r=document.createElement("div");r.id="float-root";document.body.appendChild(r)}r.innerHTML=chipPop()}
@@ -1185,8 +1232,15 @@ function openChip(el){
 function closeChip(){if(!S.chip)return;S.chip=null;document.querySelectorAll(".chip.open").forEach(x=>x.classList.remove("open"));renderChip()}
 function setChip(v){
   const c=S.chip;closeChip();if(!c)return;
-  const t=S.tasks[c.id];if(!t)return;
-  if(c.k==="st"){if(v!==(t.column||"todo"))moveTask(c.id,v,null);return}
+  const t=taskById(c.id);if(!t)return;
+  if(c.k==="st"){
+    if(v===(t.column||"todo"))return;
+    if(t.projectId===S.projectId&&S.tasks[c.id]){moveTask(c.id,v,null);return}
+    const same=Object.values(S.tasks).filter(x=>x.projectId===t.projectId&&(x.column||"todo")===v);
+    const patch={column:v,order:same.reduce((a,x)=>Math.max(a,x.order||0),0)+1,doneAt:v==="done"?Date.now():null,updatedAt:Date.now()};
+    if(S.demo){Object.assign(S.tasks[c.id]||{},patch);render();toast("Movida a "+COLNAME[v]);return}
+    safe(()=>wupd("tasks",c.id,patch),"Movida a "+COLNAME[v]);return;
+  }
   if(v!==t.milestoneId)safe(()=>wupd("tasks",c.id,{milestoneId:v,updatedAt:Date.now()}),"Hito: "+((S.milestones[v]||{}).name||""));
 }
 
@@ -1998,6 +2052,11 @@ document.addEventListener("click",async e=>{
     case "doc-del-yes":deleteDoc();break;
     case "d-share-new":m.draft.share.token=newToken();renderModal();toast("Enlace nuevo. Guarda para que el anterior deje de funcionar.");break;
     case "chip":if(!el.disabled)openChip(el);break;
+    case "tl-mode":S.tlMode=el.dataset.v;if(S.tlMode==="hitos")S.lane=true;ls.set("pj-tlmode",S.tlMode);closeChip();render();break;
+    case "st-tog":{const v=el.dataset.v;S.stOff.has(v)?S.stOff.delete(v):S.stOff.add(v);if(S.stOff.size===COLS.length)S.stOff.delete(v);render();break}
+    case "lane-tog":S.lane=!S.lane;if(!S.lane&&S.tlMode==="hitos"){S.tlMode="tareas";ls.set("pj-tlmode","tareas")}render();break;
+    case "lg-reset":S.stOff.clear();S.lane=true;render();break;
+    case "grp-tog":{S.grpOpen.has(id)?S.grpOpen.delete(id):S.grpOpen.add(id);render();break}
     case "chip-set":setChip(el.dataset.v);break;
     case "nav-open":S.navOpen=true;render();break;
     case "nav-close":S.navOpen=false;render();break;
@@ -2149,7 +2208,7 @@ document.addEventListener("keydown",e=>{
   if((e.metaKey||e.ctrlKey)&&(e.key==="b"||e.key==="B")&&!S.modal&&window.innerWidth>900){e.preventDefault();toggleSide();return}
   if(e.key==="Enter"&&(e.target.id==="f-title"||e.target.id==="d-title")){e.preventDefault();return}
   if(e.key==="Enter"&&e.target.classList&&e.target.classList.contains("card")){openTask(e.target.dataset.id)}
-  if((e.key==="Enter"||e.key===" ")&&e.target.dataset&&e.target.dataset.act==="sub-tog"){e.preventDefault();e.stopPropagation();e.target.click()}
+  if((e.key==="Enter"||e.key===" ")&&e.target.dataset&&(e.target.dataset.act==="sub-tog"||e.target.dataset.act==="grp-tog")){e.preventDefault();e.stopPropagation();e.target.click()}
   if(e.key==="Enter"&&(e.metaKey||e.ctrlKey)&&e.target.id==="c-text"){e.preventDefault();const b=document.querySelector('[data-act="comment-add"]');if(b)b.click()}
 });
 
