@@ -976,7 +976,7 @@ function sidebar(){
       ${grp("docs","documentos","Docu",NAVI.docu,dOpen,v==="documentos")}
       ${dOpen?[["all","Todos"],["mine","Míos"],["company","De la empresa"],["public","Con enlace público"]].map(([f,l])=>`<button class="sub ${v==="documentos"&&S.docF===f?"on":""}" data-act="doc-f" data-f="${f}">${ico(f==="public"?"globe":f==="mine"?"lock":f==="company"?"building":"doc","sm")}<span>${l}</span></button>`).join(""):""}
       <div class="nav-sec">Organización</div>
-      ${a("equipo","Equipo",NAVI.team)}
+      ${S.isOwner||S.demo?a("equipo","Equipo",NAVI.team):""}
       ${a("proyectos","Proyectos",NAVI.proj)}
       ${S.ws&&S.ws.isSuperadmin?a("empresas","Empresas",NAVI.emp):""}
     </nav>
@@ -1026,7 +1026,7 @@ function view(){
     case "inicio":return viewInicio();
     case "cronograma":return viewCrono();
     case "hitos":return hitosOn()||!curProject()?viewHitos():viewTablero();
-    case "equipo":return viewEquipo();
+    case "equipo":return S.isOwner||S.demo?viewEquipo():viewInicio();
     case "proyectos":return viewProyectos();
     case "empresas":return viewEmpresas();
     case "documentos":return viewDocumentos();
