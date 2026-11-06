@@ -453,6 +453,26 @@ button.tl-lab:hover .t{color:var(--accent)}
 .proj h3{font-size:16.5px;font-weight:600}
 .proj p{margin:0;color:var(--muted);font-size:13.5px;overflow-wrap:anywhere}
 .proj .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto}
+.tag.cl{font-weight:600}
+.cl-picks{display:flex;flex-wrap:wrap;gap:6px}
+.cl-picks button{height:28px;padding:0 11px;border-radius:999px;border:1px solid var(--line-2);background:var(--surface);color:var(--text);font:inherit;font-size:12.5px;font-weight:500;cursor:pointer}
+.cl-picks button.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.cl-sum{margin-bottom:16px}
+.cl-row{display:grid;grid-template-columns:minmax(120px,200px) 1fr auto;align-items:center;gap:14px;width:100%;padding:10px 18px;border:0;border-bottom:1px solid var(--line);background:none;font:inherit;color:inherit;text-align:left;cursor:pointer}
+.cl-row:last-child{border-bottom:0}
+.cl-row:hover{background:var(--surface-2)}
+.cl-row.on{background:var(--accent-soft)}
+.cl-row .tag{justify-self:start}
+.cl-track{height:10px;border-radius:6px;background:var(--surface-2);overflow:hidden}
+.cl-fill{display:flex;height:100%;border-radius:6px;overflow:hidden}
+.cl-fill i{display:block;height:100%}
+.cl-fill .o{background:var(--accent)}.cl-fill .d{background:var(--accent);opacity:.35}
+.cl-num{font-size:12.5px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+.cl-num b{color:var(--text);font-size:14px;margin-right:4px}
+.cl-legend{display:flex;gap:12px;align-items:center;font-size:12px;color:var(--muted)}
+.cl-legend i{display:inline-block;width:10px;height:10px;border-radius:3px;background:var(--accent);margin-right:5px;vertical-align:-1px}
+.cl-legend i.d{opacity:.35}
+@media (max-width:640px){.cl-row{grid-template-columns:1fr auto;gap:8px 12px;padding:10px 14px}.cl-row .cl-track{grid-column:1/-1;grid-row:2}.cl-pj,.cl-legend{display:none}}
 .stack{display:flex}
 .stack .av{border:2px solid var(--surface);margin-left:-6px}
 .stack .av:first-child{margin-left:0}
@@ -892,6 +912,14 @@ function visTag(p){
   const n=(p.memberIds||[]).length;
   return `<span class="tag vis">${ico(ic,"sm")}<span>${v==="members"?n+" "+(n===1?"persona":"personas"):VIS[v]}</span></span>`;
 }
+// Cliente del proyecto: texto libre que se reutiliza como etiqueta. Mismo nombre (sin importar mayúsculas) = mismo cliente.
+const clientOf=p=>((p&&p.client)||"").trim();
+function clientList(){
+  const m=new Map();
+  Object.values(S.projects).forEach(p=>{const c=clientOf(p);if(c&&!m.has(c.toLowerCase()))m.set(c.toLowerCase(),c)});
+  return [...m.values()].sort((a,b)=>a.localeCompare(b,"es"));
+}
+const clientTag=c=>c?`<span class="tag cl av-c${avColor(c.toLowerCase())}">${ico("building","sm")}<span>${esc(c)}</span></span>`:"";
 const curProject=()=>S.projectId&&S.projects[S.projectId]?{id:S.projectId,...S.projects[S.projectId]}:null;
 function projectPeople(){
   const p=curProject();if(!p)return[];
@@ -1455,17 +1483,46 @@ function viewEmpresas(){
     </div></section>
   </div>`;
 }
+// Todas las tareas que la persona puede ver (para contar por cliente). Se cargan al entrar a Proyectos.
+function loadAllTasks(){
+  if(S.allTasks||S.allTasksLoading)return;
+  if(S.demo){S.allTasks=S.tasks;return}
+  S.allTasksLoading=true;
+  S.db.collection("tasks").get().then(snap=>{S.allTasks=mapDocs(snap)}).catch(e=>{console.error(e);S.allTasks={}}).finally(()=>{S.allTasksLoading=false;if(S.view==="proyectos")render()});
+}
+function clientSummary(all){
+  loadAllTasks();
+  if(!all.some(p=>clientOf(p)))return `<section class="panel cl-sum"><div class="panel-h"><h2>Tareas por cliente</h2></div><div class="empty"><p>Asigna un cliente a tus proyectos (Editar → Cliente) para ver aquí a cuál le estamos sacando más tareas.</p></div></section>`;
+  if(!S.allTasks)return `<section class="panel cl-sum"><div class="panel-h"><h2>Tareas por cliente</h2><span class="hint">Contando tareas…</span></div></section>`;
+  const key=p=>clientOf(p).toLowerCase();
+  const rows=new Map();
+  all.forEach(p=>{const k=key(p);if(!rows.has(k))rows.set(k,{name:clientOf(p),projs:new Set(),open:0,done:0});rows.get(k).projs.add(p.id)});
+  const byProj=Object.fromEntries(all.map(p=>[p.id,key(p)]));
+  Object.values(S.allTasks).forEach(t=>{if(t.archived||!(t.projectId in byProj))return;const r=rows.get(byProj[t.projectId]);if(t.column==="done")r.done++;else r.open++});
+  const list=[...rows.values()].sort((a,b)=>(!a.name)-(!b.name)||(b.open+b.done)-(a.open+a.done)||b.open-a.open);
+  const max=Math.max(1,...list.map(r=>r.open+r.done));
+  return `<section class="panel cl-sum"><div class="panel-h"><h2>Tareas por cliente</h2><span class="cl-legend"><span><i></i>Abiertas</span><span><i class="d"></i>Hechas</span></span></div>
+    ${list.map(r=>{const tot=r.open+r.done,c=r.name||"";const on=S.clientF!=null&&S.clientF.toLowerCase()===c.toLowerCase();
+      return `<button class="cl-row ${on?"on":""}" data-act="cl-filter" data-c="${esc(c)}" title="${on?"Quitar filtro":"Ver solo estos proyectos"}">${c?clientTag(c):`<span class="tag neutral"><span>Sin cliente</span></span>`}
+      <span class="cl-track"><span class="cl-fill" style="width:${tot/max*100}%">${r.open?`<i class="o" style="flex:${r.open}"></i>`:""}${r.done?`<i class="d" style="flex:${r.done}"></i>`:""}</span></span>
+      <span class="cl-num"><b>${tot}</b>${tot===1?"tarea":"tareas"} · ${r.open} ${r.open===1?"abierta":"abiertas"}<span class="cl-pj"> · ${r.projs.size} ${r.projs.size===1?"proyecto":"proyectos"}</span></span></button>`}).join("")}
+  </section>`;
+}
 function viewProyectos(){
   const h=head("Proyectos","folder",S.canWrite?`<button class="btn primary" data-act="new-project">${ico("plus","sm")}Nuevo proyecto</button>`:"");
   const all=Object.entries(S.projects).map(([id,p])=>({id,...p})).filter(projVisible).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
-  const act=all.filter(p=>!p.archived),arch=all.filter(p=>p.archived);
+  const cf=S.clientF!=null?S.clientF.toLowerCase():null;
+  const shown=cf==null?all:all.filter(p=>clientOf(p).toLowerCase()===cf);
+  const act=shown.filter(p=>!p.archived),arch=shown.filter(p=>p.archived);
   const pc=p=>`<article class="proj"><div class="row" style="display:flex;justify-content:space-between;gap:8px;align-items:center"><h3>${esc(p.name)}</h3>${p.id===S.projectId?`<span class="tag hito">Abierto</span>`:p.archived?`<span class="tag neutral">Archivado</span>`:""}</div>
-    <div class="tags">${visTag(p)}${p.ownerId&&p.ownerId!==S.me.id?`<span class="tag neutral"><span>Creado por ${esc(first(p.ownerId))}</span></span>`:""}</div>
+    <div class="tags">${clientTag(clientOf(p))}${visTag(p)}${p.ownerId&&p.ownerId!==S.me.id?`<span class="tag neutral"><span>Creado por ${esc(first(p.ownerId))}</span></span>`:""}</div>
     ${p.description?`<p>${esc(p.description)}</p>`:""}
     ${p.start||p.end||p.noEnd?`<div class="meta"><span>${ico("cal","sm")}${esc(p.noEnd&&!p.start?"Sin fecha de fin":fmtRange(p.start,p.end))}</span></div>`:""}
     ${pvis(p)==="members"&&(p.memberIds||[]).length?`<div class="stack">${(p.memberIds||[]).slice(0,6).map(id=>av(id,"md")).join("")}</div>`:""}
     <div class="acts">${!p.archived?`<button class="btn sm" data-act="open-project" data-id="${p.id}">Abrir tablero</button>`:""}${canManageProj(p)?`<button class="btn ghost sm" data-act="edit-project" data-id="${p.id}">${ico("edit","sm")}Editar</button>`:""}${canManageProj(p)&&p.archived?`<button class="btn ghost sm" data-act="unarchive-project" data-id="${p.id}">Restaurar</button>`:""}</div></article>`;
   return h+`<div class="content">
+    ${clientSummary(all.filter(p=>!p.archived))}
+    ${cf!=null?`<div class="toolbar"><span class="pill sel">${ico("building","sm")}<span>${S.clientF?esc(S.clientF):"Sin cliente"}</span><button class="x" data-act="cl-filter" data-c="${esc(S.clientF)}" aria-label="Quitar filtro de cliente">${ico("x","sm")}</button></span><span class="hint">${shown.length} ${shown.length===1?"proyecto":"proyectos"}</span></div>`:""}
     ${act.length?`<div class="projs">${act.map(pc).join("")}</div>`:noProject().replace('<div class="content">',"").replace(/<\/div>$/,"")}
     ${arch.length?`<h2 style="font-size:15px;color:var(--muted);margin-top:8px">Archivados</h2><div class="projs">${arch.map(pc).join("")}</div>`:""}
   </div>`;
@@ -1735,7 +1792,7 @@ async function deleteHito(){
 }
 function openProject(id){
   closeMenus();
-  const src=id?Object.assign({name:"",description:"",start:"",end:"",memberIds:[],useHitos:false},clone(S.projects[id])):{name:"",description:"",start:"",end:"",memberIds:[],useHitos:false,visibility:S.isOwner?"members":"private"};
+  const src=id?Object.assign({name:"",description:"",client:"",start:"",end:"",memberIds:[],useHitos:false},clone(S.projects[id])):{name:"",description:"",client:"",start:"",end:"",memberIds:[],useHitos:false,visibility:S.isOwner?"members":"private"};
   src.visibility=pvis(src);
   src.useHitos=id?projHitosOn(id,S.projects[id]):false;
   S.modal={kind:"project",id:id||uid(),isNew:!id,draft:src,err:"",confirmArch:false};
@@ -1749,6 +1806,9 @@ function projectModal(){
   <div class="m-body">
     <div class="field"><label for="p-name">Nombre</label><input id="p-name" type="text" data-p="name" value="${esc(d.name)}" placeholder="Ej: Portal de clientes"></div>
     <div class="field"><label for="p-desc">Descripción</label><textarea id="p-desc" data-p="description" placeholder="Objetivo del proyecto y para quién es">${esc(d.description)}</textarea></div>
+    <div class="field"><label for="p-client">Cliente</label><input id="p-client" type="text" data-p="client" list="p-clients" autocomplete="off" value="${esc(d.client||"")}" placeholder="Escribe un cliente nuevo o elige uno de abajo"><datalist id="p-clients">${clientList().map(c=>`<option value="${esc(c)}"></option>`).join("")}</datalist>
+      ${clientList().length?`<div class="cl-picks">${clientList().map(c=>`<button type="button" class="${clientOf(d).toLowerCase()===c.toLowerCase()?"on":""}" data-act="p-client" data-c="${esc(c)}">${esc(c)}</button>`).join("")}</div>`:""}
+      <span class="hint">Opcional. Con el cliente puedes ver en Proyectos a cuál le estamos sacando más tareas.</span></div>
     <div class="field"><span class="flabel">Fechas</span><div class="dates"><input id="p-start" type="date" data-p="start" value="${esc(d.start)}" aria-label="Inicio"><span class="hint">a</span><input id="p-end" type="date" data-p="end" value="${esc(d.noEnd?"":d.end)}" aria-label="Fin" ${d.noEnd?"disabled":""}></div><label class="inline-check"><input type="checkbox" class="cb" data-act="p-noend" ${d.noEnd?"checked":""}>Sin fecha de fin</label></div>
     <div class="field"><span class="flabel">Hitos</span><label class="inline-check"><input type="checkbox" class="cb" data-act="p-hitos" ${d.useHitos?"checked":""}>Usar hitos en este proyecto</label><span class="hint">${d.useHitos?"Las tareas se agrupan por hito y cada tarea debe tener uno cuando el proyecto tenga hitos creados.":"El proyecto no mostrará hitos. Si ya tenía hitos, se conservan ocultos y vuelven a aparecer si activas esta opción."}</span></div>
     <div class="field"><span class="flabel">Quién lo ve</span><div class="vis-opts">
@@ -1764,7 +1824,8 @@ async function saveProject(){
   const m=S.modal,d=m.draft;
   if(!d.name.trim()){m.err="Escribe el nombre del proyecto.";renderModal();return}
   if(!d.noEnd&&d.start&&d.end&&d.end<d.start){m.err="La fecha de fin es anterior a la de inicio.";renderModal();return}
-  const body={name:d.name.trim(),description:d.description||"",start:d.start||"",end:d.noEnd?"":(d.end||""),noEnd:!!d.noEnd,useHitos:!!d.useHitos,visibility:pvis(d),memberIds:pvis(d)==="members"?d.memberIds:[],archived:!!d.archived,ownerId:d.ownerId||S.me.id,createdAt:d.createdAt||Date.now(),updatedAt:Date.now()};
+  const cl=clientOf(d),clKnown=clientList().find(c=>c.toLowerCase()===cl.toLowerCase());
+  const body={name:d.name.trim(),description:d.description||"",client:clKnown||cl,start:d.start||"",end:d.noEnd?"":(d.end||""),noEnd:!!d.noEnd,useHitos:!!d.useHitos,visibility:pvis(d),memberIds:pvis(d)==="members"?d.memberIds:[],archived:!!d.archived,ownerId:d.ownerId||S.me.id,createdAt:d.createdAt||Date.now(),updatedAt:Date.now()};
   if(await safe(()=>wset("projects",m.id,body),m.isNew?"Proyecto creado":"Proyecto guardado")){
     if(m.isNew){S.projectId=m.id;ls.set("pj-project",m.id);subTasks();S.view="tablero"}
     closeModal(true);
@@ -1989,6 +2050,7 @@ function go(v){
   if(!VIEWS.includes(v))v="tablero";
   S.view=v;S.menu=null;S.navOpen=false;S.hitoOnly=null;S.chip=null;
   if(v==="documentos")S.navDocs=true;if(TASKV.includes(v))S.navTasks=true;
+  if(v==="proyectos")S.allTasks=null;
   try{history.replaceState(null,"","#"+v)}catch(e){}
   render();
   const mn=$("#main");if(mn)mn.scrollTop=0;
@@ -2099,6 +2161,8 @@ document.addEventListener("click",async e=>{
     case "hito-only-clear":S.hitoOnly=null;render();break;
     case "new-project":openProject(null);break;
     case "edit-project":openProject(id);break;
+    case "p-client":if(S.modal&&S.modal.kind==="project"){const d=S.modal.draft;d.client=clientOf(d).toLowerCase()===el.dataset.c.toLowerCase()?"":el.dataset.c;renderModal()}break;
+    case "cl-filter":S.clientF=S.clientF===el.dataset.c?null:el.dataset.c;render();break;
     case "proj-save":saveProject();break;
     case "proj-arch":m.confirmArch=true;renderModal();break;
     case "proj-arch-no":m.confirmArch=false;renderModal();break;
@@ -2262,7 +2326,7 @@ function enterDemo(reason){
   Object.entries(ppl).forEach(([id,name])=>S.profiles[id]={id,name,avatarUrl:"",email:null,guest:false});
   const t0=today();
   S.members={u1:{role:"admin",title:"",addedAt:Date.now()-9e8},u2:{role:"member",title:"Diseñadora",addedAt:Date.now()-8e8},u3:{role:"member",title:"Desarrollador",addedAt:Date.now()-7e8},u4:{role:"member",title:"Analista de datos",addedAt:Date.now()-6e8}};
-  S.projects={p1:{name:"Portal de clientes (ejemplo)",description:"Un portal donde cada cliente ve el avance de sus campañas y sus reuniones.",start:addDays(t0,-20),end:addDays(t0,40),memberIds:["u2","u3","u4"],ownerId:"u1",visibility:"members",useHitos:true,createdAt:1},p2:{name:"Onboarding comercial (ejemplo)",description:"Proceso de bienvenida para clientes nuevos.",start:addDays(t0,-5),end:addDays(t0,25),memberIds:[],ownerId:"u1",visibility:"company",createdAt:2},p3:{name:"Mis pendientes (ejemplo)",description:"Proyecto privado para organizar mi propia semana.",memberIds:[],ownerId:"u1",visibility:"private",noEnd:true,createdAt:3}};
+  S.projects={p1:{name:"Portal de clientes (ejemplo)",client:"Quicktrack",description:"Un portal donde cada cliente ve el avance de sus campañas y sus reuniones.",start:addDays(t0,-20),end:addDays(t0,40),memberIds:["u2","u3","u4"],ownerId:"u1",visibility:"members",useHitos:true,createdAt:1},p2:{name:"Onboarding comercial (ejemplo)",client:"Solucionsoft",description:"Proceso de bienvenida para clientes nuevos.",start:addDays(t0,-5),end:addDays(t0,25),memberIds:[],ownerId:"u1",visibility:"company",createdAt:2},p3:{name:"Mis pendientes (ejemplo)",description:"Proyecto privado para organizar mi propia semana.",memberIds:[],ownerId:"u1",visibility:"private",noEnd:true,createdAt:3}};
   S.documents={d1:{title:"Propuesta para el cliente piloto",content:"# Alcance\nEl portal muestra a cada cliente sus campañas y reuniones.\n\n## Entregables\n- Diseño aprobado\n- Beta privada con 5 clientes\n- Lanzamiento\n\n## Pendientes\n- [x] Validar precios\n- [ ] Firmar acuerdo\n\n> Cualquier duda, escríbenos a **hola@ingenio.co**.",visibility:"project",projectId:"p1",attachments:[{id:"a1",kind:"link",name:"Cotización en Drive",url:"https://drive.google.com",by:"u1"}],share:{enabled:true,token:"demo123token456abc"},ownerId:"u1",createdAt:Date.now()-5e8,updatedAt:Date.now()-36e5*3,updatedBy:"u1"},
     d2:{title:"Guía de bienvenida para el equipo",content:"# Bienvenida\nCómo trabajamos, herramientas y horarios.",visibility:"company",attachments:[],share:{enabled:false,token:""},ownerId:"u2",createdAt:Date.now()-9e8,updatedAt:Date.now()-864e5*2,updatedBy:"u2"},
     d3:{title:"Notas de mi semana",content:"- Llamar a proveedores\n- Revisar contrato",visibility:"private",attachments:[],share:{enabled:false,token:""},ownerId:"u1",createdAt:Date.now()-2e8,updatedAt:Date.now()-864e5,updatedBy:"u1"}};
@@ -2278,7 +2342,9 @@ function enterDemo(reason){
     T("t5",{title:"Las reuniones agendadas aparecen en el portal con su fecha",milestoneId:"m2",column:"review",priority:"media",start:addDays(t0,-6),end:addDays(t0,-1),assignees:["u3"],order:1}),
     T("t6",{title:"Textos de bienvenida y ayuda revisados",milestoneId:"m2",column:"todo",priority:"baja",end:addDays(t0,-2),assignees:["u2"],order:3}),
     T("t7",{title:"Guía de estilo del portal publicada para el equipo",milestoneId:"m1",column:"done",priority:"media",start:addDays(t0,-12),end:addDays(t0,-7),assignees:["u2"],order:2}),
-    T("t8",{title:"Avisar por correo cuando una campaña se pausa",milestoneId:"m3",column:"todo",priority:"media",start:addDays(t0,22),end:addDays(t0,30),order:4})
+    T("t8",{title:"Avisar por correo cuando una campaña se pausa",milestoneId:"m3",column:"todo",priority:"media",start:addDays(t0,22),end:addDays(t0,30),order:4}),
+    T("t9",{projectId:"p2",title:"Correo de bienvenida para clientes nuevos",column:"doing",priority:"media",assignees:["u2"],order:1}),
+    T("t10",{projectId:"p2",title:"Checklist de la primera semana",column:"done",priority:"baja",assignees:["u3"],order:2})
   ]);
   S.comments={k1:{taskId:"t2",text:"Probado en staging: el inicio de sesión funciona con dos clientes de prueba. Falta el filtro por cliente.",by:"u3",at:Date.now()-36e5*20},k2:{taskId:"t2",text:"Perfecto, lo reviso mañana con el cliente piloto.",by:"u1",at:Date.now()-36e5*18,parentId:"k1"}};
   S.projectId="p1";
