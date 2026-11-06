@@ -317,9 +317,21 @@ button.tl-lab:hover .t{color:var(--accent)}
 .tl-blabel{position:absolute;top:0;height:36px;display:flex;align-items:center;font-size:12.5px;color:var(--muted);white-space:nowrap;pointer-events:none;z-index:2}
 .tl-track{align-self:stretch}
 .qnav{display:inline-flex;align-items:center;gap:4px;flex-wrap:nowrap}
-.tabs .tabs.per{display:inline-flex;gap:0;margin-left:-2px;border:1px solid var(--line-2);border-radius:999px;padding:2px;background:var(--surface)}
-.tabs .tabs.per .pill{height:30px;border:0;padding:0 12px;font-size:13px}
-.tabs .tabs.per .pill.cur{background:var(--surface-2);box-shadow:0 0 0 1px var(--fg) inset;font-weight:600}
+.tabs .menu-wrap.per{display:inline-flex}
+.tabs .menu-wrap.per .pop{min-width:170px}
+.tl-top .qnav{margin-left:auto}
+.tl-wrap.grabbing{cursor:grabbing;user-select:none}
+.tl-wrap .tl-track,.tl-wrap .tl-scale{cursor:grab}
+.tl-wrap.grabbing .tl-track,.tl-wrap.grabbing .tl-scale{cursor:grabbing}
+@media (min-width:901px){
+  .toolbar.one{flex-wrap:nowrap}
+  .toolbar.one>.menu-wrap{min-width:70px;flex:0 1 auto;max-width:230px}
+  .toolbar.one>.menu-wrap>.pill{max-width:100%;width:100%;overflow:hidden}
+  .toolbar.one>.menu-wrap>.pill>span,.toolbar.one>.menu-wrap>.pill>button{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+  .toolbar.one>.menu-wrap>.pill>.i,.toolbar.one>.menu-wrap>.pill>svg{flex:none}
+  .toolbar.one>.search{flex:0 1 200px;width:auto;min-width:42px}
+  .toolbar.one>.tabs{flex-wrap:nowrap;flex:none}
+}
 .tl-bar.todo{background:color-mix(in srgb,var(--dot-todo) 38%,var(--surface));border:1.5px solid var(--dot-todo)}
 .tl-bar.doing{background:color-mix(in srgb,var(--dot-doing) 38%,var(--surface));border:1.5px solid var(--dot-doing)}
 .tl-bar.review{background:color-mix(in srgb,var(--dot-review) 42%,var(--surface));border:1.5px solid var(--dot-review)}
@@ -1014,8 +1026,10 @@ function render(){
   if(noWs&&!S.ws.isSuperadmin){app.innerHTML=gateNoAccess();return}
   if(noWs&&S.ws.isSuperadmin)S.view="empresas";
   if(!noWs&&!S.demo&&!S.isOwner&&S.membersReady&&!S.members[S.me.id]){app.innerHTML=gateNoAccess();return}
+  {const ow=document.querySelector(".tl-wrap"),ot=ow&&ow.querySelector(".tl[data-start]");if(ot&&S.tlLeft)S.tlLeft=addDays(ot.dataset.start,Math.round(ow.scrollLeft/ +ot.dataset.dw))}
   app.innerHTML=`<div class="shell ${S.navOpen?"nav-open":""} ${S.sideCollapsed?"side-collapsed":""}">${sidebar()}<main class="main" id="main">${S.demo?demoBanner():""}${view()}</main><div class="scrim" data-act="nav-close"></div></div>`;
   bindBoard();
+  bindTimeline();
   if(S.chip)document.querySelectorAll(`.chip[data-k="${S.chip.k}"][data-id="${S.chip.id}"]`).forEach(x=>x.classList.add("open"));
   restoreFocus(f);
 }
@@ -1206,16 +1220,57 @@ function viewHitos(){
 
 const msOf=pid=>!projHitosOn(pid,S.projects[pid])?[]:Object.entries(S.milestones).map(([id,m])=>({id,...m})).filter(m=>m.projectId===pid).sort((a,b)=>(a.date||"9").localeCompare(b.date||"9"));
 const taskById=id=>S.tasks[id]||null;
+const MESES=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+// Fecha que queda en el borde izquierdo al entrar: un poco antes de hoy.
+const tlDefaultLeft=byM=>addDays(today(),byM?-5:-14);
+// Título de arriba: el mes (o trimestre) que se está viendo.
+function tlLabel(left,byM){const d=parse(addDays(left,byM?3:10));return byM?MESES[d.getMonth()]+" "+d.getFullYear():"Q"+(Math.floor(d.getMonth()/3)+1)+" "+d.getFullYear()}
+function calSel(byM){
+  const open=S.menu==="calp",cur=byM?"m":"q";
+  return `<span class="menu-wrap per"><button class="pill" data-act="menu" data-m="calp" aria-expanded="${open}" aria-haspopup="menu" title="Escala del cronograma">${byM?"Mes":"Trimestre"}${ico("down","sm")}</button>${open?`<div class="pop" role="menu">${[["m","Mes"],["q","Trimestre"]].map(([k,l])=>`<button class="${cur===k?"on":""}" data-act="cal-per" data-v="${k}" role="menuitemradio" aria-checked="${cur===k}"><span>${l}</span>${cur===k?`<span class="ck">${ico("check","sm")}</span>`:""}</button>`).join("")}</div>`:""}</span>`;
+}
+// Ubica el cronograma en S.tlLeft después de pintar, y deja moverse arrastrando con el mouse o con la rueda sobre las fechas.
+function bindTimeline(){
+  const w=document.querySelector(".tl-wrap"),tl=w&&w.querySelector(".tl[data-start]");if(!tl)return;
+  const st=tl.dataset.start,dw=+tl.dataset.dw,byM=S.calP==="m";
+  if(!S.tlLeft)S.tlLeft=tlDefaultLeft(byM);
+  w.scrollLeft=Math.max(0,diffDays(st,S.tlLeft)*dw);
+  const lab=$("#tl-label");
+  w.addEventListener("scroll",()=>{S.tlLeft=addDays(st,Math.round(w.scrollLeft/dw));if(lab)lab.textContent=tlLabel(S.tlLeft,byM)},{passive:true});
+  w.addEventListener("mousedown",e=>{
+    if(e.button!==0||e.target.closest("button,[data-act],input,a,textarea,select,.tl-lab"))return;
+    const x0=e.clientX,s0=w.scrollLeft;let moved=false;w.classList.add("grabbing");
+    const mv=ev=>{const dx=ev.clientX-x0;if(Math.abs(dx)>3)moved=true;w.scrollLeft=s0-dx};
+    const up=()=>{w.classList.remove("grabbing");window.removeEventListener("mousemove",mv);window.removeEventListener("mouseup",up)};
+    window.addEventListener("mousemove",mv);window.addEventListener("mouseup",up);e.preventDefault();
+  });
+  const head=w.querySelector(".tl-head");
+  if(head)head.addEventListener("wheel",e=>{if(Math.abs(e.deltaY)>Math.abs(e.deltaX)){w.scrollLeft+=e.deltaY;e.preventDefault()}},{passive:false});
+}
+function tlStep(dir){
+  const w=document.querySelector(".tl-wrap"),tl=w&&w.querySelector(".tl[data-start]");if(!tl)return;
+  const byM=S.calP==="m",n=byM?1:3;
+  const cur=parse(S.tlLeft||tlDefaultLeft(byM));
+  let y=cur.getFullYear(),m=byM?cur.getMonth():Math.floor(cur.getMonth()/3)*3;
+  const atStart=cur.getDate()<=3&&(byM||cur.getMonth()===m);
+  m+=dir>0?n:(atStart?-n:0);
+  const target=iso(new Date(y,m,1));
+  w.scrollTo({left:Math.max(0,diffDays(tl.dataset.start,target)*+tl.dataset.dw),behavior:"smooth"});
+}
 function viewCrono(){
   const h=head("Tareas","tasks",curProject()?newTaskBtn():"");
   const mode=S.tlMode==="hitos"&&hitosOn()?"hitos":"tareas";
   if(!curProject())return h+noProject();
-  // Periodo: por trimestre (Q) o por mes. S.calQ={y,q} y S.calM={y,m}; "Hoy" vuelve al periodo actual.
+  // Cronograma continuo: todos los meses de los años que tocan las tareas (y el actual), de enero a diciembre.
+  // "Mes" o "Trimestre" solo cambian el zoom; uno se mueve arrastrando con el mouse, con el trackpad o con las flechas.
   const byM=S.calP==="m";
-  if(!S.calQ){const d=new Date();S.calQ={y:d.getFullYear(),q:Math.floor(d.getMonth()/3)}}
-  if(!S.calM){const d=new Date();S.calM={y:d.getFullYear(),m:d.getMonth()}}
-  const y=byM?S.calM.y:S.calQ.y,q=S.calQ.q,m0=byM?S.calM.m:q*3,nM=byM?1:3;
-  const start=iso(new Date(y,m0,1)),end=iso(new Date(y,m0+nM,0)),t0=today();
+  const t0=today();
+  const ds=[t0,addDays(t0,90)];
+  taskList().forEach(t=>{[t.start,t.end].forEach(d=>d&&ds.push(d));(t.subtasks||[]).forEach(x=>{[x.start,x.end].forEach(d=>d&&ds.push(d))})});
+  projMilestones().forEach(m=>m.date&&ds.push(m.date));
+  const yrs=ds.map(d=>+String(d).slice(0,4)).filter(n=>n>1900&&n<3000);
+  const y0=Math.min(...yrs),y1=Math.max(...yrs);
+  const start=`${y0}-01-01`,end=`${y1}-12-31`;
   const days=diffDays(start,end)+1;
   const DW=byM?30:11;
   const dayIdx=s=>diffDays(start,s);
@@ -1264,8 +1319,7 @@ function viewCrono(){
       if(open)g.ts.forEach(t=>{rows+=taskRows(t)});
     });
   }
-  const MESL=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
-  const months=Array.from({length:nM},(_,k)=>{const ms2=iso(new Date(y,m0+k,1)),me=iso(new Date(y,m0+k+1,0));return `<span class="tl-month" style="left:${dayIdx(ms2)*DW}px;width:${(diffDays(ms2,me)+1)*DW}px">${MESL[m0+k]}</span>`}).join("");
+  const months=Array.from({length:(y1-y0+1)*12},(_,k)=>{const yy=y0+Math.floor(k/12),mm=k%12;const ms2=iso(new Date(yy,mm,1)),me=iso(new Date(yy,mm+1,0));return `<span class="tl-month" style="left:${dayIdx(ms2)*DW}px;width:${(diffDays(ms2,me)+1)*DW}px">${MESES[mm]}${mm===0||k===0?" "+yy:""}</span>`}).join("");
   let ticks="",grid="";
   for(let k=0;k<days;k++){const s2=addDays(start,k),dw=parse(s2).getDay();
     if(byM)ticks+=`<span class="tl-tick day ${s2===t0?"cur":""} ${dw===0||dw===6?"we":""}" style="left:${k*DW}px;width:${DW}px">${parse(s2).getDate()}</span>`;
@@ -1278,17 +1332,13 @@ function viewCrono(){
   const todayTag=t0>=start&&t0<=end?`<span class="tl-todaytag" style="left:${dayIdx(t0)*DW+DW/2}px">Hoy</span>`:"";
   const modes=[["tareas","Tareas","tasks"]];if(hitosOn())modes.push(["hitos","Hitos","flag"]);
   const top=`<div class="tl-top">${modes.length>1?`<div class="tl-modes" role="group" aria-label="Ver el cronograma por">${modes.map(([k,l,ic])=>`<button class="lgb mode ${mode===k?"on":""}" data-act="tl-mode" data-v="${k}" aria-pressed="${mode===k}">${ico(ic,"sm")}${l}</button>`).join("")}</div>`:""}
-    <div class="lgb-row" role="group" aria-label="Mostrar u ocultar">${COLS.map(c=>`<button class="lgb ${S.stOff.has(c.id)?"off":""}" data-act="st-tog" data-v="${c.id}" aria-pressed="${!S.stOff.has(c.id)}" title="${!S.stOff.size?"Ver solo tareas en "+c.name:S.stOff.has(c.id)?"Sumar tareas en "+c.name:"Quitar tareas en "+c.name}"><i class="lg-${c.id}"></i>${c.name}</button>`).join("")}${mode==="hitos"?`<button class="lgb ${S.lane?"":"off"}" data-act="lane-tog" aria-pressed="${S.lane}" title="${S.lane?"Ocultar":"Mostrar"} hitos"><i class="lg-hito"></i>Hito</button>`:""}${S.stOff.size||!S.lane?`<button class="link-btn" data-act="lg-reset">Mostrar todo</button>`:""}</div></div>`;
+    <div class="lgb-row" role="group" aria-label="Mostrar u ocultar">${COLS.map(c=>`<button class="lgb ${S.stOff.has(c.id)?"off":""}" data-act="st-tog" data-v="${c.id}" aria-pressed="${!S.stOff.has(c.id)}" title="${!S.stOff.size?"Ver solo tareas en "+c.name:S.stOff.has(c.id)?"Sumar tareas en "+c.name:"Quitar tareas en "+c.name}"><i class="lg-${c.id}"></i>${c.name}</button>`).join("")}${mode==="hitos"?`<button class="lgb ${S.lane?"":"off"}" data-act="lane-tog" aria-pressed="${S.lane}" title="${S.lane?"Ocultar":"Mostrar"} hitos"><i class="lg-hito"></i>Hito</button>`:""}${S.stOff.size||!S.lane?`<button class="link-btn" data-act="lg-reset">Mostrar todo</button>`:""}</div>
+    <span class="qnav"><button class="icon-btn" data-act="cal-prev" aria-label="${byM?"Mes anterior":"Trimestre anterior"}">${ico("left")}</button><b class="q-label" id="tl-label">${tlLabel(S.tlLeft||tlDefaultLeft(byM),byM)}</b><button class="icon-btn" data-act="cal-next" aria-label="${byM?"Mes siguiente":"Trimestre siguiente"}">${ico("right")}</button><button class="btn sm" data-act="cal-today">Hoy</button></span></div>`;
   const labHead=mode==="tareas"?"Tarea":"Hito / tarea";
   return h+`<div class="content">
-  <div class="toolbar">${projectSwitcher()}${personFilter()}${searchBox()}${viewTabs(`<span class="tabs per" role="group" aria-label="Ver el cronograma por">${[["q","Por Q"],["m","Por mes"]].map(([k,l])=>`<button class="pill ${(byM?"m":"q")===k?"cur":""}" data-act="cal-per" data-v="${k}" aria-pressed="${(byM?"m":"q")===k}">${l}</button>`).join("")}</span>`)}<span class="grow"></span>
-    ${(()=>{const ids=taskList().filter(t=>(t.subtasks||[]).some(s=>s.start||s.end)).map(t=>t.id);if(!ids.length)return"";const allHid=ids.every(i=>S.subHidden.has(i));return `<button class="btn sm" data-act="sub-tog-all" data-hide="${allHid?0:1}">${ico("sub","sm")}${allHid?"Mostrar subtareas":"Ocultar subtareas"}</button>`})()}
-    <span class="qnav"><button class="icon-btn" data-act="cal-prev" aria-label="${byM?"Mes anterior":"Trimestre anterior"}">${ico("left")}</button>
-    <b class="q-label">${byM?MESL[m0]+" "+y:"Q"+(q+1)+" "+y}</b>
-    <button class="icon-btn" data-act="cal-next" aria-label="${byM?"Mes siguiente":"Trimestre siguiente"}">${ico("right")}</button>
-    <button class="btn sm" data-act="cal-today">Hoy</button></span></div>
+  <div class="toolbar one">${projectSwitcher()}${personFilter()}${searchBox()}${viewTabs(calSel(byM))}</div>
   <div class="tl-box">${top}
-  ${rows?`<div class="tl-wrap"><div class="tl no-hito"><div class="tl-grid" style="width:${days*DW}px">${grid}</div><div class="tl-row tl-head"><div class="tl-lab"><span>${labHead}</span></div><div class="tl-scale" style="width:${days*DW}px">${months}${ticks}${todayTag}</div></div>${rows}</div></div>`:`<div class="tl-wrap"><div class="empty"><p>${S.stOff.size||qq||S.person?"Ninguna tarea coincide con lo que elegiste.":"No hay tareas que mostrar. Ponles fechas para verlas en el cronograma."}</p></div></div>`}
+  ${rows?`<div class="tl-wrap"><div class="tl no-hito" data-start="${start}" data-dw="${DW}"><div class="tl-grid" style="width:${days*DW}px">${grid}</div><div class="tl-row tl-head"><div class="tl-lab"><span>${labHead}</span></div><div class="tl-scale" style="width:${days*DW}px">${months}${ticks}${todayTag}</div></div>${rows}</div></div>`:`<div class="tl-wrap"><div class="empty"><p>${S.stOff.size||qq||S.person?"Ninguna tarea coincide con lo que elegiste.":"No hay tareas que mostrar. Ponles fechas para verlas en el cronograma."}</p></div></div>`}
   </div></div>`;
 }
 /* Botones pequeños de estado e hito: un clic abre las opciones y se cambia ahí mismo */
@@ -2129,6 +2179,7 @@ function go(v){
   if(!VIEWS.includes(v))v="tablero";
   S.view=v;S.menu=null;S.navOpen=false;S.hitoOnly=null;S.chip=null;
   if(v==="documentos")S.navDocs=true;if(TASKV.includes(v))S.navTasks=true;
+  if(v==="cronograma")S.tlLeft=null;
   if(v==="proyectos")S.allTasks=null;
   try{history.replaceState(null,"","#"+v)}catch(e){}
   render();
@@ -2136,7 +2187,7 @@ function go(v){
 }
 function pickProject(id){
   if(id===S.projectId)return;
-  S.projectId=id;S.person=null;S.calQ=null;S.calM=null;S.hitoOnly=null;ls.set("pj-project",id||"");
+  S.projectId=id;S.person=null;S.tlLeft=null;S.hitoOnly=null;ls.set("pj-project",id||"");
   subTasks();
 }
 function ensureProject(){
@@ -2282,12 +2333,9 @@ document.addEventListener("click",async e=>{
     case "mem-remove":S.confirmRemove=id;render();break;
     case "mem-remove-no":S.confirmRemove=null;render();break;
     case "mem-remove-yes":removeMember(id);break;
-    case "cal-prev":case "cal-next":{const dir=act==="cal-next"?1:-1;
-      if(S.calP==="m"){let {y,m}=S.calM;m+=dir;if(m<0){m=11;y--}if(m>11){m=0;y++}S.calM={y,m};S.calQ={y,q:Math.floor(m/3)}}
-      else{let {y,q}=S.calQ;q+=dir;if(q<0){q=3;y--}if(q>3){q=0;y++}S.calQ={y,q};const d=new Date();S.calM={y,m:(d.getFullYear()===y&&Math.floor(d.getMonth()/3)===q)?d.getMonth():q*3}}
-      render();break}
-    case "cal-today":S.calQ=null;S.calM=null;render();break;
-    case "cal-per":S.calP=el.dataset.v==="m"?"m":"q";ls.set("pj-calp",S.calP);render();break;
+    case "cal-prev":case "cal-next":tlStep(act==="cal-next"?1:-1);break;
+    case "cal-today":{S.tlLeft=null;const w=document.querySelector(".tl-wrap"),tl=w&&w.querySelector(".tl[data-start]");if(tl)w.scrollTo({left:Math.max(0,diffDays(tl.dataset.start,tlDefaultLeft(S.calP==="m"))*+tl.dataset.dw),behavior:"smooth"});break}
+    case "cal-per":{const v=el.dataset.v==="m"?"m":"q";S.menu=null;if(v!==S.calP){S.calP=v;ls.set("pj-calp",v)}render();break}
   }
 });
 document.addEventListener("change",e=>{
