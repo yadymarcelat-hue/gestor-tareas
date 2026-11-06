@@ -464,7 +464,9 @@ button.tl-lab:hover .t{color:var(--accent)}
 .cl-new{display:flex;gap:6px;padding:4px;align-items:center}
 .cl-new .btn{flex:none;width:auto}
 .modal .cl-new input{flex:1 1 auto;width:auto;min-width:0;height:32px;border-radius:999px;border:1px solid var(--line-2);padding:0 12px;font:inherit;font-size:13.5px;background:var(--surface);color:inherit}
-.p-cl{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.cl-box{display:flex;flex-direction:column;gap:8px;border:1px solid var(--line-2);border-radius:12px;padding:10px}
+.cl-picks button{display:inline-flex;align-items:center;gap:4px}
+.cl-new .btn{display:inline-flex;align-items:center;gap:4px}
 .cl-picks{display:flex;flex-wrap:wrap;gap:6px}
 .cl-picks button{height:28px;padding:0 11px;border-radius:999px;border:1px solid var(--line-2);background:var(--surface);color:var(--text);font:inherit;font-size:12.5px;font-weight:500;cursor:pointer}
 .cl-picks button.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
@@ -936,10 +938,23 @@ function clientList(){
 const canonClient=c=>clientList().find(x=>lc(x)===lc(c))||String(c||"").trim();
 // Clientes a los que cuenta una tarea: los suyos o, si no tiene y el proyecto tiene un solo cliente, ese.
 const taskClients=(t,p)=>{const own=clientsOf(t);if(own.length)return own;const pc=clientsOf(p);return pc.length===1?pc:[]};
-function clientPop(sel,opts,act){
+function clientNewRow(){
   const m=S.modal;
+  return `<div class="cl-new"><input id="cl-new" type="text" placeholder="Escribe un cliente nuevo y presiona Enter" value="${esc(m.clNew||"")}" autocomplete="off" aria-label="Nombre del cliente nuevo"><button type="button" class="btn sm" data-act="cl-add">${ico("plus","sm")}Agregar</button></div>`;
+}
+function clientPop(sel,opts,act){
   return `<div class="pop cl-pop" role="menu">${opts.map(c=>{const on=sel.some(x=>lc(x)===lc(c));return `<button type="button" class="${on?"on":""}" data-act="${act}" data-c="${esc(c)}">${clientTag(c)}${on?`<span class="ck">${ico("check","sm")}</span>`:""}</button>`}).join("")||`<div class="hint" style="padding:8px 10px">Todavía no hay clientes.</div>`}
-    <hr><div class="cl-new"><input id="cl-new" type="text" placeholder="Cliente nuevo" value="${esc(m.clNew||"")}" autocomplete="off" aria-label="Nombre del cliente nuevo"><button type="button" class="btn sm" data-act="cl-add" data-k="${act}">Agregar</button></div></div>`;
+    <hr>${clientNewRow()}</div>`;
+}
+// Versión siempre visible (ventana del proyecto): todas las etiquetas para marcar o desmarcar y el campo para agregar.
+function clientBox(sel,opts){
+  return `<div class="cl-box">${opts.length?`<div class="cl-picks">${opts.map(c=>{const on=sel.some(x=>lc(x)===lc(c));return `<button type="button" class="${on?"on":""}" data-act="cl-tog" data-c="${esc(c)}" aria-pressed="${on}">${on?ico("check","sm"):""}${esc(c)}</button>`}).join("")}</div>`:""}${clientNewRow()}</div>`;
+}
+// Agrega lo escrito en "cliente nuevo"; acepta varios separados por coma.
+function flushClients(){
+  const m=S.modal;if(!m)return;
+  String(m.clNew||"").split(/[,;\n]/).map(x=>x.trim()).filter(Boolean).forEach(v=>{const c=canonClient(v);if(!m.draft.clients.some(x=>lc(x)===lc(c)))m.draft.clients.push(c)});
+  m.clNew="";
 }
 const clientTag=c=>c?`<span class="tag cl av-c${avColor(c.toLowerCase())}">${ico("building","sm")}<span>${esc(c)}</span></span>`:"";
 const curProject=()=>S.projectId&&S.projects[S.projectId]?{id:S.projectId,...S.projects[S.projectId]}:null;
@@ -1729,6 +1744,7 @@ function setDraftField(key,val){
 }
 async function saveTask(){
   const m=S.modal,d=m.draft;
+  flushClients();
   m.err="";
   if(!d.title.trim()){m.err="Escribe el título de la tarea.";renderModal();$("#f-title").focus();return}
   if(projMilestones().length&&!d.milestoneId){m.err="hito";renderModal();return}
@@ -1837,8 +1853,8 @@ function projectModal(){
   <div class="m-body">
     <div class="field"><label for="p-name">Nombre</label><input id="p-name" type="text" data-p="name" value="${esc(d.name)}" placeholder="Ej: Portal de clientes"></div>
     <div class="field"><label for="p-desc">Descripción</label><textarea id="p-desc" data-p="description" placeholder="Objetivo del proyecto y para quién es">${esc(d.description)}</textarea></div>
-    <div class="field"><span class="flabel">Clientes</span><div class="menu-wrap"><button type="button" class="cl-sel" data-act="cl-open" aria-expanded="${!!m.clOpen}">${d.clients.length?d.clients.map(clientTag).join(""):`<span class="ph">Sin cliente</span>`}</button>${m.clOpen?clientPop(d.clients,uniqClients(clientList().concat(d.clients)),"cl-tog"):""}</div>
-      <span class="hint">Opcional. Agrega uno o varios. Al crear una tarea en este proyecto aparecen como etiquetas para elegir.</span></div>
+    <div class="field"><span class="flabel">Clientes</span>${clientBox(d.clients,uniqClients(clientList().concat(d.clients)))}
+      <span class="hint">Opcional. Marca uno o varios, o escribe nuevos (puedes separarlos con coma). Al crear una tarea en este proyecto aparecen como etiquetas para elegir.</span></div>
     <div class="field"><span class="flabel">Fechas</span><div class="dates"><input id="p-start" type="date" data-p="start" value="${esc(d.start)}" aria-label="Inicio"><span class="hint">a</span><input id="p-end" type="date" data-p="end" value="${esc(d.noEnd?"":d.end)}" aria-label="Fin" ${d.noEnd?"disabled":""}></div><label class="inline-check"><input type="checkbox" class="cb" data-act="p-noend" ${d.noEnd?"checked":""}>Sin fecha de fin</label></div>
     <div class="field"><span class="flabel">Hitos</span><label class="inline-check"><input type="checkbox" class="cb" data-act="p-hitos" ${d.useHitos?"checked":""}>Usar hitos en este proyecto</label><span class="hint">${d.useHitos?"Las tareas se agrupan por hito y cada tarea debe tener uno cuando el proyecto tenga hitos creados.":"El proyecto no mostrará hitos. Si ya tenía hitos, se conservan ocultos y vuelven a aparecer si activas esta opción."}</span></div>
     <div class="field"><span class="flabel">Quién lo ve</span><div class="vis-opts">
@@ -1852,13 +1868,13 @@ function projectModal(){
 }
 function addClient(){
   const m=S.modal;if(!m)return;
-  const v=String(m.clNew||"").trim();if(!v)return;
-  const c=canonClient(v);
-  if(!m.draft.clients.some(x=>lc(x)===lc(c)))m.draft.clients.push(c);
-  m.clNew="";renderModal();const x=$("#cl-new");if(x)x.focus();
+  const inp=$("#cl-new");if(inp)m.clNew=inp.value;
+  if(!String(m.clNew||"").trim())return;
+  flushClients();renderModal();const x=$("#cl-new");if(x)x.focus();
 }
 async function saveProject(){
   const m=S.modal,d=m.draft;
+  flushClients();
   if(!d.name.trim()){m.err="Escribe el nombre del proyecto.";renderModal();return}
   if(!d.noEnd&&d.start&&d.end&&d.end<d.start){m.err="La fecha de fin es anterior a la de inicio.";renderModal();return}
   const body={name:d.name.trim(),description:d.description||"",clients:uniqClients(d.clients),start:d.start||"",end:d.noEnd?"":(d.end||""),noEnd:!!d.noEnd,useHitos:!!d.useHitos,visibility:pvis(d),memberIds:pvis(d)==="members"?d.memberIds:[],archived:!!d.archived,ownerId:d.ownerId||S.me.id,createdAt:d.createdAt||Date.now(),updatedAt:Date.now()};
