@@ -477,7 +477,11 @@ button.tl-lab:hover .t{color:var(--accent)}
 .cl-picks button.on{opacity:1;box-shadow:0 0 0 2px currentColor inset}
 .cl-sel{display:flex;align-items:center;gap:6px;width:100%;min-height:40px;padding:5px 32px 5px 10px;border-radius:20px;border:1px solid var(--line-2);background:var(--surface);font:inherit;color:inherit;text-align:left;cursor:pointer;flex-wrap:wrap;position:relative}
 .cl-sel:after{content:"";position:absolute;right:14px;top:50%;width:6px;height:6px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:translateY(-70%) rotate(45deg)}
-.cl-sel .tag{height:24px}
+.cl-sel{flex-wrap:nowrap;overflow:hidden}
+.cl-sel .tag{height:22px;flex:0 1 auto;min-width:0}
+.cl-sel .cl-more{flex:none}
+.tag.cl{height:20px;padding:0 6px;gap:4px;font-size:11.5px;border-radius:5px}
+.tag.cl .i{width:12px;height:12px}
 .cl-sel .ph{color:var(--muted);padding-left:4px;font-weight:500}
 .cl-sel:disabled{cursor:default}
 .cl-pop{min-width:260px;left:auto;right:0}
@@ -491,22 +495,6 @@ button.tl-lab:hover .t{color:var(--accent)}
 .cl-picks{display:flex;flex-wrap:wrap;gap:6px}
 .cl-picks button{height:28px;padding:0 11px;border-radius:999px;border:1px solid var(--line-2);background:var(--surface);color:var(--text);font:inherit;font-size:12.5px;font-weight:500;cursor:pointer}
 .cl-picks button.on:not([data-cc]){background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
-.cl-sum{margin-bottom:16px}
-.cl-row{display:grid;grid-template-columns:minmax(120px,200px) 1fr auto;align-items:center;gap:14px;width:100%;padding:10px 18px;border:0;border-bottom:1px solid var(--line);background:none;font:inherit;color:inherit;text-align:left;cursor:pointer}
-.cl-row:last-child{border-bottom:0}
-.cl-row:hover{background:var(--surface-2)}
-.cl-row.on{background:var(--accent-soft)}
-.cl-row .tag{justify-self:start}
-.cl-track{height:10px;border-radius:6px;background:var(--surface-2);overflow:hidden}
-.cl-fill{display:flex;height:100%;border-radius:6px;overflow:hidden}
-.cl-fill i{display:block;height:100%}
-.cl-fill .o{background:var(--accent)}.cl-fill .d{background:var(--accent);opacity:.35}
-.cl-num{font-size:12.5px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
-.cl-num b{color:var(--text);font-size:14px;margin-right:4px}
-.cl-legend{display:flex;gap:12px;align-items:center;font-size:12px;color:var(--muted)}
-.cl-legend i{display:inline-block;width:10px;height:10px;border-radius:3px;background:var(--accent);margin-right:5px;vertical-align:-1px}
-.cl-legend i.d{opacity:.35}
-@media (max-width:640px){.cl-row{grid-template-columns:1fr auto;gap:8px 12px;padding:10px 14px}.cl-row .cl-track{grid-column:1/-1;grid-row:2}.cl-pj,.cl-legend{display:none}}
 .stack{display:flex}
 .stack .av{border:2px solid var(--surface);margin-left:-6px}
 .stack .av:first-child{margin-left:0}
@@ -953,12 +941,11 @@ const lc=c=>String(c||"").toLowerCase();
 function uniqClients(arr){const m=new Map();arr.forEach(c=>{c=String(c||"").trim();if(c&&!m.has(lc(c)))m.set(lc(c),c)});return [...m.values()]}
 function clientList(){
   const all=[];Object.values(S.projects).forEach(p=>all.push(...clientsOf(p)));
-  Object.values(S.allTasks||{}).concat(Object.values(S.tasks)).forEach(t=>all.push(...clientsOf(t)));
+  Object.values(S.tasks).forEach(t=>all.push(...clientsOf(t)));
   return uniqClients(all).sort((a,b)=>a.localeCompare(b,"es"));
 }
 const canonClient=c=>clientList().find(x=>lc(x)===lc(c))||String(c||"").trim();
 // Clientes a los que cuenta una tarea: los suyos o, si no tiene y el proyecto tiene un solo cliente, ese.
-const taskClients=(t,p)=>{const own=clientsOf(t);if(own.length)return own;const pc=clientsOf(p);return pc.length===1?pc:[]};
 function clientNewRow(){
   const m=S.modal;
   return `<div class="cl-new"><input id="cl-new" type="text" placeholder="Escribe un cliente nuevo y presiona Enter" value="${esc(m.clNew||"")}" autocomplete="off" aria-label="Nombre del cliente nuevo"><button type="button" class="btn sm" data-act="cl-add">${ico("plus","sm")}Agregar</button></div>`;
@@ -1598,38 +1585,10 @@ function viewEmpresas(){
   </div>`;
 }
 // Todas las tareas que la persona puede ver (para contar por cliente). Se cargan al entrar a Proyectos.
-function loadAllTasks(){
-  if(S.allTasks||S.allTasksLoading)return;
-  if(S.demo){S.allTasks=S.tasks;return}
-  S.allTasksLoading=true;
-  S.db.collection("tasks").get().then(snap=>{S.allTasks=mapDocs(snap)}).catch(e=>{console.error(e);S.allTasks={}}).finally(()=>{S.allTasksLoading=false;if(S.view==="proyectos")render()});
-}
-function clientSummary(all){
-  loadAllTasks();
-  if(!S.allTasks)return `<section class="panel cl-sum"><div class="panel-h"><h2>Tareas por cliente</h2><span class="hint">Contando tareas…</span></div></section>`;
-  const byProj=Object.fromEntries(all.map(p=>[p.id,p]));
-  const ts=Object.values(S.allTasks).filter(t=>!t.archived&&byProj[t.projectId]);
-  if(!all.some(p=>clientsOf(p).length)&&!ts.some(t=>clientsOf(t).length))return `<section class="panel cl-sum"><div class="panel-h"><h2>Tareas por cliente</h2></div><div class="empty"><p>Elige el cliente al crear una tarea (al lado de Prioridad) o agrega clientes a tus proyectos para ver aquí a cuál le estamos sacando más tareas.</p></div></section>`;
-  const rows=new Map();
-  const row=c=>{const k=lc(c);if(!rows.has(k))rows.set(k,{name:c,projs:new Set(),open:0,done:0});return rows.get(k)};
-  all.forEach(p=>clientsOf(p).forEach(c=>row(c).projs.add(p.id)));
-  ts.forEach(t=>{const cs=taskClients(t,byProj[t.projectId]);(cs.length?cs:[""]).forEach(c=>{const r=row(c);r.projs.add(t.projectId);if(t.column==="done")r.done++;else r.open++})});
-  const list=[...rows.values()].sort((a,b)=>(!a.name)-(!b.name)||(b.open+b.done)-(a.open+a.done)||b.open-a.open);
-  const max=Math.max(1,...list.map(r=>r.open+r.done));
-  return `<section class="panel cl-sum"><div class="panel-h"><h2>Tareas por cliente</h2><span class="cl-legend"><span><i></i>Abiertas</span><span><i class="d"></i>Hechas</span></span></div>
-    ${list.map(r=>{const tot=r.open+r.done,c=r.name||"";const on=S.clientF!=null&&lc(S.clientF)===lc(c);
-      return `<button class="cl-row ${on?"on":""}" data-act="cl-filter" data-c="${esc(c)}" title="${on?"Quitar filtro":"Ver solo estos proyectos"}">${c?clientTag(c):`<span class="tag neutral"><span>Sin cliente</span></span>`}
-      <span class="cl-track"><span class="cl-fill" style="width:${tot/max*100}%">${r.open?`<i class="o" style="flex:${r.open}"></i>`:""}${r.done?`<i class="d" style="flex:${r.done}"></i>`:""}</span></span>
-      <span class="cl-num"><b>${tot}</b>${tot===1?"tarea":"tareas"} · ${r.open} ${r.open===1?"abierta":"abiertas"}<span class="cl-pj"> · ${r.projs.size} ${r.projs.size===1?"proyecto":"proyectos"}</span></span></button>`}).join("")}
-  </section>`;
-}
 function viewProyectos(){
   const h=head("Proyectos","folder",S.canWrite?`<button class="btn primary" data-act="new-project">${ico("plus","sm")}Nuevo proyecto</button>`:"");
   const all=Object.entries(S.projects).map(([id,p])=>({id,...p})).filter(projVisible).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
-  const cf=S.clientF!=null?S.clientF.toLowerCase():null;
-  const tc=new Map();Object.values(S.allTasks||{}).forEach(t=>{if(t.archived||!S.projects[t.projectId])return;const cs=taskClients(t,S.projects[t.projectId]);if(!tc.has(t.projectId))tc.set(t.projectId,new Set());(cs.length?cs:[""]).forEach(c=>tc.get(t.projectId).add(lc(c)))});
-  const shown=cf==null?all:all.filter(p=>(cf===""?!clientsOf(p).length:clientsOf(p).some(c=>lc(c)===cf))||(tc.get(p.id)&&tc.get(p.id).has(cf)));
-  const act=shown.filter(p=>!p.archived),arch=shown.filter(p=>p.archived);
+  const act=all.filter(p=>!p.archived),arch=all.filter(p=>p.archived);
   const pc=p=>`<article class="proj"><div class="row" style="display:flex;justify-content:space-between;gap:8px;align-items:center"><h3>${esc(p.name)}</h3>${p.id===S.projectId?`<span class="tag hito">Abierto</span>`:p.archived?`<span class="tag neutral">Archivado</span>`:""}</div>
     <div class="tags">${clientsOf(p).map(clientTag).join("")}${visTag(p)}${p.ownerId&&p.ownerId!==S.me.id?`<span class="tag neutral"><span>Creado por ${esc(first(p.ownerId))}</span></span>`:""}</div>
     ${p.description?`<p>${esc(p.description)}</p>`:""}
@@ -1637,8 +1596,6 @@ function viewProyectos(){
     ${pvis(p)==="members"&&(p.memberIds||[]).length?`<div class="stack">${(p.memberIds||[]).slice(0,6).map(id=>av(id,"md")).join("")}</div>`:""}
     <div class="acts">${!p.archived?`<button class="btn sm" data-act="open-project" data-id="${p.id}">Abrir tablero</button>`:""}${canManageProj(p)?`<button class="btn ghost sm" data-act="edit-project" data-id="${p.id}">${ico("edit","sm")}Editar</button>`:""}${canManageProj(p)&&p.archived?`<button class="btn ghost sm" data-act="unarchive-project" data-id="${p.id}">Restaurar</button>`:""}</div></article>`;
   return h+`<div class="content">
-    ${clientSummary(all.filter(p=>!p.archived))}
-    ${cf!=null?`<div class="toolbar"><span class="pill sel">${ico("building","sm")}<span>${S.clientF?esc(S.clientF):"Sin cliente"}</span><button class="x" data-act="cl-filter" data-c="${esc(S.clientF)}" aria-label="Quitar filtro de cliente">${ico("x","sm")}</button></span><span class="hint">${shown.length} ${shown.length===1?"proyecto":"proyectos"}</span></div>`:""}
     ${act.length?`<div class="projs">${act.map(pc).join("")}</div>`:noProject().replace('<div class="content">',"").replace(/<\/div>$/,"")}
     ${arch.length?`<h2 style="font-size:15px;color:var(--muted);margin-top:8px">Archivados</h2><div class="projs">${arch.map(pc).join("")}</div>`:""}
   </div>`;
@@ -1760,7 +1717,7 @@ function taskModal(){
         ${ms.length?`<div class="field"><label for="f-hito">Hito</label><select id="f-hito" class="pill-select ${m.err==="hito"?"req":""}" data-f="milestoneId" ${dis}><option value="">${ms.length?"Elegir hito (obligatorio)":"Sin hitos en el proyecto"}</option>${ms.map(x=>`<option value="${x.id}" ${d.milestoneId===x.id?"selected":""}>${esc(x.name)}</option>`).join("")}</select></div>`:""}
         <div class="field"><label for="f-col">Columna</label><select id="f-col" class="pill-select" data-f="column" ${dis}>${COLS.map(c=>`<option value="${c.id}" ${d.column===c.id?"selected":""}>${c.name}</option>`).join("")}</select></div>
         <div class="field"><label for="f-pri">Prioridad</label><select id="f-pri" class="pill-select" data-f="priority" ${dis}>${PRI.map(([k,v])=>`<option value="${k}" ${d.priority===k?"selected":""}>${v}</option>`).join("")}</select></div>
-        <div class="field"><span class="flabel" id="f-cl-l">Cliente</span><div class="menu-wrap"><button type="button" class="cl-sel" data-act="cl-open" aria-labelledby="f-cl-l" aria-expanded="${!!m.clOpen}" ${dis}>${d.clients.length?d.clients.map(clientTag).join(""):`<span class="ph">Sin cliente</span>`}</button>${m.clOpen&&!ro?clientPop(d.clients,uniqClients(clientsOf(S.projects[S.projectId]).concat(d.clients).concat(clientsOf(S.projects[S.projectId]).length?[]:clientList())),"cl-tog"):""}</div></div>
+        <div class="field"><span class="flabel" id="f-cl-l">Cliente</span><div class="menu-wrap"><button type="button" class="cl-sel" data-act="cl-open" aria-labelledby="f-cl-l" aria-expanded="${!!m.clOpen}" ${dis}>${d.clients.length?clientTag(d.clients[0])+(d.clients.length>1?`<span class="tag neutral cl-more" title="${esc(d.clients.slice(1).join(", "))}">+${d.clients.length-1}</span>`:""):`<span class="ph">Sin cliente</span>`}</button>${m.clOpen&&!ro?clientPop(d.clients,uniqClients(clientsOf(S.projects[S.projectId]).concat(d.clients).concat(clientsOf(S.projects[S.projectId]).length?[]:clientList())),"cl-tog"):""}</div></div>
       </div>
       <div class="field"><span class="flabel">Fechas</span><div class="dates"><input id="f-start" type="date" data-f="start" value="${esc(d.start)}" aria-label="Fecha de inicio" ${dis}><span class="hint">a</span><input id="f-end" type="date" data-f="end" value="${esc(d.end)}" aria-label="Fecha de fin" ${dis}></div>${m.err==="dates"?`<span class="err">La fecha de fin es anterior a la de inicio.</span>`:""}</div>
       <div class="field"><span class="flabel">Responsables</span><div class="ppl">${ppl.map(id=>`<button type="button" class="${d.assignees.includes(id)?"on":""}" data-act="toggle-assignee" data-id="${id}" ${dis} aria-pressed="${d.assignees.includes(id)}">${av(id)}${esc(first(id))}</button>`).join("")||`<span class="hint">Agrega personas al proyecto para asignarlas.</span>`}</div></div>
@@ -2180,7 +2137,6 @@ function go(v){
   S.view=v;S.menu=null;S.navOpen=false;S.hitoOnly=null;S.chip=null;
   if(v==="documentos")S.navDocs=true;if(TASKV.includes(v))S.navTasks=true;
   if(v==="cronograma")S.tlLeft=null;
-  if(v==="proyectos")S.allTasks=null;
   try{history.replaceState(null,"","#"+v)}catch(e){}
   render();
   const mn=$("#main");if(mn)mn.scrollTop=0;
@@ -2303,7 +2259,6 @@ document.addEventListener("click",async e=>{
     case "cl-open":if(S.modal){S.modal.clOpen=!S.modal.clOpen;renderModal();if(S.modal.clOpen)setTimeout(()=>{const x=$("#cl-new");if(x)x.focus()},20)}break;
     case "cl-tog":if(S.modal){const a=S.modal.draft.clients;const k=a.findIndex(x=>lc(x)===lc(el.dataset.c));k<0?a.push(el.dataset.c):a.splice(k,1);renderModal()}break;
     case "cl-add":addClient();break;
-    case "cl-filter":S.clientF=S.clientF===el.dataset.c?null:el.dataset.c;render();break;
     case "proj-save":saveProject();break;
     case "proj-arch":m.confirmArch=true;renderModal();break;
     case "proj-arch-no":m.confirmArch=false;renderModal();break;
