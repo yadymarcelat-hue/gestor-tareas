@@ -28,7 +28,7 @@
   --bg:#f6f7f9; --surface:#ffffff; --surface-2:#f2f3f6; --hover:#eef0f4; --line:#e5e7ec; --line-2:#d9dce3;
   --fg:#15171c; --muted:#5f6673; --faint:#9399a5;
   --accent:#1667ff; --accent-hover:#0e57e0; --accent-soft:#e7efff; --accent-fg:#ffffff;
-  --violet:#7b5cf5; --violet-soft:#efeaff; --ch-sub:#d4730b;
+  --violet:#7b5cf5; --violet-soft:#efeaff;
   --col-todo:#eceef2; --col-doing:#dbe8ff; --col-review:#fcf1cc; --col-done:#d9f3e2;
   --dot-todo:#9399a5; --dot-doing:#1667ff; --dot-review:#e4a400; --dot-done:#21a55a;
   --p-alta-bg:#fde7e7; --p-alta-fg:#c42b2b; --p-media-bg:#fdf0d3; --p-media-fg:#9a6200; --p-baja-bg:#eef0f3; --p-baja-fg:#4a515d;
@@ -174,7 +174,7 @@ h1,h2,h3{text-wrap:balance;margin:0}
 .tabs .pill .i{width:16px;height:16px}
 .tabs .ic-task,.tabs .ic-cal{color:var(--violet)}
 .tabs .ic-hito{color:var(--accent)}
-.tabs .ic-rep{color:var(--ch-sub)}
+.tabs .ic-rep{color:var(--violet)}
 .tabs .pill.cur{background:var(--surface-2);border-color:var(--fg);font-weight:600}
 .menu-wrap{position:relative}
 .pop{position:absolute;top:calc(100% + 6px);left:0;z-index:30;min-width:240px;max-width:min(320px,86vw);background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow-lg);padding:6px;max-height:340px;overflow:auto}
@@ -395,6 +395,8 @@ button.tl-lab:hover .t{color:var(--accent)}
 .ppl button{display:inline-flex;align-items:center;gap:7px;height:36px;padding:0 13px 0 5px;border-radius:999px;border:1px solid var(--line-2);background:var(--surface);font-weight:500}
 .ppl button:hover{background:var(--hover)}
 .ppl button.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.d-ppl{margin-top:10px;max-height:220px;overflow:auto;padding:2px}
+.d-ppl.req{outline:1.5px solid var(--danger);outline-offset:4px;border-radius:10px}
 .sec-h{display:flex;align-items:center;gap:8px;justify-content:space-between}
 .sec-h .flabel{display:flex;align-items:center;gap:8px}
 .sec-h .count{color:var(--faint);font-weight:500;font-variant-numeric:tabular-nums}
@@ -483,6 +485,7 @@ button.tl-lab:hover .t{color:var(--accent)}
 .cl-sel{flex-wrap:nowrap;overflow:hidden}
 .cl-sel .tag{height:22px;flex:0 1 auto;min-width:0}
 .cl-sel .cl-more{flex:none}
+.rep-scope{display:flex;gap:6px;margin:0 0 14px}
 .rep-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:16px;margin-top:16px;align-items:start}
 .rep-stat{background:var(--surface);border:1px solid var(--line)}
 .rep-stat .sl{font-size:13px;color:var(--muted)}.rep-stat b{font-size:24px;font-weight:600;font-variant-numeric:tabular-nums}.rep-stat .ss{font-size:12px;color:var(--muted)}
@@ -492,16 +495,18 @@ button.tl-lab:hover .t{color:var(--accent)}
 .hb-lab{min-width:0;display:flex}.hb-lab .person{color:var(--fg);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.hb-lab .muted{color:var(--muted)}
 .hb-bars{display:flex;flex-direction:column;gap:4px}
 .hb-track{display:flex;align-items:center;gap:2px;height:14px;min-width:0}
-.hb-track i{display:block;height:100%;border-radius:0 4px 4px 0;min-width:3px}
+.hb-track i{display:block;height:100%;border-radius:0 4px 4px 0;min-width:4px;box-sizing:border-box}
 .hb-track i+i{border-radius:0 4px 4px 0}
-.hb-track i.o{background:var(--accent)}.hb-track i.d{background:var(--accent);opacity:.35}.hb-track i.s{background:var(--ch-sub)}
-.hb-pair .hb-track{height:10px}
+.hb-track i.o,.hb-legend i.o{background:color-mix(in srgb,var(--dot-doing) 38%,var(--surface));border:1.5px solid var(--dot-doing)}
+.hb-track i.d,.hb-legend i.d{background:color-mix(in srgb,var(--dot-done) 38%,var(--surface));border:1.5px solid var(--dot-done)}
+.hb-track i.s,.hb-legend i.s{background:color-mix(in srgb,var(--violet) 38%,var(--surface));border:1.5px solid var(--violet)}
+.hb-pair .hb-track{height:12px}
 .hb-val{font-size:12.5px;font-weight:600;margin-left:6px;font-variant-numeric:tabular-nums;color:var(--fg)}
 .hb-row:hover .hb-track i,.hb-pair:hover .hb-track i{filter:brightness(1.08)}
 .hb-legend{display:flex;gap:12px;align-items:center;font-size:12px;color:var(--muted);white-space:nowrap;flex:none}
 .hb-val:first-child{margin-left:0}
-.hb-legend i{display:inline-block;width:10px;height:10px;border-radius:3px;background:var(--accent);margin-right:5px;vertical-align:-1px}
-.hb-legend i.d{opacity:.35}.hb-legend i.s{background:var(--ch-sub)}
+.hb-legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px;box-sizing:border-box}
+
 @media (max-width:640px){.rep-grid{grid-template-columns:1fr}.hb-row,.hb-pair{grid-template-columns:1fr;gap:6px}}
 .tag.cl{height:20px;padding:0 6px;gap:4px;font-size:11.5px;border-radius:5px}
 .tag.cl .i{width:12px;height:12px}
@@ -752,7 +757,6 @@ button.chip:disabled{cursor:default;filter:none;border-color:transparent}
 .md hr{border:0;border-top:1px solid var(--line);margin:16px 0}
 .md a{color:var(--accent)}
 .md .todo-i{list-style:none;margin-left:-20px}
-.edit-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .share-box{display:flex;flex-direction:column;gap:12px;padding:16px 20px;border-bottom:1px solid var(--line)}
 .share-box:last-child{border-bottom:0}
 .share-box h4{font-size:14px;font-weight:600;margin:0;display:flex;align-items:center;gap:8px}
@@ -1391,12 +1395,13 @@ function setChip(v){
 }
 
 /* ---------- Docu: documentos ---------- */
-const DVIS={private:"Solo yo",company:"Toda la empresa",project:"Personas de un proyecto"};
+const DVIS={private:"Solo yo",people:"Personas específicas",company:"Toda la empresa",project:"Personas de un proyecto"};
 const dvis=d=>(d&&DVIS[d.visibility])?d.visibility:"private";
 function canSeeDoc(d){
   if(d.ownerId===S.me.id)return true;
   const v=dvis(d);
   if(v==="company")return true;
+  if(v==="people")return (d.memberIds||[]).includes(S.me.id);
   if(v==="project")return projVisible(S.projects[d.projectId]);
   return false;
 }
@@ -1412,6 +1417,7 @@ function docList(){
 }
 function dvisTag(d){
   const v=dvis(d);const p=v==="project"&&S.projects[d.projectId];
+  if(v==="people"){const ids=(d.memberIds||[]).filter(id=>id!==d.ownerId);return `<span class="tag vis" title="${esc(ids.map(nm).join(", "))}">${ico("users","sm")}<span>${ids.length===1?esc(nm(ids[0])):ids.length+" personas"}</span></span>`}
   return `<span class="tag vis">${ico(v==="private"?"lock":v==="company"?"building":"folder","sm")}<span>${esc(p?p.name:DVIS[v])}</span></span>`;
 }
 // Markdown sencillo: # títulos, - listas, 1. listas, [ ] tareas, > citas, **negrita**, *cursiva*, `código`, [texto](enlace).
@@ -1453,7 +1459,7 @@ function openDoc(id){
   const src=isNew?{title:"",content:"",visibility:"private",projectId:"",docs:[],share:{enabled:false,token:""},ownerId:S.me.id}
     :Object.assign({title:"",content:"",visibility:"private",projectId:""},clone(S.documents[id]),{docs:clone((S.documents[id]||{}).attachments||[])});
   src.visibility=dvis(src);src.share=Object.assign({enabled:false,token:""},src.share||{});
-  S.modal={kind:"doc",id:did,isNew,draft:src,orig:clone(src),err:"",confirmDel:false,linkForm:false,link:{name:"",url:""},uploading:0,newAssets:[],preview:!isNew&&!!src.content};
+  S.modal={kind:"doc",id:did,isNew,draft:src,orig:clone(src),err:"",confirmDel:false,linkForm:false,link:{name:"",url:""},uploading:0,newAssets:[]};
   renderModal();
   setTimeout(()=>{const el=$("#d-title");if(el&&isNew)el.focus()},30);
 }
@@ -1466,10 +1472,10 @@ function docModal(){
   const link=d.share.token?shareUrl(d.share.token):"";
   return `<div class="overlay" data-act="modal-bg"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="m-title">
   <div class="m-main">
-    <div class="m-head">${ico("doc")}<h2 id="m-title">${m.isNew?"Nuevo documento":ro?"Documento":"Editar documento"}</h2>${ro||!d.content&&m.isNew?"":`<div class="edit-bar"><button class="btn sm ${m.preview?"":"primary"}" data-act="doc-mode" data-v="edit">${ico("edit","sm")}Escribir</button><button class="btn sm ${m.preview?"primary":""}" data-act="doc-mode" data-v="view">${ico("eye","sm")}Vista previa</button></div>`}<button class="icon-btn" data-act="modal-close" aria-label="Cerrar">${ico("x")}</button></div>
+    <div class="m-head">${ico("doc")}<h2 id="m-title">${m.isNew?"Nuevo documento":ro?"Documento":"Editar documento"}</h2><button class="icon-btn" data-act="modal-close" aria-label="Cerrar">${ico("x")}</button></div>
     <div class="m-body">
       <textarea id="d-title" class="title-input" rows="1" placeholder="Título del documento" data-d="title" ${dis} aria-label="Título">${esc(d.title)}</textarea>
-      ${m.preview||ro?`<div class="md">${md(d.content)||`<p class="hint">Este documento está vacío.</p>`}</div>`
+      ${ro?`<div class="md">${md(d.content)||`<p class="hint">Este documento está vacío.</p>`}</div>`
         :`<textarea id="d-content" class="doc-edit" data-d="content" placeholder="Escribe aquí… Usa # para títulos, - para listas, [ ] para pendientes y **negrita**." aria-label="Contenido">${esc(d.content)}</textarea>`}
       <div class="field"><div class="sec-h"><span class="flabel">${ico("clip","sm")}Archivos <span class="count">${docs.length}</span></span></div>
         <div class="docs">${docs.map(x=>docRow(x,ro)).join("")}</div>
@@ -1488,7 +1494,8 @@ function docModal(){
   </div>
   <aside class="m-side" aria-label="Compartir"><h3>Compartir</h3><div class="share-scroll">
     <div class="share-box"><h4>${ico("users","sm")}Dentro de ${esc(wsName())}</h4>
-      ${ro?`<span>${dvisTag(d)}</span>`:`<div class="vis-opts">${[["private","Solo yo","Nadie más lo ve, ni las administradoras."],["company","Toda la empresa","Todas las personas lo leen. Lo editan tú y las administradoras."],["project","Personas de un proyecto","Lo ven quienes ven el proyecto que elijas."]].map(([k,l,hh])=>`<label class="vis-opt"><input type="radio" name="d-vis" data-act="d-vis" value="${k}" ${d.visibility===k?"checked":""}><span><b>${l}</b><small>${hh}</small></span></label>`).join("")}</div>
+      ${ro?`<span>${dvisTag(d)}</span>`:`<div class="vis-opts">${[["private","Solo yo","Nadie más lo ve, ni las administradoras."],["people","Personas específicas","Solo lo ven las personas que elijas."],["company","Toda la empresa","Todas las personas lo leen. Lo editan tú y las administradoras."],["project","Personas de un proyecto","Lo ven quienes ven el proyecto que elijas."]].map(([k,l,hh])=>`<label class="vis-opt"><input type="radio" name="d-vis" data-act="d-vis" value="${k}" ${d.visibility===k?"checked":""}><span><b>${l}</b><small>${hh}</small></span></label>`).join("")}</div>
+      ${d.visibility==="people"?`<div class="ppl d-ppl ${m.err==="ppl"?"req":""}">${memberIds().filter(id=>id!==(d.ownerId||S.me.id)).sort((a,b)=>nm(a).localeCompare(nm(b),"es")).map(id=>{const on=(d.memberIds||[]).includes(id);return `<button type="button" class="${on?"on":""}" data-act="d-person" data-id="${id}" aria-pressed="${on}">${av(id)}${esc(nm(id))}</button>`}).join("")||`<span class="hint">Todavía no hay más personas en la empresa.</span>`}</div>`:""}
       ${d.visibility==="project"?`<select id="d-proj" class="pill-select ${m.err==="proj"?"req":""}" data-d="projectId"><option value="">Elegir proyecto</option>${projs.map(p=>`<option value="${p.id}" ${d.projectId===p.id?"selected":""}>${esc(p.name)}</option>`).join("")}</select>`:""}`}
     </div>
     <div class="share-box"><h4>${ico("globe","sm")}Fuera de la empresa</h4>
@@ -1505,9 +1512,11 @@ function docModal(){
 async function saveDoc(){
   const m=S.modal,d=m.draft;m.err="";
   if(!d.title.trim()){m.err="Escribe el título del documento.";renderModal();const x=$("#d-title");if(x)x.focus();return}
+  const shareIds=(d.memberIds||[]).filter(id=>S.members[id]&&id!==(d.ownerId||S.me.id));
+  if(d.visibility==="people"&&!shareIds.length){m.err="ppl";renderModal();toast("Elige al menos una persona para compartir el documento.",true);return}
   if(d.visibility==="project"&&!d.projectId){m.err="proj";renderModal();toast("Elige el proyecto que puede ver el documento.",true);return}
   const now=Date.now();
-  const body={title:d.title.trim(),content:d.content||"",visibility:d.visibility,projectId:d.visibility==="project"?d.projectId:"",attachments:d.docs||[],
+  const body={title:d.title.trim(),content:d.content||"",visibility:d.visibility,projectId:d.visibility==="project"?d.projectId:"",memberIds:d.visibility==="people"?shareIds:[],attachments:d.docs||[],
     share:{enabled:!!d.share.enabled,token:d.share.token||""},updatedAt:now,updatedBy:S.me.id};
   let ok;
   if(m.isNew){Object.assign(body,{ownerId:S.me.id,createdAt:now});ok=await safe(()=>wset("documents",m.id,body),"Documento creado")}
@@ -1621,12 +1630,17 @@ function hbar(label,segs,tip){
   return `<div class="hb-row" title="${esc(tip)}"><span class="hb-lab">${label}</span><span class="hb-track">${segs.filter(x=>x.v).map(x=>`<i class="${x.c}" style="width:${x.w}%"></i>`).join("")}<b class="hb-val">${tot}</b></span></div>`};
 function viewReporte(){
   const h=head("Tareas","tasks","");
-  const bar=`<div class="toolbar">${viewTabs()}<span class="hint">Todos los proyectos activos</span></div>`;
-  loadAllTasks();
-  if(!S.allTasks)return h+`<div class="content">${bar}<section class="panel"><div class="empty"><p>Contando tareas…</p></div></section></div>`;
+  const all=S.repAll||!curProject();
+  const bar=`<div class="toolbar one">${projectSwitcher()}${personFilter()}${searchBox()}${viewTabs()}</div>
+    <div class="rep-scope" role="group" aria-label="Alcance del reporte"><button class="lgb mode ${all?"":"on"}" data-act="rep-all" data-v="0" aria-pressed="${!all}" ${curProject()?"":"disabled"}>${ico("folder","sm")}Este proyecto</button><button class="lgb mode ${all?"on":""}" data-act="rep-all" data-v="1" aria-pressed="${all}">${ico("building","sm")}Todos los proyectos</button></div>`;
+  if(all)loadAllTasks();
+  if(all&&!S.allTasks)return h+`<div class="content">${bar}<section class="panel"><div class="empty"><p>Contando tareas…</p></div></section></div>`;
   const projs=Object.entries(S.projects).map(([id,p])=>({id,...p})).filter(p=>projVisible(p)&&!p.archived);
   const byProj=Object.fromEntries(projs.map(p=>[p.id,p]));
-  const ts=Object.values(S.allTasks).filter(t=>!t.archived&&byProj[t.projectId]);
+  const q=S.q.trim().toLowerCase();
+  const ts=Object.values(all?S.allTasks:S.tasks).filter(t=>!t.archived&&byProj[t.projectId]&&(all||t.projectId===S.projectId)
+    &&(!S.person||(t.assignees||[]).includes(S.person)||(t.subtasks||[]).some(x=>x.assignee===S.person))
+    &&(!q||(t.title||"").toLowerCase().includes(q)||(t.description||"").toLowerCase().includes(q)));
   // Clientes
   const cr=new Map();const crow=c=>{const k=lc(c);if(!cr.has(k))cr.set(k,{name:c,projs:new Map(),open:0,done:0});return cr.get(k)};
   ts.forEach(t=>{const own=clientsOf(t),pc=clientsOf(byProj[t.projectId]);const cs=own.length?own:(pc.length===1?pc:[]);
@@ -1639,7 +1653,7 @@ function viewReporte(){
   let subs=0;
   ts.forEach(t=>{const as=t.assignees||[];(as.length?as:[""]).forEach(id=>{const r=prow(id);t.column==="done"?r.td++:r.to++});
     (t.subtasks||[]).forEach(x=>{subs++;const r=prow(x.assignee||"");x.done||t.column==="done"?r.sd++:r.so++})});
-  const pl=[...pr.values()].sort((a,b)=>(!a.id)-(!b.id)||(b.to+b.td+b.so+b.sd)-(a.to+a.td+a.so+a.sd));
+  const pl=[...pr.values()].filter(r=>!S.person||r.id===S.person).sort((a,b)=>(!a.id)-(!b.id)||(b.to+b.td+b.so+b.sd)-(a.to+a.td+a.so+a.sd));
   const pmax=Math.max(1,...pl.map(r=>Math.max(r.to+r.td,r.so+r.sd)));
   const pct=(n,m)=>n/m*100;
   const stat=(l,v,sub)=>`<div class="stat rep-stat"><span class="sl">${l}</span><b>${v}</b>${sub?`<span class="ss">${sub}</span>`:""}</div>`;
@@ -2257,7 +2271,6 @@ document.addEventListener("click",async e=>{
     case "doc-f":S.docF=el.dataset.f||"all";S.navDocs=true;if(S.view!=="documentos")go("documentos");else render();break;
     case "doc-new":if(S.canWrite)openDoc(null);break;
     case "doc-open":openDoc(id);break;
-    case "doc-mode":m.preview=el.dataset.v==="view";renderModal();if(!m.preview){const x=$("#d-content");if(x)x.focus()}break;
     case "doc-save":saveDoc();break;
     case "doc-del":m.confirmDel=true;renderModal();break;
     case "doc-del-no":m.confirmDel=false;renderModal();break;
@@ -2280,10 +2293,12 @@ document.addEventListener("click",async e=>{
     case "nav-open":S.navOpen=true;render();break;
     case "nav-close":S.navOpen=false;render();break;
     case "menu":S.menu=S.menu===el.dataset.m?null:el.dataset.m;render();break;
-    case "pick-project":S.menu=null;pickProject(id);break;
+    case "pick-project":S.menu=null;S.repAll=false;pickProject(id);break;
     case "open-project":pickProject(id);go("tablero");break;
     case "person":S.person=id;S.menu=null;render();break;
+    case "d-person":{const a=m.draft.memberIds=(m.draft.memberIds||[]).slice();const i=a.indexOf(id);i<0?a.push(id):a.splice(i,1);if(m.err==="ppl")m.err="";renderModal();break}
     case "person-clear":S.person=null;S.menu=null;render();break;
+    case "rep-all":S.repAll=el.dataset.v==="1";render();break;
     case "toggle-arch":S.showArchived=!S.showArchived;render();break;
     case "new-task":if(S.canWrite)openTask(null,el.dataset.col);break;
     case "open-task":if(S.dragId)return;openTask(id);break;
@@ -2370,7 +2385,7 @@ document.addEventListener("change",e=>{
   if(t.id==="me-photo"&&t.files&&t.files[0]){setPhoto(t.files[0]);t.value="";return}
   if(t.id==="emp-me"){S.emp.form.includeMe=t.checked;return}
   if(t.dataset.act==="inv-proj"){const a=S.inv.projects;t.checked?a.includes(t.value)||a.push(t.value):S.inv.projects=a.filter(x=>x!==t.value);return}
-  if(t.dataset.act==="d-vis"&&m){m.draft.visibility=t.value;if(m.err==="proj")m.err="";renderModal();return}
+  if(t.dataset.act==="d-vis"&&m){m.draft.visibility=t.value;if(m.err==="proj"||m.err==="ppl")m.err="";renderModal();return}
   if(t.dataset.act==="d-share"&&m){m.draft.share.enabled=t.checked;if(t.checked&&!m.draft.share.token)m.draft.share.token=newToken();renderModal();return}
   if(m&&m.kind==="doc"&&t.dataset.d&&t.tagName==="SELECT"){m.draft[t.dataset.d]=t.value;if(m.err==="proj")m.err="";renderModal();return}
   if(t.id==="ws-logo"&&t.files&&t.files[0]){setLogo(t.files[0]);t.value="";return}

@@ -12,18 +12,25 @@
 
 -- 1. Quién ve qué ------------------------------------------------------------------
 
--- ¿La persona que llama puede ver este proyecto?
+-- ¿La persona que llama puede ver un proyecto con estos datos?
+-- Decide con los datos del proyecto mismo, así sirve también al crearlo (cuando todavía no está guardado).
+create or replace function public.project_visible(ws text, d jsonb) returns boolean
+language sql stable security definer set search_path = public as $$
+  select public.is_member(ws) and (
+    d->>'ownerId' = auth.uid()::text
+    or coalesce(d->>'visibility', 'members') = 'company'
+    or (coalesce(d->>'visibility', 'members') = 'members'
+        and (public.is_admin(ws) or coalesce(d->'memberIds', '[]'::jsonb) ? auth.uid()::text))
+  );
+$$;
+
+-- ¿La persona que llama puede ver este proyecto guardado? (para sus tareas, hitos y comentarios)
 create or replace function public.can_see_project(ws text, pid text) returns boolean
 language sql stable security definer set search_path = public as $$
-  select public.is_member(ws) and exists (
+  select exists (
     select 1 from public.docs p
     where p.workspace_id = ws and p.collection = 'projects' and p.id = pid
-      and (
-        p.data->>'ownerId' = auth.uid()::text
-        or coalesce(p.data->>'visibility', 'members') = 'company'
-        or (coalesce(p.data->>'visibility', 'members') = 'members'
-            and (public.is_admin(ws) or coalesce(p.data->'memberIds', '[]'::jsonb) ? auth.uid()::text))
-      )
+      and public.project_visible(ws, p.data)
   );
 $$;
 
@@ -44,7 +51,7 @@ $$;
 create or replace function public.can_read_doc(ws text, c text, i text, d jsonb) returns boolean
 language sql stable security definer set search_path = public as $$
   select public.is_member(ws) and case
-    when c = 'projects' then public.can_see_project(ws, i)
+    when c = 'projects' then public.project_visible(ws, d)
     when c in ('tasks', 'milestones') then public.can_see_project(ws, d->>'projectId')
     when c = 'comments' then public.can_see_project(ws, coalesce(
       d->>'projectId',
