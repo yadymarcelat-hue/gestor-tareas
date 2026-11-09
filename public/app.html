@@ -1251,6 +1251,7 @@ async function loadAgenda(force){
     const d0=parse(day),d1=parse(addDays(day,1));
     const r=await fetch("/api/calendar",{method:"POST",headers:{"content-type":"application/json",authorization:"Bearer "+token},body:JSON.stringify({timeMin:d0.toISOString(),timeMax:d1.toISOString(),tz:Intl.DateTimeFormat().resolvedOptions().timeZone})});
     const j=await r.json().catch(()=>({}));
+    if(r.status===400&&/basic\.ics/.test(j.error||""))throw new Error("El servidor todavía tiene la versión anterior. Sube a GitHub app/api/calendar/route.js, la carpeta app/api/google y lib/google.js.");
     if(!r.ok)throw new Error(j.error||"No pudimos leer tu calendario.");
     if(S.ag&&S.ag.key===key)S.ag={key,loading:false,events:j.connected?j.events||[]:null,err:"",at:Date.now(),on:!!j.connected,email:j.email||"",setup:j.setup!==false,expired:!!j.expired};
   }catch(e){if(S.ag&&S.ag.key===key)S.ag=Object.assign(S.ag,{loading:false,events:null,err:e.message||"No pudimos leer tu calendario."})}
@@ -1262,6 +1263,7 @@ async function gcalConnect(){
     const token=await window.appAuth.token();
     const r=await fetch("/api/google/start",{method:"POST",headers:{authorization:"Bearer "+token}});
     const j=await r.json().catch(()=>({}));
+    if(r.status===404)throw new Error("Falta publicar la conexión con Google: sube a GitHub la carpeta app/api/google y lib/google.js.");
     if(!r.ok||!j.url)throw new Error(j.error||"No pudimos abrir Google.");
     location.href=j.url;
   }catch(e){toast(e.message,true)}
@@ -1280,7 +1282,7 @@ function agendaPanel(){
   loadAgenda();
   const ag=S.ag&&S.ag.key===day?S.ag:null;const url=!ag||ag.on!==false;
   const dl=parse(day).toLocaleDateString("es-CO",{weekday:"long",day:"numeric",month:"long"});
-  const nav=`<div class="ag-nav"><button class="icon-btn sm" data-act="ag-day" data-v="-1" aria-label="Día anterior">${ico("left","sm")}</button><button class="btn sm ${isToday?"":"ghost"}" data-act="ag-day" data-v="0">Hoy</button><button class="icon-btn sm" data-act="ag-day" data-v="1" aria-label="Día siguiente">${ico("right","sm")}</button>${url?`<button class="icon-btn sm" data-act="gcal-open" aria-label="Configurar Google Calendar" title="Configurar Google Calendar">${ico("cal","sm")}</button>`:""}</div>`;
+  const nav=`<div class="ag-nav"><button class="icon-btn sm" data-act="ag-day" data-v="-1" aria-label="Día anterior">${ico("left","sm")}</button><button class="btn sm ${isToday?"":"ghost"}" data-act="ag-day" data-v="0">Hoy</button><button class="icon-btn sm" data-act="ag-day" data-v="1" aria-label="Día siguiente">${ico("right","sm")}</button>${ag&&ag.on===true?`<button class="icon-btn sm" data-act="gcal-open" aria-label="Configurar Google Calendar" title="Configurar Google Calendar">${ico("cal","sm")}</button>`:""}</div>`;
   const hd=`<div class="panel-h"><div class="ag-title"><h2>${ico("cal","sm")}Mi día</h2><span class="hint">${esc(dl.charAt(0).toUpperCase()+dl.slice(1))}</span></div>${url?nav:""}</div>`;
   if(!url)return `<section class="panel ag">${hd}<div class="ag-empty"><span class="badge-ic">${ico("cal")}</span><div><b>${ag.expired?"Vuelve a conectar tu Google Calendar":"Conecta tu Google Calendar"}</b><p>${ag.setup?ag.expired?"Google pidió que autorices otra vez el acceso a tu calendario.":"Mira aquí tus reuniones de hoy y tu agenda por horas. Cada persona conecta su propia cuenta de Google; la app solo lee tu calendario.":"Falta configurar la conexión con Google en Vercel (GOOGLE_CLIENT_ID y GOOGLE_CLIENT_SECRET)."}</p></div>${ag.setup?`<button class="btn primary" data-act="gcal-connect">${ico("cal","sm")}Conectar con Google</button>`:""}</div></section>`;
   if(!ag||(!ag.events&&ag.loading))return `<section class="panel ag">${hd}<div class="ag-empty"><p class="hint">Cargando tu agenda…</p></div></section>`;
