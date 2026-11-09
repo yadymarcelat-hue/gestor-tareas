@@ -485,6 +485,41 @@ button.tl-lab:hover .t{color:var(--accent)}
 .cl-sel{flex-wrap:nowrap;overflow:hidden}
 .cl-sel .tag{height:22px;flex:0 1 auto;min-width:0}
 .cl-sel .cl-more{flex:none}
+/* Mi día */
+.ag-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.ag-chip{height:34px;cursor:default;color:var(--muted);font-size:13.5px}.ag-chip b{color:var(--fg);font-weight:600;font-variant-numeric:tabular-nums}
+.ag-chip.late{color:var(--danger)}.ag-chip.late b{color:var(--danger)}
+.ag{margin-bottom:16px}
+.ag-title{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;min-width:0}
+.ag-title h2{display:inline-flex;align-items:center;gap:7px}.ag-title h2 .i{color:var(--violet)}
+.ag-nav{display:flex;align-items:center;gap:4px;flex:none}
+.ag-empty{display:flex;align-items:center;gap:14px;padding:18px;flex-wrap:wrap}.ag-empty>div{flex:1 1 240px;min-width:0}.ag-empty p{margin:2px 0 0;color:var(--muted);font-size:13.5px}
+.ag-empty .badge-ic{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;background:var(--violet-soft);color:var(--violet);flex:none}
+.ag-sum{display:flex;gap:6px 18px;flex-wrap:wrap;font-size:14px;color:var(--muted);margin-bottom:12px}.ag-sum b{color:var(--fg);font-weight:600;font-variant-numeric:tabular-nums}
+.ag-next{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:12px;border:1.5px solid var(--dot-doing);background:color-mix(in srgb,var(--dot-doing) 10%,var(--surface));margin-bottom:14px}
+.ag-next .grow{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}
+.ag-next b{font-size:17px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+a.btn{text-decoration:none}
+.ag-when{font-size:13px;color:var(--accent);font-weight:600}
+.ag-strip{margin:4px 0 14px}
+.ag-track{position:relative;height:calc(var(--lanes) * 24px + 10px);min-height:34px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2);overflow:hidden}
+.ag-hr{position:absolute;top:0;bottom:0;width:1px;background:var(--line)}
+.ag-blk{position:absolute;height:18px;border-radius:5px;box-sizing:border-box;background:color-mix(in srgb,var(--dot-doing) 38%,var(--surface));border:1.5px solid var(--dot-doing)}
+.ag-blk.past{background:color-mix(in srgb,var(--dot-todo) 25%,var(--surface));border-color:color-mix(in srgb,var(--dot-todo) 60%,var(--surface))}
+.ag-blk.next{background:color-mix(in srgb,var(--violet) 38%,var(--surface));border-color:var(--violet)}
+.ag-now{position:absolute;top:0;bottom:0;width:2px;margin-left:-1px;background:var(--danger);z-index:2}
+.ag-now:before{content:"";position:absolute;top:-1px;left:-3px;width:8px;height:8px;border-radius:50%;background:var(--danger)}
+.ag-hours{position:relative;height:18px;margin-top:4px;font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.ag-hours span{position:absolute;transform:translateX(-50%)}.ag-hours span:first-child{transform:none}.ag-hours span:last-child{transform:translateX(-100%)}
+.ag-list{display:flex;flex-direction:column}
+.ag-row{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--line);min-width:0}.ag-row:last-child{border-bottom:0}
+.ag-t{width:76px;flex:none;font-size:13.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.ag-bar{width:4px;align-self:stretch;min-height:22px;border-radius:2px;background:var(--dot-doing);flex:none}
+.ag-row.next .ag-bar{background:var(--violet)}.ag-row.allday .ag-bar{background:var(--dot-review)}
+.ag-n{flex:1;min-width:0;display:flex;flex-direction:column}.ag-n>span{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ag-n small{color:var(--muted);font-size:12.5px}
+.ag-row.past .ag-n>span{text-decoration:line-through;color:var(--muted)}.ag-row.past .ag-bar{background:var(--line-2)}
+.gc-steps{margin:0 0 16px;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:14px}.gc-steps a{color:var(--accent)}
+@media (max-width:600px){.ag-next{flex-wrap:wrap}.ag-t{width:58px}.panel-h:has(.ag-title){flex-wrap:wrap}}
 .rep-scope{display:flex;gap:6px;margin:0 0 14px}
 .rep-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:16px;margin-top:16px;align-items:start}
 .rep-stat{background:var(--surface);border:1px solid var(--line)}
@@ -793,6 +828,7 @@ const TASKV=["tablero","cronograma","hitos","reporte"];
 
 /* ---------- icons ---------- */
 const P={
+  video:'<rect x="3" y="6" width="12" height="12" rx="2"/><path d="m15 10 6-3v10l-6-3"/>',
   chart:'<path d="M4 20h16"/><rect x="5" y="11" width="3.5" height="6" rx="1"/><rect x="10.25" y="6" width="3.5" height="11" rx="1"/><rect x="15.5" y="9" width="3.5" height="8" rx="1"/>',
   home:'<path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
   tasks:'<path d="M4 6l1.5 1.5L8 5M4 12l1.5 1.5L8 11M4 18l1.5 1.5L8 17M11 6h9M11 12h9M11 18h9"/>',
@@ -1191,9 +1227,95 @@ function card(t){
   </article>`;
 }
 
+/* ---------- Mi día: agenda de Google Calendar ---------- */
+const hm=d=>`${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
+const durTxt=ms=>{const mi=Math.max(0,Math.round(ms/60000));const h=Math.floor(mi/60),r=mi%60;return h&&r?`${h} h ${r} min`:h?`${h} h`:`${r} min`};
+const gcalUrl=()=>S.demo?(ls.get("pj-gcal")||"demo"):(ls.get("pj-gcal")||"");
+function agDay(){return addDays(today(),S.agOff||0)}
+function demoAgenda(day){
+  const at=(h,mi)=>{const d=parse(day);d.setHours(h,mi,0,0);return d.toISOString()};
+  return [{id:"a",title:"Cumpleaños de Ana",start:day,end:addDays(day,1),allDay:true},
+    {id:"1",title:"Weekly del equipo",start:at(8,0),end:at(9,0),link:"https://meet.google.com/abc-defg-hij"},
+    {id:"2",title:"Demo con cliente piloto",start:at(9,0),end:at(10,0),link:"https://meet.google.com/abc-defg-hij"},
+    {id:"3",title:"Revisión de diseño",start:at(11,0),end:at(11,30)},
+    {id:"4",title:"Almuerzo con Daniel",start:at(12,45),end:at(13,45),location:"Oficina"},
+    {id:"5",title:"Planeación de la semana",start:at(15,0),end:at(16,0),link:"https://meet.google.com/abc-defg-hij"},
+    {id:"6",title:"Llamada con proveedor",start:at(15,30),end:at(16,15)}]}
+async function loadAgenda(){
+  const url=gcalUrl(),day=agDay(),key=url+"|"+day;
+  if(!url||(S.ag&&S.ag.key===key&&(S.ag.loading||Date.now()-S.ag.at<300000)))return;
+  S.ag={key,loading:true,events:S.ag&&S.ag.key===key?S.ag.events:null,err:"",at:Date.now()};
+  if(S.demo){S.ag={key,loading:false,events:demoAgenda(day),err:"",at:Date.now()};return}
+  try{
+    const token=await window.appAuth.token();
+    const r=await fetch("/api/calendar",{method:"POST",headers:{"content-type":"application/json",authorization:"Bearer "+token},body:JSON.stringify({url,day,tz:Intl.DateTimeFormat().resolvedOptions().timeZone})});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok)throw new Error(j.error||"No pudimos leer tu calendario.");
+    if(S.ag&&S.ag.key===key)S.ag={key,loading:false,events:j.events||[],err:"",at:Date.now()};
+  }catch(e){if(S.ag&&S.ag.key===key)S.ag={key,loading:false,events:null,err:e.message||"No pudimos leer tu calendario.",at:Date.now()}}
+  if(S.view==="inicio")render();
+}
+function agendaPanel(){
+  const url=gcalUrl(),day=agDay(),isToday=day===today();
+  const dl=parse(day).toLocaleDateString("es-CO",{weekday:"long",day:"numeric",month:"long"});
+  const nav=`<div class="ag-nav"><button class="icon-btn sm" data-act="ag-day" data-v="-1" aria-label="Día anterior">${ico("left","sm")}</button><button class="btn sm ${isToday?"":"ghost"}" data-act="ag-day" data-v="0">Hoy</button><button class="icon-btn sm" data-act="ag-day" data-v="1" aria-label="Día siguiente">${ico("right","sm")}</button>${url?`<button class="icon-btn sm" data-act="gcal-open" aria-label="Configurar Google Calendar" title="Configurar Google Calendar">${ico("cal","sm")}</button>`:""}</div>`;
+  const hd=`<div class="panel-h"><div class="ag-title"><h2>${ico("cal","sm")}Mi día</h2><span class="hint">${esc(dl.charAt(0).toUpperCase()+dl.slice(1))}</span></div>${url?nav:""}</div>`;
+  if(!url)return `<section class="panel ag">${hd}<div class="ag-empty"><span class="badge-ic">${ico("cal")}</span><div><b>Conecta tu Google Calendar</b><p>Mira aquí tus reuniones de hoy y tu agenda por horas, sin salir del gestor.</p></div><button class="btn primary" data-act="gcal-open">Conectar Google Calendar</button></div></section>`;
+  loadAgenda();
+  const ag=S.ag&&S.ag.key===url+"|"+day?S.ag:null;
+  if(!ag||(!ag.events&&ag.loading))return `<section class="panel ag">${hd}<div class="ag-empty"><p class="hint">Cargando tu agenda…</p></div></section>`;
+  if(ag.err)return `<section class="panel ag">${hd}<div class="ag-empty"><div><b>No pudimos leer tu calendario</b><p>${esc(ag.err)}</p></div><button class="btn" data-act="gcal-open">Revisar conexión</button></div></section>`;
+  const evs=ag.events||[];const allDay=evs.filter(e=>e.allDay);
+  const timed=evs.filter(e=>!e.allDay).map(e=>({...e,s:new Date(e.start),e:new Date(e.end)}));
+  const now=new Date();
+  // Tiempo ocupado sin contar dos veces las reuniones que se cruzan.
+  let busy=0,cur=null;timed.slice().sort((a,b)=>a.s-b.s).forEach(x=>{if(!cur||x.s>cur.e){if(cur)busy+=cur.e-cur.s;cur={s:x.s,e:x.e}}else if(x.e>cur.e)cur.e=x.e});if(cur)busy+=cur.e-cur.s;
+  const last=timed.reduce((m,x)=>x.e>m?x.e:m,null);
+  const nextEv=isToday?timed.find(x=>x.e>now):null;
+  const sum=`<div class="ag-sum"><span><b>${timed.length}</b> ${timed.length===1?"reunión":"reuniones"}</span>${timed.length?`<span><b>${durTxt(busy)}</b> ocupadas</span>`:""}${isToday&&last&&last>now?`<span>Libre desde <b>${hm(last)}</b></span>`:isToday&&timed.length?`<span>Ya terminaste tus reuniones</span>`:""}</div>`;
+  const join=x=>x.link?`<a class="btn sm ${x===nextEv?"primary":""}" href="${esc(x.link)}" target="_blank" rel="noopener noreferrer">${ico("video","sm")}Unirse</a>`:"";
+  const nextCard=nextEv?`<div class="ag-next"><div class="grow"><span class="ag-when">${nextEv.s<=now?`Ahora · termina en ${durTxt(nextEv.e-now)}`:`En ${durTxt(nextEv.s-now)}`}</span><b>${esc(nextEv.title)}</b><span class="hint">${hm(nextEv.s)} – ${hm(nextEv.e)} · ${durTxt(nextEv.e-nextEv.s)}${nextEv.location?" · "+esc(nextEv.location):""}</span></div>${join(nextEv)}</div>`:"";
+  let strip="";
+  if(timed.length){
+    const h0=Math.min(8,...timed.map(x=>x.s.getHours()));
+    const h1=Math.max(19,...timed.map(x=>x.e.getHours()+(x.e.getMinutes()?1:0)));
+    const base=parse(day);base.setHours(h0,0,0,0);const span=(h1-h0)*3600000;
+    const pos=d=>Math.max(0,Math.min(100,(d-base)/span*100));
+    const lanes=[];timed.forEach(x=>{let i=lanes.findIndex(end=>end<=x.s);if(i<0){i=lanes.length;lanes.push(0)}lanes[i]=x.e;x.lane=i});
+    const hours=[];for(let h=h0;h<=h1;h++)hours.push(h);
+    strip=`<div class="ag-strip" style="--lanes:${lanes.length}"><div class="ag-track">${hours.slice(0,-1).map((h,i)=>`<i class="ag-hr" style="left:${i/(h1-h0)*100}%"></i>`).join("")}
+      ${timed.map(x=>`<span class="ag-blk ${isToday&&x.e<=now?"past":""} ${x===nextEv?"next":""}" style="left:${pos(x.s)}%;width:${Math.max(.8,pos(x.e)-pos(x.s))}%;top:${6+x.lane*24}px" title="${esc(hm(x.s)+" – "+hm(x.e)+" · "+x.title)}"></span>`).join("")}
+      ${isToday&&now>=base&&now-base<=span?`<i class="ag-now" style="left:${pos(now)}%"></i>`:""}</div>
+      <div class="ag-hours">${hours.map((h,i)=>`<span style="left:${i/(h1-h0)*100}%">${h}</span>`).join("")}</div></div>`;
+  }
+  const list=`<div class="ag-list">${allDay.map(x=>`<div class="ag-row allday"><span class="ag-t">Todo el día</span><span class="ag-bar"></span><span class="ag-n">${esc(x.title)}</span></div>`).join("")}
+    ${timed.map(x=>{const past=isToday&&x.e<=now;return `<div class="ag-row ${past?"past":""} ${x===nextEv?"next":""}"><span class="ag-t">${hm(x.s)}</span><span class="ag-bar"></span><span class="ag-n"><span>${esc(x.title)}</span><small>${durTxt(x.e-x.s)}${x.location?" · "+esc(x.location):""}</small></span>${past?"":join(x)}</div>`}).join("")}
+    ${evs.length?"":`<p class="hint" style="padding:6px 0">No tienes reuniones ${isToday?"hoy":"este día"}.</p>`}</div>`;
+  return `<section class="panel ag">${hd}<div class="panel-b">${sum}${nextCard}${strip}${list}</div></section>`;
+}
+function gcalModal(){
+  const m=S.modal;const cur=ls.get("pj-gcal")||"";
+  return `<div class="overlay" data-act="modal-bg"><div class="modal narrow" role="dialog" aria-modal="true" aria-labelledby="m-title"><div class="m-main">
+  <div class="m-head">${ico("cal")}<h2 id="m-title">Conectar Google Calendar</h2><button class="icon-btn" data-act="modal-close" aria-label="Cerrar">${ico("x")}</button></div>
+  <div class="m-body">
+    <ol class="gc-steps">
+      <li>Abre <a href="https://calendar.google.com/calendar/r/settings" target="_blank" rel="noopener noreferrer">la configuración de Google Calendar</a> en la computadora.</li>
+      <li>A la izquierda, en <b>Configuración de mis calendarios</b>, haz clic en tu calendario.</li>
+      <li>Baja hasta <b>Integrar el calendario</b> y copia la <b>Dirección secreta en formato iCal</b>.</li>
+      <li>Pégala aquí.</li>
+    </ol>
+    <label class="field"><span class="flabel">Dirección secreta en formato iCal</span><input id="gcal-url" class="inp" type="url" placeholder="https://calendar.google.com/calendar/ical/…/basic.ics" value="${esc(m.val!=null?m.val:cur)}" autocomplete="off" spellcheck="false"></label>
+    ${m.err?`<p class="err">${esc(m.err)}</p>`:""}
+    <p class="hint">${ico("lock","sm")} Queda guardada solo en este navegador y nadie más del equipo la ve. No la compartas: quien la tenga puede ver tu calendario. Si usas otra computadora, conéctala ahí también.</p>
+    <p class="hint">Si no ves la dirección secreta, tu empresa la tiene bloqueada en Google Workspace; pídele a quien administra Google que la active.</p>
+  </div>
+  <div class="m-foot">${cur?`<button class="btn danger-t" data-act="gcal-off">Desconectar</button>`:""}<span class="grow"></span><button class="btn" data-act="modal-close">Cancelar</button><button class="btn primary" data-act="gcal-save">Guardar</button></div>
+  </div></div></div>`;
+}
 function viewInicio(){
-  const h=head("Inicio","home",curProject()?newTaskBtn():"");
-  if(!curProject())return h+noProject();
+  const hr=new Date().getHours();const hi=(hr<12?"Buenos días":hr<19?"Buenas tardes":"Buenas noches")+(S.me.id?", "+first(S.me.id):"");
+  const h=head(hi,"home",curProject()?newTaskBtn():"");
+  if(!curProject())return h+`<div class="content">${agendaPanel()}</div>`+noProject();
   const ts=taskList().filter(t=>!t.archived);
   const counts=COLS.map(c=>[c,ts.filter(t=>(t.column||"todo")===c.id).length]);
   const mine=ts.filter(t=>t.column!=="done"&&((t.assignees||[]).includes(S.me.id)||(t.subtasks||[]).some(s=>s.assignee===S.me.id&&!s.done))).sort((a,b)=>(a.end||"9").localeCompare(b.end||"9"));
@@ -1201,7 +1323,13 @@ function viewInicio(){
   const ms=projMilestones().filter(m=>!hitoStats(m.id).complete).slice(0,4);
   const p=curProject();
   const tli=t=>`<button class="li" data-act="open-task" data-id="${t.id}"><span class="grow"><span class="t" style="display:block">${esc(t.title)}</span><span class="s">${esc(COLNAME[t.column||"todo"])}${t.end?" · "+esc(fmtRange(t.start,t.end)):""}</span></span>${isLate(t)?`<span class="tag late">Vencida</span>`:t.priority&&t.priority!=="none"?`<span class="tag p-${t.priority}">${PRINAME[t.priority]}</span>`:""}</button>`;
+  const agHtml=agendaPanel();
+  const td=today(),dueToday=mine.filter(t=>t.end===td).length;
+  const ag=S.ag&&S.ag.key===gcalUrl()+"|"+td&&S.ag.events?S.ag.events.filter(e=>!e.allDay).length:null;
+  const chips=`<div class="ag-chips">${ag!=null&&!S.agOff?`<span class="pill ag-chip">${ico("cal","sm")}<b>${ag}</b> ${ag===1?"reunión":"reuniones"} hoy</span>`:""}<span class="pill ag-chip">${ico("clock","sm")}<b>${dueToday}</b> ${dueToday===1?"tarea vence":"tareas vencen"} hoy</span>${late.length?`<span class="pill ag-chip late">${ico("flag","sm")}<b>${late.length}</b> ${late.length===1?"vencida":"vencidas"}</span>`:""}</div>`;
   return h+`<div class="content">
+    ${chips}
+    ${agHtml}
     <div class="toolbar">${projectSwitcher()}<span class="hint">${p.start||p.end?esc(fmtRange(p.start,p.end)):""}</span></div>
     <div class="stat-row">${counts.map(([c,n])=>`<div class="stat c-${c.id}"><span><i class="dot"></i>${c.name}</span><b>${n}</b></div>`).join("")}</div>
     <div class="grid-2">
@@ -1769,7 +1897,7 @@ function renderModal(){
   const mo=root.querySelector(".modal"),msc=mo?mo.scrollTop:0,ov=root.querySelector(".overlay"),osc=ov?ov.scrollTop:0,had=!!ov;
   const cl=root.querySelector("#c-list"),csc=cl?cl.scrollTop:0;
   const f=document.activeElement&&root.contains(document.activeElement)&&document.activeElement.id?{id:document.activeElement.id,s:document.activeElement.selectionStart,e:document.activeElement.selectionEnd}:null;
-  let html=m.kind==="task"?taskModal():m.kind==="hito"?hitoModal():m.kind==="project"?projectModal():m.kind==="me"?meModal():m.kind==="ws"?wsModal():m.kind==="emp"?empModal():m.kind==="inv"?invModal():m.kind==="doc"?docModal():memberModal();
+  let html=m.kind==="task"?taskModal():m.kind==="hito"?hitoModal():m.kind==="project"?projectModal():m.kind==="me"?meModal():m.kind==="ws"?wsModal():m.kind==="emp"?empModal():m.kind==="inv"?invModal():m.kind==="doc"?docModal():m.kind==="gcal"?gcalModal():memberModal();
   if(had)html=html.replace('class="overlay"','class="overlay still"');
   root.innerHTML=html;
   const nb=root.querySelector(".m-body");if(nb)nb.scrollTop=sc;
@@ -2304,6 +2432,12 @@ document.addEventListener("click",async e=>{
     case "open-task":if(S.dragId)return;openTask(id);break;
     case "modal-bg":if(e.target===el)closeModal(false);break;
     case "modal-close":closeModal(false);break;
+    case "ag-day":{const v=+el.dataset.v;S.agOff=v?(S.agOff||0)+v:0;render();break}
+    case "gcal-open":S.modal={kind:"gcal",err:"",val:null};renderModal();setTimeout(()=>{const x=$("#gcal-url");if(x){x.focus();x.select()}},30);break;
+    case "gcal-save":{const x=$("#gcal-url");const v=(x?x.value:"").trim().replace(/^webcal:\/\//i,"https://");
+      if(!/^https:\/\/calendar\.google\.com\/calendar\/ical\/[^/]+\/[^/]+\/basic\.ics$/.test(v)){S.modal.val=v;S.modal.err="Esa no parece la dirección secreta. Debe empezar por https://calendar.google.com/calendar/ical/ y terminar en basic.ics.";renderModal();break}
+      ls.set("pj-gcal",v);S.ag=null;closeModal(true);toast("Google Calendar conectado");break}
+    case "gcal-off":ls.set("pj-gcal","");S.ag=null;closeModal(true);toast("Google Calendar desconectado");break;
     case "toggle-assignee":{const a=m.draft.assignees;const i=a.indexOf(id);i<0?a.push(id):a.splice(i,1);renderModal();break}
     case "sub-tog":{S.subHidden.has(id)?S.subHidden.delete(id):S.subHidden.add(id);saveHidden();render();break}
     case "sub-tog-all":{if(el.dataset.hide==="1")taskList().forEach(t=>S.subHidden.add(t.id));else S.subHidden.clear();saveHidden();render();break}
@@ -2456,6 +2590,7 @@ document.addEventListener("keydown",e=>{
 document.addEventListener("scroll",()=>{if(S.chip)closeChip()},true);
 window.addEventListener("resize",()=>{if(S.chip)closeChip()});
 /* hito filter shortcut on the board */
+setInterval(()=>{const a=document.activeElement;if(S.view==="inicio"&&!S.modal&&!S.menu&&!(a&&a.matches&&a.matches("input,textarea,select")))render()},60000);
 const _filtered=filteredTasks;
 filteredTasks=function(){const r=_filtered();return S.hitoOnly&&S.view==="tablero"?r.filter(t=>t.milestoneId===S.hitoOnly):r};
 
