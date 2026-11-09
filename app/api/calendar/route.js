@@ -35,7 +35,7 @@ export async function POST(req) {
     const timer = setTimeout(() => ctrl.abort(), 12000);
     const r = await fetch(url, { signal: ctrl.signal, redirect: "follow", cache: "no-store" });
     clearTimeout(timer);
-    if (r.status === 404 || r.status === 403) return fail(404, "Google no reconoce esa dirección. Puede que la hayan cambiado: copia otra vez la dirección secreta.");
+    if (r.status === 404 || r.status === 403) return fail(404, /\/public\/basic\.ics$/.test(url) ? "Esa es la dirección pública y tu calendario no es público. Copia la «Dirección secreta en formato iCal»." : "Google no reconoce esa dirección. Puede que la hayan cambiado: copia otra vez la dirección secreta.");
     if (!r.ok) return fail(502, "Google Calendar no respondió. Intenta de nuevo en un momento.");
     const len = Number(r.headers.get("content-length") || 0);
     if (len > MAX_BYTES) return fail(413, "El calendario es demasiado grande para leerlo.");

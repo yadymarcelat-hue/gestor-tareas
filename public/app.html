@@ -139,6 +139,7 @@ h1,h2,h3{text-wrap:balance;margin:0}
 .ph{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:16px max(24px,env(safe-area-inset-right,0px)) 16px max(24px,env(safe-area-inset-left,0px));background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
 .ph-title{display:flex;align-items:center;gap:10px;flex:1 1 150px;min-width:0}
 .ph-title .badge-ic{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;background:var(--violet-soft);color:var(--violet)}
+.ph-title .badge-ic.home{background:color-mix(in srgb,#f0a020 16%,var(--surface));color:#f0a020}
 .ph-title h1{font-size:22px;font-weight:700;letter-spacing:-.015em}
 .ph-actions{display:flex;gap:8px;flex-wrap:wrap}
 .icon-btn.menu-btn{display:none}
@@ -1137,7 +1138,7 @@ function sidebar(){
 }
 function head(title,ic,actions=""){
   return `<header class="ph"><button class="icon-btn menu-btn" data-act="nav-open" aria-label="Abrir menú">${ico("menu")}</button>
-  <div class="ph-title"><span class="badge-ic">${ico(ic)}</span><h1>${esc(title)}</h1></div><div class="ph-actions">${actions}</div></header>`;
+  <div class="ph-title"><span class="badge-ic ${ic==="home"?"home":""}">${ico(ic)}</span><h1>${esc(title)}</h1></div><div class="ph-actions">${actions}</div></header>`;
 }
 function projectSwitcher(){
   const ps=visibleProjects();const cur=curProject();
@@ -1317,7 +1318,6 @@ function viewInicio(){
   const h=head(hi,"home",curProject()?newTaskBtn():"");
   if(!curProject())return h+`<div class="content">${agendaPanel()}</div>`+noProject();
   const ts=taskList().filter(t=>!t.archived);
-  const counts=COLS.map(c=>[c,ts.filter(t=>(t.column||"todo")===c.id).length]);
   const mine=ts.filter(t=>t.column!=="done"&&((t.assignees||[]).includes(S.me.id)||(t.subtasks||[]).some(s=>s.assignee===S.me.id&&!s.done))).sort((a,b)=>(a.end||"9").localeCompare(b.end||"9"));
   const late=ts.filter(isLate).sort((a,b)=>a.end.localeCompare(b.end));
   const ms=projMilestones().filter(m=>!hitoStats(m.id).complete).slice(0,4);
@@ -1331,8 +1331,7 @@ function viewInicio(){
     ${chips}
     ${agHtml}
     <div class="toolbar">${projectSwitcher()}<span class="hint">${p.start||p.end?esc(fmtRange(p.start,p.end)):""}</span></div>
-    <div class="stat-row">${counts.map(([c,n])=>`<div class="stat c-${c.id}"><span><i class="dot"></i>${c.name}</span><b>${n}</b></div>`).join("")}</div>
-    <div class="grid-2">
+        <div class="grid-2">
       <section class="panel"><div class="panel-h"><h2>Mis tareas abiertas</h2><span class="hint">${mine.length}</span></div><div class="panel-b"><div class="list">${mine.slice(0,8).map(tli).join("")||`<div class="empty"><p>No tienes tareas abiertas en este proyecto.</p></div>`}</div></div></section>
       ${hitosOn()?`<section class="panel"><div class="panel-h"><h2>Próximos hitos</h2><button class="link-btn" data-act="go" data-v="hitos">Ver todos</button></div><div class="panel-b"><div class="list">${ms.map(m=>{const s=hitoStats(m.id);const pct=s.total?Math.round(s.done/s.total*100):0;return `<div class="li"><span class="grow"><span class="t" style="display:block">${esc(m.name)}</span><span class="s">${m.date?esc(fmt(m.date)):"Sin fecha"} · ${s.done} de ${s.total} tareas</span><div class="bar" style="margin-top:6px"><i style="width:${pct}%"></i></div></span>${m.date&&m.date<today()?`<span class="tag late">Vencido</span>`:""}</div>`}).join("")||`<div class="empty"><p>No hay hitos pendientes.</p></div>`}</div></div></section>`:""}
     </div>
@@ -2435,6 +2434,7 @@ document.addEventListener("click",async e=>{
     case "ag-day":{const v=+el.dataset.v;S.agOff=v?(S.agOff||0)+v:0;render();break}
     case "gcal-open":S.modal={kind:"gcal",err:"",val:null};renderModal();setTimeout(()=>{const x=$("#gcal-url");if(x){x.focus();x.select()}},30);break;
     case "gcal-save":{const x=$("#gcal-url");const v=(x?x.value:"").trim().replace(/^webcal:\/\//i,"https://");
+      if(/\/public\/basic\.ics$/.test(v)){S.modal.val=v;S.modal.err="Esa es la dirección pública, y solo funciona si el calendario es público. Copia la que dice «Dirección secreta en formato iCal» (tiene la palabra private).";renderModal();break}
       if(!/^https:\/\/calendar\.google\.com\/calendar\/ical\/[^/]+\/[^/]+\/basic\.ics$/.test(v)){S.modal.val=v;S.modal.err="Esa no parece la dirección secreta. Debe empezar por https://calendar.google.com/calendar/ical/ y terminar en basic.ics.";renderModal();break}
       ls.set("pj-gcal",v);S.ag=null;closeModal(true);toast("Google Calendar conectado");break}
     case "gcal-off":ls.set("pj-gcal","");S.ag=null;closeModal(true);toast("Google Calendar desconectado");break;
