@@ -321,6 +321,8 @@ button.tl-lab:hover .t{color:var(--accent)}
 .qnav{display:inline-flex;align-items:center;gap:4px;flex-wrap:nowrap}
 .tabs .menu-wrap.per{display:inline-flex}
 .tabs .menu-wrap.per>.pill{width:112px;justify-content:space-between}
+.tabs .menu-wrap.per>.pill[data-m=repscope]{width:auto;min-width:150px}
+.tabs .menu-wrap.per .pop:has([data-act=rep-all]){min-width:220px;left:auto;right:0}.tabs .menu-wrap.per .pop [data-act=rep-all]{white-space:nowrap}
 .tabs .menu-wrap.per .pop{min-width:170px}
 .tl-top .qnav{margin-left:auto}
 .tl-wrap.grabbing{cursor:grabbing;user-select:none}
@@ -519,9 +521,7 @@ a.btn{text-decoration:none}
 .ag-row.next .ag-bar{background:var(--violet)}.ag-row.allday .ag-bar{background:var(--dot-review)}
 .ag-n{flex:1;min-width:0;display:flex;flex-direction:column}.ag-n>span{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ag-n small{color:var(--muted);font-size:12.5px}
 .ag-row.past .ag-n>span{text-decoration:line-through;color:var(--muted)}.ag-row.past .ag-bar{background:var(--line-2)}
-.gc-steps{margin:0 0 16px;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:14px}.gc-steps a{color:var(--accent)}
 @media (max-width:600px){.ag-next{flex-wrap:wrap}.ag-t{width:58px}.panel-h:has(.ag-title){flex-wrap:wrap}}
-.rep-scope{display:flex;gap:6px;margin:0 0 14px}
 .rep-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:16px;margin-top:16px;align-items:start}
 .rep-stat{background:var(--surface);border:1px solid var(--line)}
 .rep-stat .sl{font-size:13px;color:var(--muted)}.rep-stat b{font-size:24px;font-weight:600;font-variant-numeric:tabular-nums}.rep-stat .ss{font-size:12px;color:var(--muted)}
@@ -1162,9 +1162,9 @@ function searchBox(){
   return `<label class="search">${ico("search","sm")}<input id="q" type="text" placeholder="Buscar tareas" value="${esc(S.q)}" aria-label="Buscar tareas"></label>`;
 }
 // "after" va pegado al botón Cronograma (los botones Por Q / Por mes).
-function viewTabs(after){
+function viewTabs(after,afterId="cronograma"){
   const t=[["tablero","Tablero","board","ic-task"],["cronograma","Cronograma","cal","ic-cal"]];if(hitosOn())t.push(["hitos","Hitos","flag","ic-hito"]);t.push(["reporte","Reporte","chart","ic-rep"]);
-  return `<div class="tabs" aria-label="Vistas de tareas">${t.map(([id,l,ic,cls])=>`<button class="pill ${S.view===id?"cur":""}" aria-current="${S.view===id?"page":"false"}" data-act="go" data-v="${id}">${ico(ic,cls)}${l}</button>${id==="cronograma"&&after?after:""}`).join("")}</div>`;
+  return `<div class="tabs" aria-label="Vistas de tareas">${t.map(([id,l,ic,cls])=>`<button class="pill ${S.view===id?"cur":""}" aria-current="${S.view===id?"page":"false"}" data-act="go" data-v="${id}">${ico(ic,cls)}${l}</button>${id===afterId&&after?after:""}`).join("")}</div>`;
 }
 function noProject(){
   const can=S.canWrite;
@@ -1231,7 +1231,6 @@ function card(t){
 /* ---------- Mi día: agenda de Google Calendar ---------- */
 const hm=d=>`${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
 const durTxt=ms=>{const mi=Math.max(0,Math.round(ms/60000));const h=Math.floor(mi/60),r=mi%60;return h&&r?`${h} h ${r} min`:h?`${h} h`:`${r} min`};
-const gcalUrl=()=>S.demo?(ls.get("pj-gcal")||"demo"):(ls.get("pj-gcal")||"");
 function agDay(){return addDays(today(),S.agOff||0)}
 function demoAgenda(day){
   const at=(h,mi)=>{const d=parse(day);d.setHours(h,mi,0,0);return d.toISOString()};
@@ -1242,30 +1241,50 @@ function demoAgenda(day){
     {id:"4",title:"Almuerzo con Daniel",start:at(12,45),end:at(13,45),location:"Oficina"},
     {id:"5",title:"Planeación de la semana",start:at(15,0),end:at(16,0),link:"https://meet.google.com/abc-defg-hij"},
     {id:"6",title:"Llamada con proveedor",start:at(15,30),end:at(16,15)}]}
-async function loadAgenda(){
-  const url=gcalUrl(),day=agDay(),key=url+"|"+day;
-  if(!url||(S.ag&&S.ag.key===key&&(S.ag.loading||Date.now()-S.ag.at<300000)))return;
-  S.ag={key,loading:true,events:S.ag&&S.ag.key===key?S.ag.events:null,err:"",at:Date.now()};
-  if(S.demo){S.ag={key,loading:false,events:demoAgenda(day),err:"",at:Date.now()};return}
+async function loadAgenda(force){
+  const day=agDay(),key=day;
+  if(!force&&S.ag&&S.ag.key===key&&(S.ag.loading||Date.now()-S.ag.at<300000))return;
+  S.ag={key,loading:true,events:S.ag&&S.ag.key===key?S.ag.events:null,err:"",at:Date.now(),on:S.ag?S.ag.on:null,email:S.ag?S.ag.email:""};
+  if(S.demo){S.ag={key,loading:false,events:demoAgenda(day),err:"",at:Date.now(),on:true,email:"marcela@ejemplo.com"};return}
   try{
     const token=await window.appAuth.token();
-    const r=await fetch("/api/calendar",{method:"POST",headers:{"content-type":"application/json",authorization:"Bearer "+token},body:JSON.stringify({url,day,tz:Intl.DateTimeFormat().resolvedOptions().timeZone})});
+    const d0=parse(day),d1=parse(addDays(day,1));
+    const r=await fetch("/api/calendar",{method:"POST",headers:{"content-type":"application/json",authorization:"Bearer "+token},body:JSON.stringify({timeMin:d0.toISOString(),timeMax:d1.toISOString(),tz:Intl.DateTimeFormat().resolvedOptions().timeZone})});
     const j=await r.json().catch(()=>({}));
     if(!r.ok)throw new Error(j.error||"No pudimos leer tu calendario.");
-    if(S.ag&&S.ag.key===key)S.ag={key,loading:false,events:j.events||[],err:"",at:Date.now()};
-  }catch(e){if(S.ag&&S.ag.key===key)S.ag={key,loading:false,events:null,err:e.message||"No pudimos leer tu calendario.",at:Date.now()}}
+    if(S.ag&&S.ag.key===key)S.ag={key,loading:false,events:j.connected?j.events||[]:null,err:"",at:Date.now(),on:!!j.connected,email:j.email||"",setup:j.setup!==false,expired:!!j.expired};
+  }catch(e){if(S.ag&&S.ag.key===key)S.ag=Object.assign(S.ag,{loading:false,events:null,err:e.message||"No pudimos leer tu calendario."})}
   if(S.view==="inicio")render();
 }
+async function gcalConnect(){
+  if(S.demo){toast("En la vista de ejemplo no se conecta Google.",true);return}
+  try{
+    const token=await window.appAuth.token();
+    const r=await fetch("/api/google/start",{method:"POST",headers:{authorization:"Bearer "+token}});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok||!j.url)throw new Error(j.error||"No pudimos abrir Google.");
+    location.href=j.url;
+  }catch(e){toast(e.message,true)}
+}
+async function gcalDisconnect(){
+  if(S.demo){closeModal(true);return}
+  try{
+    const token=await window.appAuth.token();
+    const r=await fetch("/api/google/disconnect",{method:"POST",headers:{authorization:"Bearer "+token}});
+    if(!r.ok)throw new Error("No pudimos desconectar Google Calendar.");
+    S.ag=null;closeModal(true);toast("Google Calendar desconectado");
+  }catch(e){toast(e.message,true)}
+}
 function agendaPanel(){
-  const url=gcalUrl(),day=agDay(),isToday=day===today();
+  const day=agDay(),isToday=day===today();
+  loadAgenda();
+  const ag=S.ag&&S.ag.key===day?S.ag:null;const url=!ag||ag.on!==false;
   const dl=parse(day).toLocaleDateString("es-CO",{weekday:"long",day:"numeric",month:"long"});
   const nav=`<div class="ag-nav"><button class="icon-btn sm" data-act="ag-day" data-v="-1" aria-label="Día anterior">${ico("left","sm")}</button><button class="btn sm ${isToday?"":"ghost"}" data-act="ag-day" data-v="0">Hoy</button><button class="icon-btn sm" data-act="ag-day" data-v="1" aria-label="Día siguiente">${ico("right","sm")}</button>${url?`<button class="icon-btn sm" data-act="gcal-open" aria-label="Configurar Google Calendar" title="Configurar Google Calendar">${ico("cal","sm")}</button>`:""}</div>`;
   const hd=`<div class="panel-h"><div class="ag-title"><h2>${ico("cal","sm")}Mi día</h2><span class="hint">${esc(dl.charAt(0).toUpperCase()+dl.slice(1))}</span></div>${url?nav:""}</div>`;
-  if(!url)return `<section class="panel ag">${hd}<div class="ag-empty"><span class="badge-ic">${ico("cal")}</span><div><b>Conecta tu Google Calendar</b><p>Mira aquí tus reuniones de hoy y tu agenda por horas, sin salir del gestor.</p></div><button class="btn primary" data-act="gcal-open">Conectar Google Calendar</button></div></section>`;
-  loadAgenda();
-  const ag=S.ag&&S.ag.key===url+"|"+day?S.ag:null;
+  if(!url)return `<section class="panel ag">${hd}<div class="ag-empty"><span class="badge-ic">${ico("cal")}</span><div><b>${ag.expired?"Vuelve a conectar tu Google Calendar":"Conecta tu Google Calendar"}</b><p>${ag.setup?ag.expired?"Google pidió que autorices otra vez el acceso a tu calendario.":"Mira aquí tus reuniones de hoy y tu agenda por horas. Cada persona conecta su propia cuenta de Google; la app solo lee tu calendario.":"Falta configurar la conexión con Google en Vercel (GOOGLE_CLIENT_ID y GOOGLE_CLIENT_SECRET)."}</p></div>${ag.setup?`<button class="btn primary" data-act="gcal-connect">${ico("cal","sm")}Conectar con Google</button>`:""}</div></section>`;
   if(!ag||(!ag.events&&ag.loading))return `<section class="panel ag">${hd}<div class="ag-empty"><p class="hint">Cargando tu agenda…</p></div></section>`;
-  if(ag.err)return `<section class="panel ag">${hd}<div class="ag-empty"><div><b>No pudimos leer tu calendario</b><p>${esc(ag.err)}</p></div><button class="btn" data-act="gcal-open">Revisar conexión</button></div></section>`;
+  if(ag.err)return `<section class="panel ag">${hd}<div class="ag-empty"><div><b>No pudimos leer tu calendario</b><p>${esc(ag.err)}</p></div><button class="btn" data-act="ag-retry">Intentar de nuevo</button></div></section>`;
   const evs=ag.events||[];const allDay=evs.filter(e=>e.allDay);
   const timed=evs.filter(e=>!e.allDay).map(e=>({...e,s:new Date(e.start),e:new Date(e.end)}));
   const now=new Date();
@@ -1295,22 +1314,14 @@ function agendaPanel(){
   return `<section class="panel ag">${hd}<div class="panel-b">${sum}${nextCard}${strip}${list}</div></section>`;
 }
 function gcalModal(){
-  const m=S.modal;const cur=ls.get("pj-gcal")||"";
+  const ag=S.ag||{};
   return `<div class="overlay" data-act="modal-bg"><div class="modal narrow" role="dialog" aria-modal="true" aria-labelledby="m-title"><div class="m-main">
-  <div class="m-head">${ico("cal")}<h2 id="m-title">Conectar Google Calendar</h2><button class="icon-btn" data-act="modal-close" aria-label="Cerrar">${ico("x")}</button></div>
+  <div class="m-head">${ico("cal")}<h2 id="m-title">Google Calendar</h2><button class="icon-btn" data-act="modal-close" aria-label="Cerrar">${ico("x")}</button></div>
   <div class="m-body">
-    <ol class="gc-steps">
-      <li>Abre <a href="https://calendar.google.com/calendar/r/settings" target="_blank" rel="noopener noreferrer">la configuración de Google Calendar</a> en la computadora.</li>
-      <li>A la izquierda, en <b>Configuración de mis calendarios</b>, haz clic en tu calendario.</li>
-      <li>Baja hasta <b>Integrar el calendario</b> y copia la <b>Dirección secreta en formato iCal</b>.</li>
-      <li>Pégala aquí.</li>
-    </ol>
-    <label class="field"><span class="flabel">Dirección secreta en formato iCal</span><input id="gcal-url" class="inp" type="url" placeholder="https://calendar.google.com/calendar/ical/…/basic.ics" value="${esc(m.val!=null?m.val:cur)}" autocomplete="off" spellcheck="false"></label>
-    ${m.err?`<p class="err">${esc(m.err)}</p>`:""}
-    <p class="hint">${ico("lock","sm")} Queda guardada solo en este navegador y nadie más del equipo la ve. No la compartas: quien la tenga puede ver tu calendario. Si usas otra computadora, conéctala ahí también.</p>
-    <p class="hint">Si no ves la dirección secreta, tu empresa la tiene bloqueada en Google Workspace; pídele a quien administra Google que la active.</p>
+    <p>Conectado${ag.email?` como <b>${esc(ag.email)}</b>`:""}. La app solo lee tu calendario principal para mostrar tu agenda en Inicio; no crea ni cambia reuniones.</p>
+    <p class="hint">Si desconectas, la app borra el permiso y deja de leer tu calendario. Puedes volver a conectarlo cuando quieras.</p>
   </div>
-  <div class="m-foot">${cur?`<button class="btn danger-t" data-act="gcal-off">Desconectar</button>`:""}<span class="grow"></span><button class="btn" data-act="modal-close">Cancelar</button><button class="btn primary" data-act="gcal-save">Guardar</button></div>
+  <div class="m-foot"><button class="btn danger-t" data-act="gcal-off">Desconectar</button><span class="grow"></span><button class="btn" data-act="gcal-connect">Cambiar de cuenta</button><button class="btn primary" data-act="modal-close">Listo</button></div>
   </div></div></div>`;
 }
 function viewInicio(){
@@ -1325,7 +1336,7 @@ function viewInicio(){
   const tli=t=>`<button class="li" data-act="open-task" data-id="${t.id}"><span class="grow"><span class="t" style="display:block">${esc(t.title)}</span><span class="s">${esc(COLNAME[t.column||"todo"])}${t.end?" · "+esc(fmtRange(t.start,t.end)):""}</span></span>${isLate(t)?`<span class="tag late">Vencida</span>`:t.priority&&t.priority!=="none"?`<span class="tag p-${t.priority}">${PRINAME[t.priority]}</span>`:""}</button>`;
   const agHtml=agendaPanel();
   const td=today(),dueToday=mine.filter(t=>t.end===td).length;
-  const ag=S.ag&&S.ag.key===gcalUrl()+"|"+td&&S.ag.events?S.ag.events.filter(e=>!e.allDay).length:null;
+  const ag=S.ag&&S.ag.key===td&&S.ag.events?S.ag.events.filter(e=>!e.allDay).length:null;
   const chips=`<div class="ag-chips">${ag!=null&&!S.agOff?`<span class="pill ag-chip">${ico("cal","sm")}<b>${ag}</b> ${ag===1?"reunión":"reuniones"} hoy</span>`:""}<span class="pill ag-chip">${ico("clock","sm")}<b>${dueToday}</b> ${dueToday===1?"tarea vence":"tareas vencen"} hoy</span>${late.length?`<span class="pill ag-chip late">${ico("flag","sm")}<b>${late.length}</b> ${late.length===1?"vencida":"vencidas"}</span>`:""}</div>`;
   return h+`<div class="content">
     ${chips}
@@ -1758,8 +1769,9 @@ function hbar(label,segs,tip){
 function viewReporte(){
   const h=head("Tareas","tasks","");
   const all=S.repAll||!curProject();
-  const bar=`<div class="toolbar one">${projectSwitcher()}${personFilter()}${searchBox()}${viewTabs()}</div>
-    <div class="rep-scope" role="group" aria-label="Alcance del reporte"><button class="lgb mode ${all?"":"on"}" data-act="rep-all" data-v="0" aria-pressed="${!all}" ${curProject()?"":"disabled"}>${ico("folder","sm")}Este proyecto</button><button class="lgb mode ${all?"on":""}" data-act="rep-all" data-v="1" aria-pressed="${all}">${ico("building","sm")}Todos los proyectos</button></div>`;
+  const open=S.menu==="repscope";
+  const scope=`<span class="menu-wrap per"><button class="pill" data-act="menu" data-m="repscope" aria-expanded="${open}" aria-haspopup="menu" title="Alcance del reporte">${all?"Todos los proyectos":"Este proyecto"}${ico("down","sm")}</button>${open?`<div class="pop" role="menu">${[["0","Este proyecto","folder"],["1","Todos los proyectos","building"]].map(([k,l,ic])=>`<button class="${(k==="1")===all?"on":""}" data-act="rep-all" data-v="${k}" role="menuitemradio" aria-checked="${(k==="1")===all}" ${k==="0"&&!curProject()?"disabled":""}>${ico(ic,"sm")}<span>${l}</span>${(k==="1")===all?`<span class="ck">${ico("check","sm")}</span>`:""}</button>`).join("")}</div>`:""}</span>`;
+  const bar=`<div class="toolbar one">${projectSwitcher()}${personFilter()}${searchBox()}${viewTabs(scope,"reporte")}</div>`;
   if(all)loadAllTasks();
   if(all&&!S.allTasks)return h+`<div class="content">${bar}<section class="panel"><div class="empty"><p>Contando tareas…</p></div></section></div>`;
   const projs=Object.entries(S.projects).map(([id,p])=>({id,...p})).filter(p=>projVisible(p)&&!p.archived);
@@ -2425,19 +2437,17 @@ document.addEventListener("click",async e=>{
     case "person":S.person=id;S.menu=null;render();break;
     case "d-person":{const a=m.draft.memberIds=(m.draft.memberIds||[]).slice();const i=a.indexOf(id);i<0?a.push(id):a.splice(i,1);if(m.err==="ppl")m.err="";renderModal();break}
     case "person-clear":S.person=null;S.menu=null;render();break;
-    case "rep-all":S.repAll=el.dataset.v==="1";render();break;
+    case "rep-all":S.repAll=el.dataset.v==="1";S.menu=null;render();break;
     case "toggle-arch":S.showArchived=!S.showArchived;render();break;
     case "new-task":if(S.canWrite)openTask(null,el.dataset.col);break;
     case "open-task":if(S.dragId)return;openTask(id);break;
     case "modal-bg":if(e.target===el)closeModal(false);break;
     case "modal-close":closeModal(false);break;
     case "ag-day":{const v=+el.dataset.v;S.agOff=v?(S.agOff||0)+v:0;render();break}
-    case "gcal-open":S.modal={kind:"gcal",err:"",val:null};renderModal();setTimeout(()=>{const x=$("#gcal-url");if(x){x.focus();x.select()}},30);break;
-    case "gcal-save":{const x=$("#gcal-url");const v=(x?x.value:"").trim().replace(/^webcal:\/\//i,"https://");
-      if(/\/public\/basic\.ics$/.test(v)){S.modal.val=v;S.modal.err="Esa es la dirección pública, y solo funciona si el calendario es público. Copia la que dice «Dirección secreta en formato iCal» (tiene la palabra private).";renderModal();break}
-      if(!/^https:\/\/calendar\.google\.com\/calendar\/ical\/[^/]+\/[^/]+\/basic\.ics$/.test(v)){S.modal.val=v;S.modal.err="Esa no parece la dirección secreta. Debe empezar por https://calendar.google.com/calendar/ical/ y terminar en basic.ics.";renderModal();break}
-      ls.set("pj-gcal",v);S.ag=null;closeModal(true);toast("Google Calendar conectado");break}
-    case "gcal-off":ls.set("pj-gcal","");S.ag=null;closeModal(true);toast("Google Calendar desconectado");break;
+    case "gcal-open":S.modal={kind:"gcal"};renderModal();break;
+    case "gcal-connect":gcalConnect();break;
+    case "gcal-off":gcalDisconnect();break;
+    case "ag-retry":loadAgenda(true);render();break;
     case "toggle-assignee":{const a=m.draft.assignees;const i=a.indexOf(id);i<0?a.push(id):a.splice(i,1);renderModal();break}
     case "sub-tog":{S.subHidden.has(id)?S.subHidden.delete(id):S.subHidden.add(id);saveHidden();render();break}
     case "sub-tog-all":{if(el.dataset.hide==="1")taskList().forEach(t=>S.subHidden.add(t.id));else S.subHidden.clear();saveHidden();render();break}
@@ -2590,6 +2600,9 @@ document.addEventListener("keydown",e=>{
 document.addEventListener("scroll",()=>{if(S.chip)closeChip()},true);
 window.addEventListener("resize",()=>{if(S.chip)closeChip()});
 /* hito filter shortcut on the board */
+(function(){const q=new URLSearchParams(location.search);const g=q.get("gcal");if(!g)return;
+  const msg={ok:"Google Calendar conectado",cancel:"Cancelaste la conexión con Google.",expired:"La conexión tardó demasiado. Inténtalo otra vez.",scope:"Para ver tu agenda, marca el permiso de ver tu calendario cuando Google lo pida.",norefresh:"Google no dio el permiso completo. Inténtalo otra vez.",config:"Falta configurar Google en Vercel.",db:"Falta crear la tabla google_tokens en Supabase.",error:"No pudimos conectar Google Calendar. Inténtalo otra vez."}[g]||"";
+  history.replaceState(null,"",location.pathname+location.hash);S.ag=null;setTimeout(()=>toast(msg,g!=="ok"),600)})();
 setInterval(()=>{const a=document.activeElement;if(S.view==="inicio"&&!S.modal&&!S.menu&&!(a&&a.matches&&a.matches("input,textarea,select")))render()},60000);
 const _filtered=filteredTasks;
 filteredTasks=function(){const r=_filtered();return S.hitoOnly&&S.view==="tablero"?r.filter(t=>t.milestoneId===S.hitoOnly):r};
