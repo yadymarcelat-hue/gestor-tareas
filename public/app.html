@@ -28,7 +28,7 @@
   --bg:#f6f7f9; --surface:#ffffff; --surface-2:#f2f3f6; --hover:#eef0f4; --line:#e5e7ec; --line-2:#d9dce3;
   --fg:#15171c; --muted:#5f6673; --faint:#9399a5;
   --accent:#1667ff; --accent-hover:#0e57e0; --accent-soft:#e7efff; --accent-fg:#ffffff;
-  --violet:#7b5cf5; --violet-soft:#efeaff;
+  --violet:#7b5cf5; --violet-soft:#efeaff; --ch-sub:#d4730b;
   --col-todo:#eceef2; --col-doing:#dbe8ff; --col-review:#fcf1cc; --col-done:#d9f3e2;
   --dot-todo:#9399a5; --dot-doing:#1667ff; --dot-review:#e4a400; --dot-done:#21a55a;
   --p-alta-bg:#fde7e7; --p-alta-fg:#c42b2b; --p-media-bg:#fdf0d3; --p-media-fg:#9a6200; --p-baja-bg:#eef0f3; --p-baja-fg:#4a515d;
@@ -174,6 +174,7 @@ h1,h2,h3{text-wrap:balance;margin:0}
 .tabs .pill .i{width:16px;height:16px}
 .tabs .ic-task,.tabs .ic-cal{color:var(--violet)}
 .tabs .ic-hito{color:var(--accent)}
+.tabs .ic-rep{color:var(--ch-sub)}
 .tabs .pill.cur{background:var(--surface-2);border-color:var(--fg);font-weight:600}
 .menu-wrap{position:relative}
 .pop{position:absolute;top:calc(100% + 6px);left:0;z-index:30;min-width:240px;max-width:min(320px,86vw);background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow-lg);padding:6px;max-height:340px;overflow:auto}
@@ -318,6 +319,7 @@ button.tl-lab:hover .t{color:var(--accent)}
 .tl-track{align-self:stretch}
 .qnav{display:inline-flex;align-items:center;gap:4px;flex-wrap:nowrap}
 .tabs .menu-wrap.per{display:inline-flex}
+.tabs .menu-wrap.per>.pill{width:112px;justify-content:space-between}
 .tabs .menu-wrap.per .pop{min-width:170px}
 .tl-top .qnav{margin-left:auto}
 .tl-wrap.grabbing{cursor:grabbing;user-select:none}
@@ -331,6 +333,7 @@ button.tl-lab:hover .t{color:var(--accent)}
   .toolbar.one>.menu-wrap>.pill>.i,.toolbar.one>.menu-wrap>.pill>svg{flex:none}
   .toolbar.one>.search{flex:0 1 200px;width:auto;min-width:42px}
   .toolbar.one>.tabs{flex-wrap:nowrap;flex:none}
+  .toolbar.one>.tabs{gap:6px}.toolbar.one .tabs>.pill{padding:0 11px;gap:6px}
 }
 .tl-bar.todo{background:color-mix(in srgb,var(--dot-todo) 38%,var(--surface));border:1.5px solid var(--dot-todo)}
 .tl-bar.doing{background:color-mix(in srgb,var(--dot-doing) 38%,var(--surface));border:1.5px solid var(--dot-doing)}
@@ -480,6 +483,26 @@ button.tl-lab:hover .t{color:var(--accent)}
 .cl-sel{flex-wrap:nowrap;overflow:hidden}
 .cl-sel .tag{height:22px;flex:0 1 auto;min-width:0}
 .cl-sel .cl-more{flex:none}
+.rep-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:16px;margin-top:16px;align-items:start}
+.rep-stat{background:var(--surface);border:1px solid var(--line)}
+.rep-stat .sl{font-size:13px;color:var(--muted)}.rep-stat b{font-size:24px;font-weight:600;font-variant-numeric:tabular-nums}.rep-stat .ss{font-size:12px;color:var(--muted)}
+.hb{padding:10px 18px 14px}
+.hb-row,.hb-pair{display:grid;grid-template-columns:minmax(90px,170px) 1fr;align-items:center;gap:12px;padding:7px 0}
+.hb-pair{padding:9px 0;border-bottom:1px solid var(--line)}.hb-pair:last-child{border-bottom:0}
+.hb-lab{min-width:0;display:flex}.hb-lab .person{color:var(--fg);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.hb-lab .muted{color:var(--muted)}
+.hb-bars{display:flex;flex-direction:column;gap:4px}
+.hb-track{display:flex;align-items:center;gap:2px;height:14px;min-width:0}
+.hb-track i{display:block;height:100%;border-radius:0 4px 4px 0;min-width:3px}
+.hb-track i+i{border-radius:0 4px 4px 0}
+.hb-track i.o{background:var(--accent)}.hb-track i.d{background:var(--accent);opacity:.35}.hb-track i.s{background:var(--ch-sub)}
+.hb-pair .hb-track{height:10px}
+.hb-val{font-size:12.5px;font-weight:600;margin-left:6px;font-variant-numeric:tabular-nums;color:var(--fg)}
+.hb-row:hover .hb-track i,.hb-pair:hover .hb-track i{filter:brightness(1.08)}
+.hb-legend{display:flex;gap:12px;align-items:center;font-size:12px;color:var(--muted);white-space:nowrap;flex:none}
+.hb-val:first-child{margin-left:0}
+.hb-legend i{display:inline-block;width:10px;height:10px;border-radius:3px;background:var(--accent);margin-right:5px;vertical-align:-1px}
+.hb-legend i.d{opacity:.35}.hb-legend i.s{background:var(--ch-sub)}
+@media (max-width:640px){.rep-grid{grid-template-columns:1fr}.hb-row,.hb-pair{grid-template-columns:1fr;gap:6px}}
 .tag.cl{height:20px;padding:0 6px;gap:4px;font-size:11.5px;border-radius:5px}
 .tag.cl .i{width:12px;height:12px}
 .cl-sel .ph{color:var(--muted);padding-left:4px;font-weight:500}
@@ -761,11 +784,12 @@ const PRINAME=Object.fromEntries(PRI);
 const MES=["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
 const DIA=["dom","lun","mar","mié","jue","vie","sáb"];
 const UPLOAD_TYPES={pdf:"application/pdf",png:"image/png",jpg:"image/jpeg",jpeg:"image/jpeg",gif:"image/gif",webp:"image/webp",svg:"image/svg+xml",mp4:"video/mp4",webm:"video/webm",csv:"text/csv",md:"text/markdown",json:"application/json",txt:"text/plain"};
-const VIEWS=["inicio","tablero","cronograma","hitos","documentos","equipo","proyectos","empresas"];
-const TASKV=["tablero","cronograma","hitos"];
+const VIEWS=["inicio","tablero","cronograma","hitos","reporte","documentos","equipo","proyectos","empresas"];
+const TASKV=["tablero","cronograma","hitos","reporte"];
 
 /* ---------- icons ---------- */
 const P={
+  chart:'<path d="M4 20h16"/><rect x="5" y="11" width="3.5" height="6" rx="1"/><rect x="10.25" y="6" width="3.5" height="11" rx="1"/><rect x="15.5" y="9" width="3.5" height="8" rx="1"/>',
   home:'<path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
   tasks:'<path d="M4 6l1.5 1.5L8 5M4 12l1.5 1.5L8 11M4 18l1.5 1.5L8 17M11 6h9M11 12h9M11 18h9"/>',
   board:'<rect x="3" y="4" width="5" height="16" rx="1.2"/><rect x="10" y="4" width="5" height="11" rx="1.2"/><rect x="17" y="4" width="4" height="7" rx="1.2"/>',
@@ -1098,7 +1122,7 @@ function searchBox(){
 }
 // "after" va pegado al botón Cronograma (los botones Por Q / Por mes).
 function viewTabs(after){
-  const t=[["tablero","Tablero","board","ic-task"],["cronograma","Cronograma","cal","ic-cal"]];if(hitosOn())t.push(["hitos","Hitos","flag","ic-hito"]);
+  const t=[["tablero","Tablero","board","ic-task"],["cronograma","Cronograma","cal","ic-cal"]];if(hitosOn())t.push(["hitos","Hitos","flag","ic-hito"]);t.push(["reporte","Reporte","chart","ic-rep"]);
   return `<div class="tabs" aria-label="Vistas de tareas">${t.map(([id,l,ic,cls])=>`<button class="pill ${S.view===id?"cur":""}" aria-current="${S.view===id?"page":"false"}" data-act="go" data-v="${id}">${ico(ic,cls)}${l}</button>${id==="cronograma"&&after?after:""}`).join("")}</div>`;
 }
 function noProject(){
@@ -1114,6 +1138,7 @@ function view(){
   switch(S.view){
     case "inicio":return viewInicio();
     case "cronograma":return viewCrono();
+    case "reporte":return viewReporte();
     case "hitos":return hitosOn()||!curProject()?viewHitos():viewTablero();
     case "equipo":return S.isOwner||S.demo?viewEquipo():viewInicio();
     case "proyectos":return viewProyectos();
@@ -1585,6 +1610,52 @@ function viewEmpresas(){
   </div>`;
 }
 // Todas las tareas que la persona puede ver (para contar por cliente). Se cargan al entrar a Proyectos.
+function loadAllTasks(){
+  if(S.allTasks||S.allTasksLoading)return;
+  if(S.demo){S.allTasks=S.tasks;return}
+  S.allTasksLoading=true;
+  S.db.collection("tasks").get().then(snap=>{S.allTasks=mapDocs(snap)}).catch(e=>{console.error(e);S.allTasks={}}).finally(()=>{S.allTasksLoading=false;if(S.view==="reporte")render()});
+}
+function hbar(label,segs,tip){
+  const tot=segs.reduce((n,x)=>n+x.v,0);
+  return `<div class="hb-row" title="${esc(tip)}"><span class="hb-lab">${label}</span><span class="hb-track">${segs.filter(x=>x.v).map(x=>`<i class="${x.c}" style="width:${x.w}%"></i>`).join("")}<b class="hb-val">${tot}</b></span></div>`};
+function viewReporte(){
+  const h=head("Tareas","tasks","");
+  const bar=`<div class="toolbar">${viewTabs()}<span class="hint">Todos los proyectos activos</span></div>`;
+  loadAllTasks();
+  if(!S.allTasks)return h+`<div class="content">${bar}<section class="panel"><div class="empty"><p>Contando tareas…</p></div></section></div>`;
+  const projs=Object.entries(S.projects).map(([id,p])=>({id,...p})).filter(p=>projVisible(p)&&!p.archived);
+  const byProj=Object.fromEntries(projs.map(p=>[p.id,p]));
+  const ts=Object.values(S.allTasks).filter(t=>!t.archived&&byProj[t.projectId]);
+  // Clientes
+  const cr=new Map();const crow=c=>{const k=lc(c);if(!cr.has(k))cr.set(k,{name:c,projs:new Map(),open:0,done:0});return cr.get(k)};
+  ts.forEach(t=>{const own=clientsOf(t),pc=clientsOf(byProj[t.projectId]);const cs=own.length?own:(pc.length===1?pc:[]);
+    (cs.length?cs:[""]).forEach(c=>{const r=crow(c);r.projs.set(t.projectId,(r.projs.get(t.projectId)||0)+1);t.column==="done"?r.done++:r.open++})});
+  const cl=[...cr.values()].sort((a,b)=>(!a.name)-(!b.name)||(b.open+b.done)-(a.open+a.done)||b.open-a.open);
+  const cmax=Math.max(1,...cl.map(r=>r.open+r.done));
+  const conCl=ts.filter(t=>{const own=clientsOf(t),pc=clientsOf(byProj[t.projectId]);return own.length||pc.length===1}).length;
+  // Personas
+  const pr=new Map();const prow=id=>{if(!pr.has(id))pr.set(id,{id,to:0,td:0,so:0,sd:0});return pr.get(id)};
+  let subs=0;
+  ts.forEach(t=>{const as=t.assignees||[];(as.length?as:[""]).forEach(id=>{const r=prow(id);t.column==="done"?r.td++:r.to++});
+    (t.subtasks||[]).forEach(x=>{subs++;const r=prow(x.assignee||"");x.done||t.column==="done"?r.sd++:r.so++})});
+  const pl=[...pr.values()].sort((a,b)=>(!a.id)-(!b.id)||(b.to+b.td+b.so+b.sd)-(a.to+a.td+a.so+a.sd));
+  const pmax=Math.max(1,...pl.map(r=>Math.max(r.to+r.td,r.so+r.sd)));
+  const pct=(n,m)=>n/m*100;
+  const stat=(l,v,sub)=>`<div class="stat rep-stat"><span class="sl">${l}</span><b>${v}</b>${sub?`<span class="ss">${sub}</span>`:""}</div>`;
+  const clientsPanel=`<section class="panel"><div class="panel-h"><h2>Tareas por cliente</h2><span class="hb-legend"><span><i class="o"></i>Abiertas</span><span><i class="d"></i>Hechas</span></span></div><div class="hb">
+    ${cl.some(r=>r.name)?cl.map(r=>{const c=r.name;const pj=[...r.projs].sort((a,b)=>b[1]-a[1]).map(([id,n])=>`${byProj[id].name}: ${n}`).join(" · ");
+      return hbar(c?clientTag(c):`<span class="tag neutral"><span>Sin cliente</span></span>`,[{v:r.open,w:pct(r.open,cmax),c:"o"},{v:r.done,w:pct(r.done,cmax),c:"d"}],`${c||"Sin cliente"} · ${r.open} abiertas · ${r.done} hechas\n${pj}`)}).join(""):`<div class="empty"><p>Todavía no hay tareas con cliente. Elige el cliente al crear una tarea (al lado de Prioridad).</p></div>`}
+  </div></section>`;
+  const peoplePanel=`<section class="panel"><div class="panel-h"><h2>Tareas y subtareas por persona</h2><span class="hb-legend"><span><i class="o"></i>Tareas</span><span><i class="s"></i>Subtareas</span></span></div><div class="hb">
+    ${pl.length?pl.map(r=>{const who=r.id?`<span class="person">${av(r.id)}${esc(nm(r.id))}</span>`:`<span class="person muted">Sin asignar</span>`;
+      const tip=`${r.id?nm(r.id):"Sin asignar"}\nTareas: ${r.to} abiertas · ${r.td} hechas\nSubtareas: ${r.so} pendientes · ${r.sd} hechas`;
+      return `<div class="hb-pair" title="${esc(tip)}"><span class="hb-lab">${who}</span><span class="hb-bars"><span class="hb-track">${r.to+r.td?`<i class="o" style="width:${pct(r.to+r.td,pmax)}%"></i>`:""}<b class="hb-val">${r.to+r.td}</b></span><span class="hb-track">${r.so+r.sd?`<i class="s" style="width:${pct(r.so+r.sd,pmax)}%"></i>`:""}<b class="hb-val">${r.so+r.sd}</b></span></span></div>`}).join(""):`<div class="empty"><p>No hay tareas todavía.</p></div>`}
+  </div></section>`;
+  return h+`<div class="content">${bar}
+    <div class="stat-row">${stat("Tareas activas",ts.length,`${ts.filter(t=>t.column==="done").length} hechas`)}${stat("Con cliente",conCl,ts.length?`${Math.round(conCl/ts.length*100)}% del total`:"")}${stat("Subtareas",subs,"")}${stat("Clientes",cl.filter(r=>r.name).length,"")}</div>
+    <div class="rep-grid">${clientsPanel}${peoplePanel}</div></div>`;
+}
 function viewProyectos(){
   const h=head("Proyectos","folder",S.canWrite?`<button class="btn primary" data-act="new-project">${ico("plus","sm")}Nuevo proyecto</button>`:"");
   const all=Object.entries(S.projects).map(([id,p])=>({id,...p})).filter(projVisible).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
