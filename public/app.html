@@ -489,7 +489,8 @@ button.tl-lab:hover .t{color:var(--accent)}
 .cl-sel .tag{height:22px;flex:0 1 auto;min-width:0}
 .cl-sel .cl-more{flex:none}
 /* Mi día */
-.ag-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.ag-chips{display:flex;gap:8px;flex-wrap:wrap}
+.home-bar{flex-wrap:wrap;align-items:center}
 .ag-chip{height:34px;cursor:default;color:var(--muted);font-size:13.5px}.ag-chip b{color:var(--fg);font-weight:600;font-variant-numeric:tabular-nums}
 .ag-chip.late{color:var(--danger)}.ag-chip.late b{color:var(--danger)}
 .ag{margin-bottom:0}
@@ -1319,8 +1320,7 @@ function viewInicio(){
   const tli=t=>`<button class="li" data-act="open-task" data-id="${t.id}"><span class="grow"><span class="t" style="display:block">${esc(t.title)}</span><span class="s">${esc(COLNAME[t.column||"todo"])}${t.end?" · "+esc(fmtRange(t.start,t.end)):""}</span></span>${isLate(t)?`<span class="tag late">Vencida</span>`:t.priority&&t.priority!=="none"?`<span class="tag p-${t.priority}">${PRINAME[t.priority]}</span>`:""}</button>`;
   const agHtml=agendaPanel();
   const td=today(),dueToday=mine.filter(t=>t.end===td).length;
-  const ag=S.ag&&S.ag.key===td&&S.ag.events?S.ag.events.filter(e=>!e.allDay).length:null;
-  const chips=`<div class="ag-chips">${ag!=null&&!S.agOff?`<span class="pill ag-chip">${ico("cal","sm")}<b>${ag}</b> ${ag===1?"reunión":"reuniones"} hoy</span>`:""}<span class="pill ag-chip">${ico("clock","sm")}<b>${dueToday}</b> ${dueToday===1?"tarea vence":"tareas vencen"} hoy</span>${late.length?`<span class="pill ag-chip late">${ico("flag","sm")}<b>${late.length}</b> ${late.length===1?"vencida":"vencidas"}</span>`:""}</div>`;
+  const chips=`<div class="ag-chips"><span class="pill ag-chip">${ico("clock","sm")}<b>${dueToday}</b> ${dueToday===1?"tarea vence":"tareas vencen"} hoy</span>${late.length?`<span class="pill ag-chip late">${ico("flag","sm")}<b>${late.length}</b> ${late.length===1?"vencida":"vencidas"}</span>`:""}</div>`;
   const hitos=hitosOn()?`<section class="panel"><div class="panel-h"><h2>Próximos hitos</h2><button class="link-btn" data-act="go" data-v="hitos">Ver todos</button></div><div class="panel-b"><div class="list">${ms.map(m=>{const s=hitoStats(m.id);const pct=s.total?Math.round(s.done/s.total*100):0;return `<div class="li"><span class="grow"><span class="t" style="display:block">${esc(m.name)}</span><span class="s">${m.date?esc(fmt(m.date)):"Sin fecha"} · ${s.done} de ${s.total} tareas</span><div class="bar" style="margin-top:6px"><i style="width:${pct}%"></i></div></span>${m.date&&m.date<today()?`<span class="tag late">Vencido</span>`:""}</div>`}).join("")||`<div class="empty"><p>No hay hitos pendientes.</p></div>`}</div></div></section>`:"";
   const left=`<div class="home-col">
       <section class="panel"><div class="panel-h"><h2>Mis tareas abiertas</h2><span class="hint">${mine.length}</span></div><div class="panel-b"><div class="list">${mine.slice(0,8).map(tli).join("")||`<div class="empty"><p>No tienes tareas abiertas en este proyecto.</p></div>`}</div></div></section>
@@ -1328,8 +1328,7 @@ function viewInicio(){
       ${late.length?`<section class="panel"><div class="panel-h"><h2>Tareas vencidas</h2><span class="hint">${late.length}</span></div><div class="panel-b"><div class="list">${late.slice(0,10).map(tli).join("")}</div></div></section>`:""}
     </div>`;
   return h+`<div class="content">
-    <div class="toolbar">${projectSwitcher()}<span class="hint">${p.start||p.end?esc(fmtRange(p.start,p.end)):""}</span></div>
-    ${chips}
+    <div class="toolbar home-bar">${projectSwitcher()}${p.start||p.end?`<span class="hint">${esc(fmtRange(p.start,p.end))}</span>`:""}${chips}</div>
     <div class="home-split ${agHtml?"":"solo"}">${left}${agHtml?`<div class="home-col">${agHtml}</div>`:""}</div>
   </div>`;
 }
