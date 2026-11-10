@@ -503,11 +503,7 @@ button.tl-lab:hover .t{color:var(--accent)}
 .ag-empty{display:flex;align-items:center;gap:14px;padding:18px;flex-wrap:wrap}.ag-empty>div{flex:1 1 240px;min-width:0}.ag-empty p{margin:2px 0 0;color:var(--muted);font-size:13.5px}
 .ag-empty .badge-ic{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;background:var(--violet-soft);color:var(--violet);flex:none}
 .ag-sum{display:flex;gap:6px 18px;flex-wrap:wrap;font-size:14px;color:var(--muted);margin-bottom:12px}.ag-sum b{color:var(--fg);font-weight:600;font-variant-numeric:tabular-nums}
-.ag-next{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:12px;border:1.5px solid var(--dot-doing);background:color-mix(in srgb,var(--dot-doing) 10%,var(--surface));margin-bottom:14px}
-.ag-next .grow{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}
-.ag-next b{font-size:17px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 a.btn{text-decoration:none}
-.ag-when{font-size:13px;color:var(--accent);font-weight:600}
 .ag-list{display:flex;flex-direction:column}
 .ag-row{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--line);min-width:0}.ag-row:last-child{border-bottom:0}
 .ag-t{width:76px;flex:none;font-size:13.5px;color:var(--muted);font-variant-numeric:tabular-nums}
@@ -515,7 +511,7 @@ a.btn{text-decoration:none}
 .ag-row.next .ag-bar{background:var(--violet)}.ag-row.allday .ag-bar{background:var(--dot-review)}
 .ag-n{flex:1;min-width:0;display:flex;flex-direction:column}.ag-n>span{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ag-n small{color:var(--muted);font-size:12.5px}
 .ag-row.past .ag-n>span{text-decoration:line-through;color:var(--muted)}.ag-row.past .ag-bar{background:var(--line-2)}
-@media (max-width:600px){.ag-next{flex-wrap:wrap}.ag-t{width:58px}.panel-h:has(.ag-title){flex-wrap:wrap}}
+@media (max-width:600px){.ag-t{width:58px}.panel-h:has(.ag-title){flex-wrap:wrap}}
 .rep-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:16px;margin-top:16px;align-items:start}
 .rep-stat{background:var(--surface);border:1px solid var(--line)}
 .rep-stat .sl{font-size:13px;color:var(--muted)}.rep-stat b{font-size:24px;font-weight:600;font-variant-numeric:tabular-nums}.rep-stat .ss{font-size:12px;color:var(--muted)}
@@ -1291,11 +1287,10 @@ function agendaPanel(){
   const nextEv=isToday?timed.find(x=>x.e>now):null;
   const sum=`<div class="ag-sum"><span><b>${timed.length}</b> ${timed.length===1?"reunión":"reuniones"}</span>${timed.length?`<span><b>${durTxt(busy)}</b> ocupadas</span>`:""}${isToday&&last&&last>now?`<span>Libre desde <b>${hm(last)}</b></span>`:isToday&&timed.length?`<span>Ya terminaste tus reuniones</span>`:""}</div>`;
   const join=x=>x.link?`<a class="btn sm ${x===nextEv?"primary":""}" href="${esc(x.link)}" target="_blank" rel="noopener noreferrer">${ico("video","sm")}Unirse</a>`:"";
-  const nextCard=nextEv?`<div class="ag-next"><div class="grow"><span class="ag-when">${nextEv.s<=now?`Ahora · termina en ${durTxt(nextEv.e-now)}`:`En ${durTxt(nextEv.s-now)}`}</span><b>${esc(nextEv.title)}</b><span class="hint">${hm(nextEv.s)} – ${hm(nextEv.e)} · ${durTxt(nextEv.e-nextEv.s)}${nextEv.location?" · "+esc(nextEv.location):""}</span></div>${join(nextEv)}</div>`:"";
   const list=`<div class="ag-list">${allDay.map(x=>`<div class="ag-row allday"><span class="ag-t">Todo el día</span><span class="ag-bar"></span><span class="ag-n">${esc(x.title)}</span></div>`).join("")}
     ${timed.map(x=>{const past=isToday&&x.e<=now;return `<div class="ag-row ${past?"past":""} ${x===nextEv?"next":""}"><span class="ag-t">${hm(x.s)}</span><span class="ag-bar"></span><span class="ag-n"><span>${esc(x.title)}</span><small>${durTxt(x.e-x.s)}${x.location?" · "+esc(x.location):""}</small></span>${past?"":join(x)}</div>`}).join("")}
     ${evs.length?"":`<p class="hint" style="padding:6px 0">No tienes reuniones ${isToday?"hoy":"este día"}.</p>`}</div>`;
-  return `<section class="panel ag">${hd}<div class="panel-b">${sum}${nextCard}${list}</div></section>`;
+  return `<section class="panel ag">${hd}<div class="panel-b">${sum}${list}</div></section>`;
 }
 function gcalModal(){
   const ag=S.ag||{};
