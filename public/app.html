@@ -806,15 +806,15 @@ button.chip:disabled{cursor:default;filter:none;border-color:transparent}
 .btn{box-shadow:none}
 .btn.primary{font-weight:500}
 /* Más liviano: títulos y textos activos en Medium 500, no SemiBold */
-.ph-title h1,.panel-h h2,.col-h,.ws b,.nav .on,.me .who b,.tabs .pill.cur{font-weight:500}
+.ph-title h1,.panel-h h2,.col-h,.ws b,.nav .on,.me .who b{font-weight:500}
 .tag{border-radius:999px;color:var(--fg)}
 .tag.hito{background:var(--todo-bg);color:var(--fg)}
 .tag.late{background:var(--risk-soft);color:var(--risk-text)}
 .tag.ok,.tag.warn{color:var(--fg)}
 .card,.hito-card,.proj,.modal,.gate-card{border-radius:14px}
 .pill.sel{background:var(--surface-2);border-color:var(--fg);color:var(--fg)}
-.tabs .pill.cur{background:var(--fg);border-color:var(--fg);color:var(--surface)}
-.tabs .pill.cur .i{color:inherit}
+/* Pestañas de vista como el original: activa en gris de selección con borde Tinta */
+.tabs .pill.cur .i{color:var(--fg)}
 .nav-sec{font-weight:500;color:var(--muted)}
 .bar i{background:var(--fg)}
 /* Cronograma: barras planas con el tono "Barra" de cada estado, cuadrícula casi invisible, hoy en una línea fina */
@@ -843,7 +843,7 @@ button.chip:disabled{cursor:default;filter:none;border-color:transparent}
 .legend i.lg-review,.lgb i.lg-review{background:var(--dot-review)}.legend i.lg-done,.lgb i.lg-done{background:var(--dot-done)}
 .legend i,.lgb i:not(.lg-hito){width:8px;height:8px;border-radius:50%;border:0!important}
 .lgb{border-radius:999px}
-.lgb.mode.on{background:var(--fg);border-color:var(--fg);color:var(--surface);font-weight:500}
+.lgb.mode.on{background:var(--surface-2);border-color:var(--fg);color:var(--fg);font-weight:600}
 /* Reporte: barras planas y delgadas con los tonos "Barra" de la guía, sin borde, puntas redondeadas */
 .hb-track{height:14px;gap:2px}
 .hb-pair .hb-track{height:12px}
@@ -855,6 +855,8 @@ button.chip:disabled{cursor:default;filter:none;border-color:transparent}
 .hb-legend i.o{background:var(--dot-doing);border:0}.hb-legend i.d{background:var(--dot-done);border:0}.hb-legend i.s{background:var(--dot-todo);border:0}
 .hb-val{font-weight:500;color:var(--muted);font-size:12px}
 .hb-row:hover .hb-track i,.hb-pair:hover .hb-track i{filter:brightness(.96)}
+/* Crear tarea: sin la columna de comentarios, la ventana se angosta para no verse estirada */
+.modal.new-task{width:min(760px,100%)}
 /* Un solo alto para todos los controles (36 px): botones, selectores, filtros, búsqueda y campos */
 .btn,.pill,.search,.pill-select,.ppl button,.ag-chip{height:36px}
 .btn.sm{height:32px}
@@ -973,7 +975,7 @@ const S={
   menu:null, navOpen:false, calStart:null, modal:null, inv:{email:"",name:"",title:"",projects:[],link:"",forName:"",err:"",busy:false},
   sideCollapsed:(()=>{try{return localStorage.getItem("pj-side")==="1"}catch(e){return false}})(),
   ws:null, emp:{list:null,loading:false,err:"",busy:false,result:null,form:{name:"",adminName:"",adminEmail:"",includeMe:false}},
-  unTasks:null, unCom:null, subHidden:new Set((()=>{try{return JSON.parse(localStorage.getItem("pj-subhidden")||"[]")}catch(e){return[]}})())
+  unTasks:null, unCom:null, pcom:{}, unPCom:null, subHidden:new Set((()=>{try{return JSON.parse(localStorage.getItem("pj-subhidden")||"[]")}catch(e){return[]}})())
 };
 function saveHidden(){ls.set("pj-subhidden",JSON.stringify([...S.subHidden]))}
 
@@ -1278,13 +1280,14 @@ function card(t){
   const m=hitosOn()&&t.milestoneId&&S.milestones[t.milestoneId];
   const subs=t.subtasks||[];const sd=subs.filter(s=>s.done).length;
   const docs=(t.docs||[]).length;
+  const nc=cmtCount(t.id);
   const ppl=(t.assignees||[]);
   const late=isLate(t);
   const range=fmtRange(t.start,t.end);
   return `<article class="card ${t.column==="done"?"is-done":""} ${t.archived?"is-arch":""}" ${S.canWrite?'draggable="true"':""} data-id="${t.id}" data-act="open-task" tabindex="0" role="button" aria-label="${esc(t.title)}">
     <div class="card-t">${esc(t.title||"Sin título")}</div>
     <div class="tags">${m?`<span class="tag hito">${ico("flag","sm")}<span>${esc(m.name)}</span></span>`:""}${t.priority&&t.priority!=="none"?`<span class="tag p-${t.priority}">${PRINAME[t.priority]}</span>`:""}${clientsOf(t).map(clientTag).join("")}${t.archived?`<span class="tag neutral">Archivada</span>`:""}</div>
-    ${range||subs.length||docs?`<div class="meta">${range?`<span class="${late?"late":""}">${ico("cal","sm")}${esc(range)}${late?" · vencida":""}</span>`:""}${subs.length?`<span>${ico("sub","sm")}${sd}/${subs.length}</span>`:""}${docs?`<span>${ico("clip","sm")}${docs}</span>`:""}</div>`:""}
+    ${range||subs.length||docs||nc?`<div class="meta">${range?`<span class="${late?"late":""}">${ico("cal","sm")}${esc(range)}${late?" · vencida":""}</span>`:""}${subs.length?`<span>${ico("sub","sm")}${sd}/${subs.length}</span>`:""}${docs?`<span>${ico("clip","sm")}${docs}</span>`:""}${nc?`<span title="Comentarios">${ico("comment","sm")}${nc}</span>`:""}</div>`:""}
     ${ppl.length?`<div class="people">${ppl.slice(0,3).map(id=>`<span class="person">${av(id)}${esc(first(id))}</span>`).join("")}${ppl.length>3?`<span class="person">+${ppl.length-3}</span>`:""}</div>`:""}
   </article>`;
 }
@@ -1975,7 +1978,7 @@ function taskModal(){
   const dis=ro?"disabled":"";
   const subs=d.subtasks||[],crit=d.criteria||[],docs=d.docs||[];
   const sopt=(v)=>`<option value="">Sin responsable</option>${ppl.map(id=>`<option value="${id}" ${v===id?"selected":""}>${esc(nm(id))}</option>`).join("")}`;
-  return `<div class="overlay" data-act="modal-bg"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="m-title">
+  return `<div class="overlay" data-act="modal-bg"><div class="modal ${m.isNew?"new-task":""}" role="dialog" aria-modal="true" aria-labelledby="m-title">
   <div class="m-main">
     <div class="m-head">${ico("tasks")}<h2 id="m-title">${m.isNew?"Nueva tarea":"Editar tarea"}</h2><button class="icon-btn" data-act="modal-close" aria-label="Cerrar">${ico("x")}</button></div>
     <div class="m-body">
@@ -2428,8 +2431,9 @@ function ensureProject(){
 }
 function subTasks(){
   if(S.unTasks){S.unTasks();S.unTasks=null}
+  if(S.unPCom){S.unPCom();S.unPCom=null}
   if(S.demo){render();return}
-  S.tasks={};
+  S.tasks={};S.pcom={};
   render();
   if(!S.projectId)return;
   S.unTasks=S.db.collection("tasks").where("projectId","==",S.projectId).onSnapshot(snap=>{
@@ -2438,7 +2442,10 @@ function subTasks(){
     loadProfiles(ids);
     render();
   },onErr);
+  // Comentarios del proyecto, solo para mostrar cuántos tiene cada tarjeta.
+  S.unPCom=S.db.collection("comments").where("projectId","==",S.projectId).onSnapshot(snap=>{S.pcom=mapDocs(snap);render()},onErr);
 }
+const cmtCount=tid=>Object.values(S.demo?S.comments:S.pcom).filter(c=>c.taskId===tid).length;
 function onErr(e){console.error(e);if(e&&e.code==="revoked")toast("Perdiste el acceso a la herramienta.",true)}
 
 /* ---------- events ---------- */
