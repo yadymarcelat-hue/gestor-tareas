@@ -98,7 +98,7 @@ h1,h2,h3{text-wrap:balance;margin:0}
 .ws-btn:hover{background:var(--hover)}
 .ws-name{min-width:0;display:block}
 .ws-name b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.nav .ic-emp{color:var(--muted)}
+.nav .ic-emp{color:var(--fg)}
 .emp-row{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--line)}
 .emp-row:last-child{border-bottom:0}
 .emp-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
@@ -115,10 +115,10 @@ h1,h2,h3{text-wrap:balance;margin:0}
 .nav .on{background:var(--surface-2);font-weight:600}
 .nav .sub{padding-left:22px;font-size:14.5px}
 .nav .sub .i{width:16px;height:16px}
-.nav .sub>svg{color:var(--muted)}
+.nav .sub>svg{color:var(--fg)}
 .nav .chev{margin-left:auto;color:var(--faint);display:grid}
 .nav .sub{padding-left:40px}
-.nav .ic-home,.nav .ic-task,.nav .ic-cal,.nav .ic-hito,.nav .ic-team,.nav .ic-proj{color:var(--muted)}
+.nav .ic-home,.nav .ic-task,.nav .ic-cal,.nav .ic-hito,.nav .ic-team,.nav .ic-proj{color:var(--fg)}
 .me{display:flex;align-items:center;gap:10px;padding:12px 8px 2px;border-top:1px solid var(--line);margin:8px -12px 0;padding-left:20px}
 .me .who{min-width:0}
 .me .who b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -375,7 +375,7 @@ button.tl-lab:hover .t{color:var(--accent)}
 .m-main{display:flex;flex-direction:column;min-width:0;flex:1}
 .m-head{display:flex;align-items:center;gap:10px;padding:16px 22px;border-bottom:1px solid var(--line)}
 .m-head h2{font-size:18px;font-weight:600;flex:1}
-.m-head .i{color:var(--muted)}
+.m-head .i{color:var(--fg)}
 .m-body{overflow:auto;padding:20px 26px 24px;display:flex;flex-direction:column;gap:20px}
 .m-body>*{flex-shrink:0}
 .m-foot{display:flex;align-items:center;gap:8px;padding:14px 22px;border-top:1px solid var(--line);flex-wrap:wrap}
@@ -702,7 +702,7 @@ a.btn{text-decoration:none}
 .tl-name .hint{flex:none;margin-left:auto}
 .tl .tl-lab.subt{padding-left:12px}
 .tl .tl-lab.subt .tl-name{grid-column:2 / -1;padding-left:16px;font-weight:400;color:var(--muted);font-size:13px}
-.tl .tl-lab.subt .tl-name .i{color:var(--faint)}
+.tl .tl-lab.subt .tl-name .i{color:var(--fg)}
 .tl-head .tl-lab{font-size:12px;color:var(--faint);font-weight:600;text-transform:uppercase;letter-spacing:.05em;align-items:end;padding-bottom:9px}
 .tl-head .tl-lab span:first-child{grid-column:1 / -1}
 .tl .tl-head{min-height:54px}
@@ -776,6 +776,13 @@ button.chip:disabled{cursor:default;filter:none;border-color:transparent}
 
 /* Documentos */
 .doc-list .li{gap:14px;padding:12px 0}
+.doc-row{display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line);min-width:0}.doc-row:last-child{border-bottom:0}
+.doc-row>.li{flex:1;min-width:0;border-bottom:0}
+.row-acts{display:flex;align-items:center;gap:4px;flex:none}
+.row-acts .icon-btn{width:32px;height:32px;border-radius:10px;border:1px solid var(--line-2);background:var(--surface)}
+.row-acts .icon-btn:hover{background:var(--hover)}
+.row-acts .icon-btn.del:hover{background:var(--risk-soft);border-color:var(--risk-bar);color:var(--risk-text)}
+.row-acts.confirm{gap:6px}
 .doc-list .li .s{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .doc-list .li .ic{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent);flex:none}
 .doc-list .tags{flex-wrap:wrap;justify-content:flex-end;flex:none;max-width:45%}
@@ -800,7 +807,9 @@ button.chip:disabled{cursor:default;filter:none;border-color:transparent}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
 /* Línea de marca Ingenio SAS: piezas básicas (botones, pestañas, chips, tarjetas, íconos) */
-.nav svg,.tabs .pill .i{color:var(--muted)}
+/* Íconos siempre en Tinta, como en la guía; sobre fondos de color o negro toman el color del texto */
+.i{color:var(--fg)!important}
+.btn.primary .i,.btn.danger .i,.btn.danger-t .i,.tabs .pill.cur .i,.lgb.mode.on .i,#toast .i,.late .i,.tag.late .i,.err .i,.cl-ic .i,.cl-sq .i,.tag.cl .i,.cl-picks .i,.tag.pub .i,.row-acts .del .i{color:inherit!important}
 .nav .on svg{color:var(--fg)}
 .ph-title .badge-ic{background:var(--surface-2);color:var(--fg)}
 .btn{box-shadow:none}
@@ -813,8 +822,9 @@ button.chip:disabled{cursor:default;filter:none;border-color:transparent}
 .tag.ok,.tag.warn{color:var(--fg)}
 .card,.hito-card,.proj,.modal,.gate-card{border-radius:14px}
 .pill.sel{background:var(--surface-2);border-color:var(--fg);color:var(--fg)}
-/* Pestañas de vista como el original: activa en gris de selección con borde Tinta */
-.tabs .pill.cur .i{color:var(--fg)}
+/* Pestaña de vista activa en Tinta con texto blanco (guía de marca, página 7) */
+.tabs .pill.cur{background:var(--fg);border-color:var(--fg);color:var(--surface);font-weight:500}
+.tabs .pill.cur .i{color:inherit}
 .nav-sec{font-weight:500;color:var(--muted)}
 .bar i{background:var(--fg)}
 /* Cronograma: barras planas con el tono "Barra" de cada estado, cuadrícula casi invisible, hoy en una línea fina */
@@ -843,7 +853,7 @@ button.chip:disabled{cursor:default;filter:none;border-color:transparent}
 .legend i.lg-review,.lgb i.lg-review{background:var(--dot-review)}.legend i.lg-done,.lgb i.lg-done{background:var(--dot-done)}
 .legend i,.lgb i:not(.lg-hito){width:8px;height:8px;border-radius:50%;border:0!important}
 .lgb{border-radius:999px}
-.lgb.mode.on{background:var(--surface-2);border-color:var(--fg);color:var(--fg);font-weight:600}
+.lgb.mode.on{background:var(--fg);border-color:var(--fg);color:var(--surface);font-weight:500}
 /* Reporte: barras planas y delgadas con los tonos "Barra" de la guía, sin borde, puntas redondeadas */
 .hb-track{height:14px;gap:2px}
 .hb-pair .hb-track{height:12px}
@@ -857,6 +867,7 @@ button.chip:disabled{cursor:default;filter:none;border-color:transparent}
 .hb-row:hover .hb-track i,.hb-pair:hover .hb-track i{filter:brightness(.96)}
 /* Crear tarea: sin la columna de comentarios, la ventana se angosta para no verse estirada */
 .modal.new-task{width:min(760px,100%)}
+.hb-lab .cl-sq{width:22px;height:22px;border-radius:6px;display:inline-grid;place-items:center;flex:none}
 /* Un solo alto para todos los controles (36 px): botones, selectores, filtros, búsqueda y campos */
 .btn,.pill,.search,.pill-select,.ppl button,.ag-chip{height:36px}
 .btn.sm{height:32px}
@@ -924,6 +935,7 @@ const P={
   edit:'<path d="M4 20h4L19 9l-4-4L4 16z"/>',
   clock:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
   upload:'<path d="M12 16V4M7 9l5-5 5 5M4 20h16"/>',
+  download:'<path d="M12 4v12M7 11l5 5 5-5M4 20h16"/>',
   info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>',
   building:'<path d="M4 21V5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v16M15 9h4a1 1 0 0 1 1 1v11M3 21h18M8 8h3M8 12h3M8 16h3"/>',
   panel:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/>',
@@ -1126,7 +1138,9 @@ function filteredTasks(){
     &&(!S.person||(t.assignees||[]).includes(S.person)||(t.subtasks||[]).some(s=>s.assignee===S.person))
     &&(!q||(t.title||"").toLowerCase().includes(q)||(t.description||"").toLowerCase().includes(q)));
 }
-const byOrder=(a,b)=>(a.order||0)-(b.order||0);
+// Tablero: primero por prioridad (Alta, Media, Baja, Sin prioridad) y dentro de cada una por orden de llegada.
+const PRANK={alta:0,media:1,baja:2};
+const byOrder=(a,b)=>((PRANK[a.priority]??3)-(PRANK[b.priority]??3))||((a.order||0)-(b.order||0));
 const isLate=t=>t.end&&t.column!=="done"&&t.end<today();
 function hitoStats(mid){
   const ts=taskList().filter(t=>t.milestoneId===mid&&!t.archived);
@@ -1636,7 +1650,9 @@ function viewDocumentos(){
   const list=docList();
   const F=[["all","Todos"],["mine","Míos"],["company","De la empresa"],["public","Con enlace público"]];
   const row=d=>{const snip=String(d.content||"").replace(/[#>*`\[\]()_-]/g," ").replace(/\s+/g," ").trim().slice(0,120);
-    return `<button class="li" data-act="doc-open" data-id="${d.id}"><span class="ic">${ico("doc")}</span><span class="grow"><span class="t" style="display:block">${esc(d.title||"Sin título")}</span><span class="s">${snip?esc(snip)+" · ":""}${d.updatedAt?"Editado "+esc(fmtTime(d.updatedAt).split(",")[0]):""}${d.ownerId&&d.ownerId!==S.me.id?" · "+esc(first(d.ownerId)):""}</span></span><span class="tags">${d.share&&d.share.enabled?`<span class="tag pub">${ico("globe","sm")}<span>Enlace público</span></span>`:""}${dvisTag(d)}${(d.attachments||[]).length?`<span class="tag neutral">${ico("clip","sm")}<span>${(d.attachments||[]).length}</span></span>`:""}</span></button>`};
+    const acts=S.docDel===d.id?`<span class="row-acts confirm"><span class="hint">¿Borrar?</span><button class="btn danger sm" data-act="doc-row-del-yes" data-id="${d.id}">Borrar</button><button class="btn ghost sm" data-act="doc-row-del-no">Cancelar</button></span>`
+      :`<span class="row-acts"><button class="icon-btn" data-act="doc-pdf" data-id="${d.id}" title="Descargar PDF" aria-label="Descargar PDF">${ico("download","sm")}</button>${canEditDoc(d)?`<button class="icon-btn del" data-act="doc-row-del" data-id="${d.id}" title="Eliminar" aria-label="Eliminar documento">${ico("trash","sm")}</button>`:""}</span>`;
+    return `<div class="doc-row"><button class="li" data-act="doc-open" data-id="${d.id}"><span class="ic">${ico("doc")}</span><span class="grow"><span class="t" style="display:block">${esc(d.title||"Sin título")}</span><span class="s">${snip?esc(snip)+" · ":""}${d.updatedAt?"Editado "+esc(fmtTime(d.updatedAt).split(",")[0]):""}${d.ownerId&&d.ownerId!==S.me.id?" · "+esc(first(d.ownerId)):""}</span></span><span class="tags">${d.share&&d.share.enabled?`<span class="tag pub">${ico("globe","sm")}<span>Enlace público</span></span>`:""}${dvisTag(d)}${(d.attachments||[]).length?`<span class="tag neutral">${ico("clip","sm")}<span>${(d.attachments||[]).length}</span></span>`:""}</span></button>${acts}</div>`};
   return h+`<div class="content">
     <div class="toolbar"><label class="search">${ico("search","sm")}<input id="dq" type="text" placeholder="Buscar documentos" value="${esc(S.docQ)}" aria-label="Buscar documentos"></label>
       <div class="tabs dtabs" aria-label="Filtrar documentos">${F.map(([k,l])=>`<button class="pill ${S.docF===k?"cur":""}" data-act="doc-f" data-f="${k}">${l}</button>`).join("")}</div></div>
@@ -1713,6 +1729,25 @@ async function saveDoc(){
   else ok=await safe(()=>wupd("documents",m.id,body),"Documento guardado");
   if(ok&&!m.isNew&&S.assets){const keep=new Set((d.docs||[]).filter(x=>x.assetId).map(x=>x.assetId));(m.orig.docs||[]).filter(x=>x.assetId&&!keep.has(x.assetId)).forEach(x=>S.assets.delete(x.assetId).catch(()=>{}))}
   if(ok){m.newAssets=[];closeModal(true)}
+}
+async function deleteDocById(id){
+  const d=S.documents[id];S.docDel=null;
+  if(!d||!canEditDoc(d)){render();return}
+  if(!await safe(()=>wdel("documents",id),"Documento borrado"))return;
+  if(S.assets)(d.attachments||[]).filter(x=>x.assetId).forEach(x=>S.assets.delete(x.assetId).catch(()=>{}));
+  render();
+}
+// Descarga el documento como PDF (título, fecha y contenido) con el estilo de la guía.
+async function docPdf(id){
+  const d=S.documents[id];if(!d)return;
+  toast("Preparando el PDF…");
+  try{
+    if(!window.html2pdf)await new Promise((ok,ko)=>{const sc=document.createElement("script");sc.src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";sc.onload=ok;sc.onerror=ko;document.head.appendChild(sc)});
+    const el=document.createElement("div");
+    el.innerHTML=`<div class="pdf-doc" style="font-family:Inter,system-ui,sans-serif;color:#141414;background:#fff;padding:4px"><p style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#6B6B70;margin:0 0 6px">${esc(wsName())} · Docu</p><h1 style="font-size:24px;font-weight:600;letter-spacing:-.015em;margin:0 0 4px;color:#141414">${esc(d.title||"Sin título")}</h1><p style="font-size:12px;color:#6B6B70;margin:0 0 18px;padding-bottom:12px;border-bottom:1px solid #E6E6E8">${d.updatedAt?"Editado "+esc(fmtTime(d.updatedAt)):""}</p><div class="md" style="color:#141414">${md(d.content)||""}</div></div>`;
+    const name=String(d.title||"documento").replace(/[\\/:*?"<>|]+/g,"").trim().slice(0,80)||"documento";
+    await window.html2pdf().set({margin:[14,14,14,14],filename:name+".pdf",image:{type:"jpeg",quality:.96},html2canvas:{scale:2,backgroundColor:"#ffffff"},jsPDF:{unit:"mm",format:"a4"}}).from(el).save();
+  }catch(e){console.error(e);toast("No se pudo crear el PDF. Intenta de nuevo.",true)}
 }
 async function deleteDoc(){
   const m=S.modal;const d=S.documents[m.id];
@@ -1815,9 +1850,6 @@ function loadAllTasks(){
   S.allTasksLoading=true;
   S.db.collection("tasks").get().then(snap=>{S.allTasks=mapDocs(snap)}).catch(e=>{console.error(e);S.allTasks={}}).finally(()=>{S.allTasksLoading=false;if(S.view==="reporte")render()});
 }
-function hbar(label,segs,tip){
-  const tot=segs.reduce((n,x)=>n+x.v,0);
-  return `<div class="hb-row" title="${esc(tip)}"><span class="hb-lab">${label}</span><span class="hb-track">${segs.filter(x=>x.v).map(x=>`<i class="${x.c}" style="width:${x.w}%"></i>`).join("")}<b class="hb-val">${tot}</b></span></div>`};
 function viewReporte(){
   const h=head("Tareas","tasks","");
   const all=S.repAll||!curProject();
@@ -1837,7 +1869,7 @@ function viewReporte(){
   ts.forEach(t=>{const own=clientsOf(t),pc=clientsOf(byProj[t.projectId]);const cs=own.length?own:(pc.length===1?pc:[]);
     (cs.length?cs:[""]).forEach(c=>{const r=crow(c);r.projs.set(t.projectId,(r.projs.get(t.projectId)||0)+1);t.column==="done"?r.done++:r.open++})});
   const cl=[...cr.values()].sort((a,b)=>(!a.name)-(!b.name)||(b.open+b.done)-(a.open+a.done)||b.open-a.open);
-  const cmax=Math.max(1,...cl.map(r=>r.open+r.done));
+  const cmax=Math.max(1,...cl.map(r=>Math.max(r.open,r.done)));
   const conCl=ts.filter(t=>{const own=clientsOf(t),pc=clientsOf(byProj[t.projectId]);return own.length||pc.length===1}).length;
   // Personas
   const pr=new Map();const prow=id=>{if(!pr.has(id))pr.set(id,{id,to:0,td:0,so:0,sd:0});return pr.get(id)};
@@ -1850,7 +1882,10 @@ function viewReporte(){
   const stat=(l,v,sub)=>`<div class="stat rep-stat"><span class="sl">${l}</span><b>${v}</b>${sub?`<span class="ss">${sub}</span>`:""}</div>`;
   const clientsPanel=`<section class="panel"><div class="panel-h"><h2>Tareas por cliente</h2><span class="hb-legend"><span><i class="o"></i>Abiertas</span><span><i class="d"></i>Hechas</span></span></div><div class="hb">
     ${cl.some(r=>r.name)?cl.map(r=>{const c=r.name;const pj=[...r.projs].sort((a,b)=>b[1]-a[1]).map(([id,n])=>`${byProj[id].name}: ${n}`).join(" · ");
-      return hbar(c?clientTag(c):`<span class="tag neutral"><span>Sin cliente</span></span>`,[{v:r.open,w:pct(r.open,cmax),c:"o"},{v:r.done,w:pct(r.done,cmax),c:"d"}],`${c||"Sin cliente"} · ${r.open} abiertas · ${r.done} hechas\n${pj}`)}).join(""):`<div class="empty"><p>Todavía no hay tareas con cliente. Elige el cliente al crear una tarea (al lado de Prioridad).</p></div>`}
+      // Mismo formato que "Tareas y subtareas por persona": nombre a la izquierda y dos barras, abiertas y hechas.
+      const who=c?`<span class="person"><span class="cl-sq cl-c${clientColor(c)}">${ico("building","sm")}</span>${esc(c)}</span>`:`<span class="person muted">Sin cliente</span>`;
+      const tip=`${c||"Sin cliente"} · ${r.open} abiertas · ${r.done} hechas\n${pj}`;
+      return `<div class="hb-pair" title="${esc(tip)}"><span class="hb-lab">${who}</span><span class="hb-bars"><span class="hb-track">${r.open?`<i class="o" style="width:${pct(r.open,cmax)}%"></i>`:""}<b class="hb-val">${r.open}</b></span><span class="hb-track">${r.done?`<i class="d" style="width:${pct(r.done,cmax)}%"></i>`:""}<b class="hb-val">${r.done}</b></span></span></div>`}).join(""):`<div class="empty"><p>Todavía no hay tareas con cliente. Elige el cliente al crear una tarea (al lado de Prioridad).</p></div>`}
   </div></section>`;
   const peoplePanel=`<section class="panel"><div class="panel-h"><h2>Tareas y subtareas por persona</h2><span class="hb-legend"><span><i class="o"></i>Tareas</span><span><i class="s"></i>Subtareas</span></span></div><div class="hb">
     ${pl.length?pl.map(r=>{const who=r.id?`<span class="person">${av(r.id)}${esc(nm(r.id))}</span>`:`<span class="person muted">Sin asignar</span>`;
@@ -2463,6 +2498,10 @@ document.addEventListener("click",async e=>{
     case "nav-grp":{const k=el.dataset.k==="tasks"?"navTasks":"navDocs";const inside=el.dataset.k==="tasks"?TASKV.includes(S.view):S.view==="documentos";
       if(S.sideCollapsed){go(el.dataset.v);break}
       if(!inside){S[k]=true;go(el.dataset.v)}else{S[k]=!S[k];render()}break}
+    case "doc-pdf":docPdf(el.dataset.id);break;
+    case "doc-row-del":S.docDel=el.dataset.id;render();break;
+    case "doc-row-del-no":S.docDel=null;render();break;
+    case "doc-row-del-yes":deleteDocById(el.dataset.id);break;
     case "doc-f":S.docF=el.dataset.f||"all";S.navDocs=true;if(S.view!=="documentos")go("documentos");else render();break;
     case "doc-new":if(S.canWrite)openDoc(null);break;
     case "doc-open":openDoc(id);break;
