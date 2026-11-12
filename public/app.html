@@ -795,6 +795,18 @@ button.chip:disabled{cursor:default;filter:none;border-color:transparent}
 .doc-list .tags{flex-wrap:wrap;justify-content:flex-end;flex:none;max-width:45%}
 .doc-edit{border:0;outline:0;background:none;width:100%;resize:none;min-height:260px;line-height:1.65;font-size:15px;padding:0;overflow:hidden}
 .doc-edit::placeholder{color:var(--faint)}
+.fmt-bar{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:2px;flex-wrap:wrap;padding:6px;margin:4px 0 2px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.fmt-btn{width:34px;height:34px;display:grid;place-items:center;border:0;border-radius:8px;background:none;color:var(--fg);cursor:pointer}
+.fmt-btn:hover:not(:disabled){background:var(--hover)}
+.fmt-btn:disabled{opacity:.35;cursor:default}
+.fmt-btn .i{width:18px;height:18px}
+.fmt-sep{width:1px;height:20px;background:var(--line);margin:0 4px}
+.fmt-bar .grow{flex:1}
+.fmt-prev{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 10px;border:1px solid var(--line-2);border-radius:8px;background:var(--surface);font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap}
+.fmt-prev:hover{background:var(--hover)}
+.fmt-prev.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.doc-preview{min-height:260px;padding:4px 0}
+@media (max-width:600px){.fmt-btn{width:32px;height:32px}.fmt-sep{display:none}.fmt-prev{flex:1 1 100%;justify-content:center;margin-top:4px}}
 .md{line-height:1.65;font-size:15px;overflow-wrap:anywhere}
 .md>*:first-child{margin-top:0}
 .md h2{font-size:22px;margin:22px 0 8px}.md h3{font-size:18px;margin:18px 0 6px}.md h4{font-size:15.5px;margin:14px 0 4px}
@@ -912,6 +924,15 @@ const TASKV=["tablero","cronograma","hitos","reporte"];
 
 /* ---------- icons ---------- */
 const P={
+  fbold:'<path d="M7 5h6a3.5 3.5 0 0 1 0 7H7zM7 12h7a3.5 3.5 0 0 1 0 7H7z"/>',
+  fital:'<path d="M14 5h-4M14 19h-4M15 5 9 19" transform="translate(1 0)"/>',
+  fh1:'<path d="M4 6v12M12 6v12M4 12h8M16 10l3-2v10"/>',
+  fh2:'<path d="M4 6v12M11 6v12M4 12h7M15 10a2.5 2.5 0 0 1 5 0c0 2.5-5 4-5 8h5"/>',
+  ful:'<path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/>',
+  fol:'<path d="M10 6h10M10 12h10M10 18h10M4 4.5l1.5-.5v4M3.8 10.5a1.3 1.3 0 0 1 2.4.6c0 1-2.4 1.6-2.4 3h2.6M3.8 16.3h2.4l-1.3 1.6a1.2 1.2 0 1 1-1.1 1.7"/>',
+  ftodo:'<rect x="3.5" y="4" width="6" height="6" rx="1.2"/><path d="m4.8 15.7 1.5 1.5 2.7-2.7M13 7h8M13 16h8"/>',
+  fquote:'<path d="M5 6v12M10 8h10M10 12h10M10 16h6"/>',
+  fhr:'<path d="M4 12h16"/>',
   video:'<rect x="3" y="6" width="12" height="12" rx="2"/><path d="m15 10 6-3v10l-6-3"/>',
   chart:'<path d="M4 20h16"/><rect x="5" y="11" width="3.5" height="6" rx="1"/><rect x="10.25" y="6" width="3.5" height="11" rx="1"/><rect x="15.5" y="9" width="3.5" height="8" rx="1"/>',
   home:'<path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
@@ -1676,6 +1697,51 @@ function openDoc(id){
   renderModal();
   setTimeout(()=>{const el=$("#d-title");if(el&&isNew)el.focus()},30);
 }
+// Barra de formato del documento: guarda en el mismo Markdown que ya lee md() y doc.html.
+const FMT=[["h1","fh1","Título"],["h2","fh2","Subtítulo"],["|"],["b","fbold","Negrita (Ctrl/⌘+B)"],["i","fital","Cursiva (Ctrl/⌘+I)"],["|"],["ul","ful","Viñetas"],["ol","fol","Lista numerada"],["todo","ftodo","Pendientes"],["|"],["quote","fquote","Cita"],["link","link","Enlace"],["hr","fhr","Línea divisoria"]];
+function fmtBar(prev){
+  return `<div class="fmt-bar" role="toolbar" aria-label="Formato">${FMT.map(([k,ic,l])=>k==="|"?`<span class="fmt-sep"></span>`
+    :`<button type="button" class="fmt-btn" data-act="fmt" data-fmt="${k}" title="${l}" aria-label="${l}" ${prev?"disabled":""}>${ico(ic,"sm")}</button>`).join("")}
+    <span class="grow"></span><button type="button" class="fmt-prev ${prev?"on":""}" data-act="fmt-prev" aria-pressed="${!!prev}">${ico(prev?"edit":"eye","sm")}${prev?"Seguir escribiendo":"Vista previa"}</button></div>`;
+}
+function applyFmt(k){
+  const ta=$("#d-content");if(!ta||!S.modal)return;
+  let v=ta.value,s=ta.selectionStart,e=ta.selectionEnd;
+  const set=(nv,ns,ne)=>{ta.value=nv;S.modal.draft.content=nv;fitArea(ta);ta.focus();ta.setSelectionRange(ns,ne)};
+  if(k==="b"||k==="i"||k==="link"){
+    const mk=k==="b"?"**":"*",sel=v.slice(s,e);
+    if(k==="link"){const t=sel||"texto",ins=`[${t}](https://)`;return set(v.slice(0,s)+ins+v.slice(e),s+t.length+3,s+ins.length-1)}
+    // Si ya tiene el formato, se lo quita.
+    if(v.slice(s-mk.length,s)===mk&&v.slice(e,e+mk.length)===mk&&!(k==="i"&&v.slice(s-2,s)==="**"&&v.slice(s-3,s)!=="***"))
+      return set(v.slice(0,s-mk.length)+sel+v.slice(e+mk.length),s-mk.length,e-mk.length);
+    if(sel.startsWith(mk)&&sel.endsWith(mk)&&sel.length>=mk.length*2)
+      return set(v.slice(0,s)+sel.slice(mk.length,-mk.length)+v.slice(e),s,e-mk.length*2);
+    const t=sel||(k==="b"?"negrita":"cursiva");
+    return set(v.slice(0,s)+mk+t+mk+v.slice(e),s+mk.length,s+mk.length+t.length);
+  }
+  if(k==="hr"){const pre=s&&v[s-1]!=="\n"?"\n":"",ins=pre+"\n---\n\n";return set(v.slice(0,s)+ins+v.slice(e),s+ins.length,s+ins.length)}
+  // Formatos de línea: se aplican a todas las líneas seleccionadas (o se quitan si ya lo tienen).
+  const ls=v.lastIndexOf("\n",s-1)+1;let le=v.indexOf("\n",e>s&&v[e-1]==="\n"?e-1:e);if(le<0)le=v.length;
+  const lines=v.slice(ls,le).split("\n");
+  const strip=l=>l.replace(/^(#{1,3}\s+|>\s?|\s*[-*]\s+\[[ xX]\]\s+|\s*[-*]\s+|\s*\d+[.)]\s+)/,"");
+  const pre={h1:()=>"# ",h2:()=>"## ",quote:()=>"> ",ul:()=>"- ",todo:()=>"- [ ] ",ol:i=>(i+1)+". "}[k];
+  const has={h1:/^#\s/,h2:/^##\s/,quote:/^>/,ul:/^\s*[-*]\s+(?!\[[ xX]\])/,todo:/^\s*[-*]\s+\[[ xX]\]/,ol:/^\s*\d+[.)]\s/}[k];
+  const all=lines.filter(l=>l.trim()).every(l=>has.test(l))&&lines.some(l=>l.trim());
+  let n=0;const out=lines.map(l=>{if(!l.trim()&&lines.length>1)return l;return all?strip(l):pre(n++)+strip(l)}).join("\n");
+  const nv=v.slice(0,ls)+out+v.slice(le);
+  if(s===e&&lines.length===1){const c=ls+out.length;return set(nv,c,c)}
+  set(nv,ls,ls+out.length);
+}
+// Al dar Enter dentro de una lista, la siguiente línea sigue la lista; Enter en un ítem vacío la termina.
+function listEnter(e){
+  const ta=e.target,v=ta.value,s=ta.selectionStart;if(s!==ta.selectionEnd)return false;
+  const ls=v.lastIndexOf("\n",s-1)+1,line=v.slice(ls,s);
+  const m=line.match(/^(\s*)([-*]\s+\[[ xX]\]\s+|[-*]\s+|(\d+)([.)])\s+|>\s?)(.*)$/);if(!m)return false;
+  e.preventDefault();
+  if(!m[5].trim()){ta.value=v.slice(0,ls)+v.slice(s);ta.setSelectionRange(ls,ls)}
+  else{const nx=m[3]?`${m[1]}${Number(m[3])+1}${m[4]} `:/\[[ xX]\]/.test(m[2])?`${m[1]}- [ ] `:m[1]+m[2];ta.value=v.slice(0,s)+"\n"+nx+v.slice(s);const c=s+1+nx.length;ta.setSelectionRange(c,c)}
+  S.modal.draft.content=ta.value;fitArea(ta);return true;
+}
 function fitArea(el){if(!el)return;el.style.height="auto";el.style.height=Math.max(260,el.scrollHeight)+"px"}
 function docModal(){
   const m=S.modal,d=m.draft;
@@ -1689,7 +1755,8 @@ function docModal(){
     <div class="m-body">
       <textarea id="d-title" class="title-input" rows="1" placeholder="Título del documento" data-d="title" ${dis} aria-label="Título">${esc(d.title)}</textarea>
       ${ro?`<div class="md">${md(d.content)||`<p class="hint">Este documento está vacío.</p>`}</div>`
-        :`<textarea id="d-content" class="doc-edit" data-d="content" placeholder="Escribe aquí… Usa # para títulos, - para listas, [ ] para pendientes y **negrita**." aria-label="Contenido">${esc(d.content)}</textarea>`}
+        :`${fmtBar(m.preview)}${m.preview?`<div class="md doc-preview">${md(d.content)||`<p class="hint">Todavía no hay nada escrito.</p>`}</div>`
+          :`<textarea id="d-content" class="doc-edit" data-d="content" placeholder="Escribe aquí… Selecciona texto y usa la barra de arriba para darle formato." aria-label="Contenido">${esc(d.content)}</textarea>`}`}
       <div class="field"><div class="sec-h"><span class="flabel">${ico("clip","sm")}Archivos <span class="count">${docs.length}</span></span></div>
         <div class="docs">${docs.map(x=>docRow(x,ro)).join("")}</div>
         ${m.uploading?`<span class="hint">Subiendo ${m.uploading} ${m.uploading===1?"archivo":"archivos"}…</span>`:""}
@@ -2491,6 +2558,7 @@ const cmtCount=tid=>Object.values(S.demo?S.comments:S.pcom).filter(c=>c.taskId==
 function onErr(e){console.error(e);if(e&&e.code==="revoked")toast("Perdiste el acceso a la herramienta.",true)}
 
 /* ---------- events ---------- */
+document.addEventListener("mousedown",e=>{if(e.target.closest(".fmt-btn"))e.preventDefault()});
 document.addEventListener("click",async e=>{
   const el=e.target.closest("[data-act]");
   if(S.chip&&!e.target.closest(".fpop")&&!(el&&el.dataset.act==="chip"))closeChip();
@@ -2562,6 +2630,8 @@ document.addEventListener("click",async e=>{
     case "crit-del":m.draft.criteria=m.draft.criteria.filter(c=>c.id!==id);renderModal();break;
     case "crit-done":{const c=m.draft.criteria.find(x=>x.id===id);if(c)c.done=el.checked;const row=el.closest(".crow");if(row)row.classList.toggle("done",el.checked);break}
     case "doc-del":m.draft.docs=m.draft.docs.filter(x=>x.id!==id);renderModal();break;
+    case "fmt":applyFmt(el.dataset.fmt);break;
+    case "fmt-prev":{m.preview=!m.preview;renderModal();if(!m.preview){const x=$("#d-content");if(x){x.focus();x.setSelectionRange(x.value.length,x.value.length)}}break}
     case "link-open":m.linkForm=true;renderModal();{const x=$("#l-name");if(x)x.focus()}break;
     case "link-cancel":m.linkForm=false;m.link={name:"",url:""};renderModal();break;
     case "link-add":{let u=m.link.url.trim();if(!u){toast("Pega el enlace del documento.",true);break}if(!/^https?:\/\//i.test(u))u="https://"+u;
@@ -2692,6 +2762,8 @@ document.addEventListener("keydown",e=>{
     if(S.navOpen){S.navOpen=false;render()}
   }
   if((e.metaKey||e.ctrlKey)&&(e.key==="b"||e.key==="B")&&!S.modal&&window.innerWidth>900){e.preventDefault();toggleSide();return}
+  if(e.target.id==="d-content"&&(e.metaKey||e.ctrlKey)&&!e.shiftKey&&!e.altKey&&/^[bik]$/i.test(e.key)){e.preventDefault();applyFmt({b:"b",i:"i",k:"link"}[e.key.toLowerCase()]);return}
+  if(e.target.id==="d-content"&&e.key==="Enter"&&!e.shiftKey&&!e.metaKey&&!e.ctrlKey&&!e.isComposing){listEnter(e);return}
   if(e.key==="Enter"&&(e.target.id==="f-title"||e.target.id==="d-title")){e.preventDefault();return}
   if(e.key==="Enter"&&e.target.id==="cl-new"){e.preventDefault();addClient();return}
   if(e.key==="Enter"&&e.target.classList&&e.target.classList.contains("card")){openTask(e.target.dataset.id)}
