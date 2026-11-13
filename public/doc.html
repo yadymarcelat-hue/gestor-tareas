@@ -26,7 +26,7 @@ h1{font-size:30px;line-height:1.25;letter-spacing:-.015em;margin:0 0 6px;text-wr
 .md{line-height:1.7;font-size:15.5px;overflow-wrap:anywhere}
 .md>*:first-child{margin-top:0}
 .md h2{font-size:22px;margin:24px 0 8px}.md h3{font-size:18px;margin:20px 0 6px}.md h4{font-size:15.5px;margin:16px 0 4px}
-.md p{margin:0 0 12px}.md ul,.md ol{margin:0 0 12px;padding-left:24px}.md li{margin:3px 0}
+.md p{margin:0 0 12px;white-space:pre-wrap;tab-size:4}.md ul,.md ol{margin:0 0 12px;padding-left:24px}.md li{margin:3px 0}.md ul ul,.md ul ol,.md ol ul,.md ol ol{margin:2px 0}
 .md blockquote{margin:0 0 12px;padding:4px 14px;border-left:3px solid var(--line-2);color:var(--muted)}
 .md code{background:var(--surface-2);border-radius:5px;padding:1px 5px;font-size:14px}
 .md hr{border:0;border-top:1px solid var(--line);margin:18px 0}
@@ -59,18 +59,29 @@ function md(src){
   const inl=t=>esc(t).replace(/`([^`]+)`/g,"<code>$1</code>").replace(/\*\*([^*]+)\*\*/g,"<b>$1</b>").replace(/(^|[^*])\*([^*\s][^*]*)\*/g,"$1<i>$2</i>")
     .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,'<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
     .replace(/(^|[\s(])(https?:\/\/[^\s<]+)/g,'$1<a href="$2" target="_blank" rel="noopener noreferrer">$2</a>');
-  const out=[];let list=null,para=[];
+  const out=[];let para=[],st=[];
   const flushP=()=>{if(para.length){out.push("<p>"+para.map(inl).join("<br>")+"</p>");para=[]}};
-  const flushL=()=>{if(list){out.push(`<${list.t}>${list.items.join("")}</${list.t}>`);list=null}};
+  // Listas con subniveles: cada 2 espacios (o un tab) de sangría es un nivel más.
+  const flushL=()=>{while(st.length)out.push(`</li></${st.pop().t}>`)};
+  const item=(ind,t,html)=>{
+    let lv=Math.floor(ind.replace(/\t/g,"  ").length/2);
+    lv=st.length?Math.min(lv,st[st.length-1].lv+1):0;
+    while(st.length&&st[st.length-1].lv>lv)out.push(`</li></${st.pop().t}>`);
+    const top=st[st.length-1];
+    if(top&&top.lv===lv&&top.t!==t){out.push(`</li></${st.pop().t}>`)}
+    const tp=st[st.length-1];
+    if(tp&&tp.lv===lv)out.push("</li>"+html);
+    else{out.push(`<${t}>`+html);st.push({t,lv})}
+  };
   String(src||"").split(/\r?\n/).forEach(line=>{
     let m;
     if(!line.trim()){flushP();flushL();return}
     if((m=line.match(/^(#{1,3})\s+(.*)$/))){flushP();flushL();const n=m[1].length+1;out.push(`<h${n}>${inl(m[2])}</h${n}>`);return}
     if(/^\s*(---|\*\*\*)\s*$/.test(line)){flushP();flushL();out.push("<hr>");return}
     if((m=line.match(/^>\s?(.*)$/))){flushP();flushL();out.push(`<blockquote>${inl(m[1])}</blockquote>`);return}
-    if((m=line.match(/^\s*[-*]\s+\[( |x|X)\]\s+(.*)$/))){flushP();if(!list||list.t!=="ul"){flushL();list={t:"ul",items:[]}}list.items.push(`<li class="todo-i">${m[1]===" "?"☐":"☑"} ${inl(m[2])}</li>`);return}
-    if((m=line.match(/^\s*[-*]\s+(.*)$/))){flushP();if(!list||list.t!=="ul"){flushL();list={t:"ul",items:[]}}list.items.push(`<li>${inl(m[1])}</li>`);return}
-    if((m=line.match(/^\s*\d+[.)]\s+(.*)$/))){flushP();if(!list||list.t!=="ol"){flushL();list={t:"ol",items:[]}}list.items.push(`<li>${inl(m[1])}</li>`);return}
+    if((m=line.match(/^(\s*)[-*]\s+\[( |x|X)\]\s+(.*)$/))){flushP();item(m[1],"ul",`<li class="todo-i">${m[2]===" "?"☐":"☑"} ${inl(m[3])}`);return}
+    if((m=line.match(/^(\s*)[-*]\s+(.*)$/))){flushP();item(m[1],"ul",`<li>${inl(m[2])}`);return}
+    if((m=line.match(/^(\s*)\d+[.)]\s+(.*)$/))){flushP();item(m[1],"ol",`<li>${inl(m[2])}`);return}
     flushL();para.push(line);
   });
   flushP();flushL();return out.join("");
