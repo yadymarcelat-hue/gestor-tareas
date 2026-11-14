@@ -388,8 +388,10 @@ button.tl-lab:hover .t{color:var(--accent)}
 .story label{display:grid;grid-template-columns:80px minmax(0,1fr);align-items:center;padding:12px 18px;border-bottom:1px solid var(--line);gap:10px}
 .story label:last-child{border-bottom:0}
 .story b{font-weight:600}
-.story input{border:0;outline:0;background:none;width:100%;min-width:0}
-.story input::placeholder,.field input::placeholder,.field textarea::placeholder{color:var(--faint)}
+.story input,.story textarea{border:0;outline:0;background:none;width:100%;min-width:0;resize:none;overflow:hidden;line-height:1.5;padding:0;display:block}
+.story label{align-items:start}.story b{line-height:1.5}
+.field textarea.grow-ta{resize:none;overflow:hidden}
+.story input::placeholder,.story textarea::placeholder,.field input::placeholder,.field textarea::placeholder{color:var(--faint)}
 .field{display:flex;flex-direction:column;gap:7px;min-width:0}
 .field>label,.flabel{font-size:13.5px;font-weight:500;color:var(--muted)}
 .field input[type=text],.field input[type=url],.field input[type=date],.field textarea,.inp{border:1px solid var(--line-2);border-radius:10px;background:var(--surface);padding:10px 12px;outline:0;width:100%;min-width:0}
@@ -1875,12 +1877,12 @@ function htmlToMd(root){
   walk(root);flush();return out.join("\n\n");
 }
 // Ajusta la altura del texto sin mover el scroll: al ponerla en "auto" un instante el panel se encoge y el navegador lo devolvía arriba.
-function fitArea(el){
+function fitArea(el,min=260){
   if(!el)return;
   const keep=[];for(let p=el.parentElement;p;p=p.parentElement)if(p.scrollHeight>p.clientHeight)keep.push([p,p.scrollTop]);
   const se=document.scrollingElement,wy=se?se.scrollTop:0;
   el.style.minHeight=el.offsetHeight+"px";el.style.height="auto";
-  const h=Math.max(260,el.scrollHeight);el.style.minHeight="";el.style.height=h+"px";
+  const h=Math.max(min,el.scrollHeight+(el.offsetHeight-el.clientHeight));el.style.minHeight="";el.style.height=h+"px";
   keep.forEach(([p,t])=>{p.scrollTop=t});if(se)se.scrollTop=wy;
 }
 function docModal(){
@@ -2212,11 +2214,12 @@ function renderModal(){
   if(had)html=html.replace('class="overlay"','class="overlay still"');
   root.innerHTML=html;
   if(m.kind==="doc"){const ft=$("#d-title");if(ft)fitTitle(ft)}
+  if(m.kind==="task"){const ft=$("#f-title");if(ft)fitTitle(ft);root.querySelectorAll(".grow-ta").forEach(x=>fitArea(x,Number(x.dataset.min)||0))}
   const nb=root.querySelector(".m-body");if(nb)nb.scrollTop=sc;
   const nm2=root.querySelector(".modal");if(nm2)nm2.scrollTop=msc;
   const no=root.querySelector(".overlay");if(no)no.scrollTop=osc;
   if(f){const el=document.getElementById(f.id);if(el){el.focus({preventScroll:true});try{if(f.s!=null)el.setSelectionRange(f.s,f.e)}catch(e){}}}
-  if(m.kind==="task"){const ft=$("#f-title");if(ft)fitTitle(ft);renderComments();const c2=root.querySelector("#c-list");if(c2)c2.scrollTop=csc}
+  if(m.kind==="task"){renderComments();const c2=root.querySelector("#c-list");if(c2)c2.scrollTop=csc}
 }
 function refreshModalPeople(){if(S.modal&&S.modal.kind!=="task")renderModal();else if(S.modal){renderComments()}}
 function taskModal(){
@@ -2232,11 +2235,11 @@ function taskModal(){
     <div class="m-body">
       <textarea id="f-title" class="title-input" rows="1" placeholder="Título de la tarea" data-f="title" ${dis} aria-label="Título de la tarea">${esc(d.title)}</textarea>
       <div class="story">
-        <label><b>Como</b><input id="f-como" type="text" data-f="como" placeholder="líder del equipo comercial" value="${esc(d.como)}" ${dis}></label>
-        <label><b>Quiero</b><input id="f-quiero" type="text" data-f="quiero" placeholder="ver el avance de cada hito" value="${esc(d.quiero)}" ${dis}></label>
-        <label><b>Para</b><input id="f-para" type="text" data-f="para" placeholder="decidir qué entra en la semana" value="${esc(d.para)}" ${dis}></label>
+        <label><b>Como</b><textarea id="f-como" class="grow-ta" rows="1" data-f="como" placeholder="líder del equipo comercial" ${dis}>${esc(d.como)}</textarea></label>
+        <label><b>Quiero</b><textarea id="f-quiero" class="grow-ta" rows="1" data-f="quiero" placeholder="ver el avance de cada hito" ${dis}>${esc(d.quiero)}</textarea></label>
+        <label><b>Para</b><textarea id="f-para" class="grow-ta" rows="1" data-f="para" placeholder="decidir qué entra en la semana" ${dis}>${esc(d.para)}</textarea></label>
       </div>
-      <div class="field"><label for="f-desc">Descripción</label><textarea id="f-desc" data-f="description" rows="4" placeholder="Contexto, alcance y lo que no se debe tocar" ${dis}>${esc(d.description)}</textarea></div>
+      <div class="field"><label for="f-desc">Descripción</label><textarea id="f-desc" class="grow-ta" data-min="84" data-f="description" rows="4" placeholder="Contexto, alcance y lo que no se debe tocar" ${dis}>${esc(d.description)}</textarea></div>
       <div class="fgrid">
         ${ms.length?`<div class="field"><label for="f-hito">Hito</label><select id="f-hito" class="pill-select ${m.err==="hito"?"req":""}" data-f="milestoneId" ${dis}><option value="">${ms.length?"Elegir hito (obligatorio)":"Sin hitos en el proyecto"}</option>${ms.map(x=>`<option value="${x.id}" ${d.milestoneId===x.id?"selected":""}>${esc(x.name)}</option>`).join("")}</select></div>`:""}
         <div class="field"><label for="f-col">Columna</label><select id="f-col" class="pill-select" data-f="column" ${dis}>${COLS.map(c=>`<option value="${c.id}" ${d.column===c.id?"selected":""}>${c.name}</option>`).join("")}</select></div>
@@ -2867,6 +2870,7 @@ document.addEventListener("input",e=>{
   if(m&&t.id==="cl-new"){m.clNew=t.value;return}
   if(m&&m.kind==="task"){
     if(t.id==="f-title"){if(/\n/.test(t.value))t.value=t.value.replace(/\s*\n\s*/g," ");fitTitle(t)}
+    if(t.classList.contains("grow-ta"))fitArea(t,Number(t.dataset.min)||0);
     if(t.dataset.f&&t.tagName!=="SELECT"){setDraftField(t.dataset.f,t.value);return}
     if(t.dataset.lf){m.link[t.dataset.lf]=t.value;return}
     if(t.id==="c-text"){m.cdraft=t.value;return}
