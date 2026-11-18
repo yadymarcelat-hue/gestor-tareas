@@ -797,6 +797,21 @@ button.chip:disabled{cursor:default;filter:none;border-color:transparent}
 .doc-list .tags{flex-wrap:wrap;justify-content:flex-end;flex:none;max-width:45%}
 .doc-edit{border:0;outline:0;background:none;width:100%;resize:none;min-height:260px;line-height:1.65;font-size:15px;padding:0;overflow:hidden}
 .doc-edit::placeholder{color:var(--faint)}
+.mcp-keys{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.mcp-key{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.mcp-key:last-child{border-bottom:0}
+.mcp-k-main{display:flex;flex-direction:column;gap:2px;flex:1 1 200px;min-width:0}
+.mcp-create{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}.mcp-create .inp{flex:1 1 220px}
+.share-box.mcp-new{display:flex;flex-direction:column;gap:10px;border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:var(--surface-2)}
+.mcp-steps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px;font-size:14px}
+.mcp-steps .linkcopy{margin-top:6px}
+.mfa-qr{margin:10px 0 10px;display:flex;width:max-content;padding:10px;background:#fff;border:1px solid var(--line);border-radius:12px}
+.mfa-steps .hint{display:block;margin-bottom:6px}
+.mfa-qr img{display:block;width:180px;height:180px}
+.mfa-code{display:flex;flex-direction:column;gap:6px;max-width:260px}
+.inp.code{font-size:20px;letter-spacing:.3em;text-align:center;font-variant-numeric:tabular-nums}
+.inp.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px}
+.pill-ok{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:999px;background:var(--ok-soft,#e1f5e9);color:var(--ok,#1d9150);font-size:11.5px;font-weight:600;vertical-align:1px}
 .fmt-bar{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:2px;flex-wrap:wrap;padding:6px;margin:4px 0 2px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
 .fmt-btn{width:34px;height:34px;display:grid;place-items:center;border:0;border-radius:8px;background:none;color:var(--fg);cursor:pointer}
 .fmt-btn:hover:not(:disabled){background:var(--hover)}
@@ -928,6 +943,8 @@ const TASKV=["tablero","cronograma","hitos","reporte"];
 
 /* ---------- icons ---------- */
 const P={
+  shield:'<path d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/>',
+  plug:'<path d="M9 3v5M15 3v5M6 8h12v3a6 6 0 0 1-12 0zM12 17v4"/>',
   fbold:'<path d="M7 5h6a3.5 3.5 0 0 1 0 7H7zM7 12h7a3.5 3.5 0 0 1 0 7H7z"/>',
   fital:'<path d="M14 5h-4M14 19h-4M15 5 9 19" transform="translate(1 0)"/>',
   fh1:'<path d="M4 6v12M12 6v12M4 12h8M16 10l3-2v10"/>',
@@ -1413,6 +1430,115 @@ function agendaPanel(){
     ${timed.map(x=>{const past=isToday&&x.e<=now;return `<div class="ag-row ${past?"past":""} ${x===nextEv?"next":""}"><span class="ag-t">${hm(x.s)}</span><span class="ag-bar"></span><span class="ag-n"><span>${esc(x.title)}</span><small>${durTxt(x.e-x.s)}${x.location?" · "+esc(x.location):""}</small></span>${past?"":join(x)}</div>`}).join("")}
     ${evs.length?"":`<p class="hint" style="padding:6px 0">No tienes reuniones ${isToday?"hoy":"este día"}.</p>`}</div>`;
   return `<section class="panel ag">${hd}<div class="panel-b">${sum}${list}</div></section>`;
+}
+// Conexión con Claude (MCP): cada persona crea claves y las pega en Claude. Solo lectura.
+function mcpModal(){
+  const m=S.modal,keys=m.keys;
+  const created=m.created;
+  const row=k=>`<div class="mcp-key"><div class="mcp-k-main"><b>${esc(k.name)}</b><span class="hint">Termina en …${esc(k.hint)} · creada ${esc(fmtTime(Date.parse(k.created_at)))}${k.last_used_at?" · usada "+esc(fmtTime(Date.parse(k.last_used_at))):" · sin usar"}</span></div>
+    ${m.confirm===k.id?`<span class="confirm">¿Borrarla? Claude deja de tener acceso.<button class="btn danger sm" data-act="mcp-del-yes" data-id="${k.id}">Borrar</button><button class="btn sm" data-act="mcp-del-no">No</button></span>`:`<button class="btn ghost sm" data-act="mcp-del" data-id="${k.id}">${ico("trash","sm")}Borrar</button>`}</div>`;
+  return `<div class="overlay" data-act="modal-bg"><div class="modal narrow" role="dialog" aria-modal="true" aria-labelledby="m-title"><div class="m-main">
+  <div class="m-head">${ico("plug")}<h2 id="m-title">Conectar con Claude</h2><button class="icon-btn" data-act="modal-close" aria-label="Cerrar">${ico("x")}</button></div>
+  <div class="m-body">
+    <p>Con esta conexión puedes preguntarle a Claude cosas como <i>“¿en qué estado está la tarea del mapa?”</i> o <i>“lista las tareas abiertas de QuickTrack”</i>. Claude solo <b>lee</b>: no crea ni cambia tareas, y solo ve los proyectos que tú puedes ver.</p>
+    ${created?`<div class="share-box mcp-new"><h4>${ico("check","sm")}Conexión creada</h4>
+      <span class="hint">Copia esta dirección ahora: por seguridad no la volvemos a mostrar. Quien la tenga puede leer tus tareas, así que no la compartas.</span>
+      <div class="linkcopy"><input id="mcp-url" class="inp" type="text" readonly value="${esc(created.url)}" aria-label="Dirección de la conexión"><button class="btn primary sm" data-act="copy-text" data-text="${esc(created.url)}">Copiar</button></div>
+      <ol class="mcp-steps"><li><b>En claude.ai o la app de Claude:</b> Configuración › Conectores › Agregar conector personalizado. Ponle un nombre (por ejemplo “Tareas”) y pega la dirección.</li>
+      <li><b>En Claude Code:</b> corre este comando en la terminal:<div class="linkcopy"><input class="inp" type="text" readonly value="${esc(created.cmd)}" aria-label="Comando para Claude Code"><button class="btn sm" data-act="copy-text" data-text="${esc(created.cmd)}">Copiar</button></div></li></ol></div>`:""}
+    <div class="field"><div class="sec-h"><span class="flabel">Tus conexiones <span class="count">${keys?keys.length:""}</span></span></div>
+      ${m.loading?`<span class="hint">Cargando…</span>`:keys&&keys.length?`<div class="mcp-keys">${keys.map(row).join("")}</div>`:`<span class="hint">Todavía no has conectado Claude.</span>`}
+      ${m.err?`<p class="err">${esc(m.err)}</p>`:""}
+      <div class="mcp-create"><input id="mcp-name" class="inp" type="text" maxlength="60" placeholder="Nombre de la conexión (ej. Claude del portátil)" value="${esc(m.name||"")}" data-mcp="name"><button class="btn primary sm" data-act="mcp-create" ${m.busy?"disabled":""}>${ico("plus","sm")}Crear conexión</button></div>
+    </div>
+  </div>
+  <div class="m-foot"><span class="grow"></span><button class="btn primary" data-act="modal-close">Listo</button></div>
+  </div></div></div>`;
+}
+async function mcpApi(method,q,body){
+  const token=await window.appAuth.token();
+  const r=await fetch("/api/mcp-keys"+(q||""),{method,headers:Object.assign({authorization:"Bearer "+token},body?{"content-type":"application/json"}:{}),body:body?JSON.stringify(body):undefined});
+  const j=await r.json().catch(()=>({}));
+  if(r.status===404)throw new Error("Falta publicar la conexión con Claude: sube a GitHub la carpeta app/api/mcp, app/api/mcp-keys y lib/mcp.js.");
+  if(!r.ok)throw new Error(j.error||"No pudimos completar la acción.");
+  return j;
+}
+async function mcpOpen(){
+  S.modal={kind:"mcp",keys:null,loading:true,err:"",name:"",created:null,confirm:null,busy:false};renderModal();
+  if(S.demo){Object.assign(S.modal,{loading:false,keys:[]});renderModal();return}
+  try{const j=await mcpApi("GET");if(S.modal&&S.modal.kind==="mcp"){S.modal.keys=j.keys;S.modal.loading=false;renderModal()}}
+  catch(e){if(S.modal&&S.modal.kind==="mcp"){S.modal.loading=false;S.modal.err=e.message;renderModal()}}
+}
+async function mcpCreate(){
+  const m=S.modal;if(!m||m.busy)return;
+  if(S.demo){toast("En la vista de ejemplo no se crean conexiones.",true);return}
+  m.busy=true;m.err="";renderModal();
+  try{
+    const j=await mcpApi("POST","",{name:(m.name||"").trim()||"Claude"});
+    const nm=((m.name||"").trim()||"tareas").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"tareas";
+    m.created={url:j.url,cmd:`claude mcp add --transport http ${nm} ${j.base} --header "Authorization: Bearer ${j.secret}"`};
+    m.keys=[j.key].concat(m.keys||[]);m.name="";
+  }catch(e){m.err=e.message}
+  m.busy=false;renderModal();
+}
+async function mcpDelete(id){
+  const m=S.modal;
+  try{await mcpApi("DELETE","?id="+encodeURIComponent(id));m.keys=(m.keys||[]).filter(k=>k.id!==id);m.confirm=null;m.created=null;toast("Conexión borrada")}
+  catch(e){m.err=e.message}
+  renderModal();
+}
+// Verificación en dos pasos (app de autenticación). La activa cada persona, si quiere.
+function mfaModal(){
+  const m=S.modal,code=(id,label)=>`<div class="mfa-code"><label for="${id}">${label}</label><input id="${id}" class="inp code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="7" placeholder="123 456" value="${esc(m.code||"")}" data-mfa="code"></div>`;
+  let body;
+  if(m.loading)body=`<span class="hint">Cargando…</span>`;
+  else if(m.setup)body=`<ol class="mcp-steps mfa-steps">
+      <li>Instala en tu celular una app de autenticación, si no tienes una: <b>Google Authenticator</b>, <b>Microsoft Authenticator</b>, <b>1Password</b> o <b>Authy</b>.</li>
+      <li>En la app, toca <b>agregar</b> y escanea este código:<div class="mfa-qr"><img src="${esc(m.setup.qr)}" alt="Código QR para tu app de autenticación" width="180" height="180"></div>
+        <span class="hint">¿No puedes escanear? Escribe esta clave en la app:</span><div class="linkcopy"><input class="inp mono" type="text" readonly value="${esc(m.setup.secret)}" aria-label="Clave para escribir a mano"><button class="btn sm" data-act="copy-text" data-text="${esc(m.setup.secret)}">Copiar</button></div></li>
+      <li>${code("mfa-code","Escribe el código de 6 números que muestra la app")}</li></ol>`;
+  else if(m.on)body=`<div class="share-box mcp-new"><h4>${ico("check","sm")}Activa${m.since?` desde el ${esc(fmtTime(m.since))}`:""}</h4><span class="hint">Cada vez que entres te pediremos un código de tu app de autenticación.</span></div>
+      ${m.off?`<div class="field"><p>Para desactivarla, confirma que eres tú.</p>${code("mfa-code","Código de tu app de autenticación")}</div>`:""}`;
+  else body=`<p>Además de tu contraseña, al entrar te pediremos un código de 6 números que cambia cada 30 segundos en una app de tu celular. Si alguien consigue tu contraseña, igual no podrá entrar.</p>
+      <p class="hint">Si pierdes el celular, la administradora puede quitarte la verificación para que vuelvas a entrar.</p>`;
+  const foot=m.loading?`<button class="btn" data-act="modal-close">Cerrar</button>`
+    :m.setup?`<button class="btn" data-act="mfa-cancel">Cancelar</button><button class="btn primary" data-act="mfa-confirm" ${m.busy?"disabled":""}>${m.busy?"Verificando…":"Activar"}</button>`
+    :m.on?(m.off?`<button class="btn" data-act="mfa-off-no">Cancelar</button><button class="btn danger" data-act="mfa-off-yes" ${m.busy?"disabled":""}>${m.busy?"Desactivando…":"Desactivar"}</button>`:`<button class="btn danger-t" data-act="mfa-off">Desactivar</button><span class="grow"></span><button class="btn primary" data-act="modal-close">Listo</button>`)
+    :`<button class="btn" data-act="modal-close">Ahora no</button><button class="btn primary" data-act="mfa-start" ${m.busy?"disabled":""}>${m.busy?"Preparando…":"Empezar"}</button>`;
+  return `<div class="overlay" data-act="modal-bg"><div class="modal narrow" role="dialog" aria-modal="true" aria-labelledby="m-title"><div class="m-main">
+  <div class="m-head">${ico("shield")}<h2 id="m-title">Verificación en dos pasos</h2><button class="icon-btn" data-act="modal-close" aria-label="Cerrar">${ico("x")}</button></div>
+  <div class="m-body">${body}${m.err?`<p class="err">${esc(m.err)}</p>`:""}</div>
+  <div class="m-foot">${m.on&&!m.off&&!m.setup?"":`<span class="grow"></span>`}${foot}</div>
+  </div></div></div>`;
+}
+async function mfaOpen(){
+  S.modal={kind:"mfa",loading:true,on:false,since:null,setup:null,code:"",err:"",busy:false,off:false};renderModal();
+  if(S.demo){Object.assign(S.modal,{loading:false});renderModal();return}
+  try{const x=await window.appAuth.mfa.status();S.mfa=x;if(S.modal&&S.modal.kind==="mfa")Object.assign(S.modal,{loading:false,on:x.on,since:x.since})}
+  catch(e){if(S.modal&&S.modal.kind==="mfa")Object.assign(S.modal,{loading:false,err:e.message})}
+  if(S.modal&&S.modal.kind==="mfa")renderModal();
+}
+function mfaFocus(){setTimeout(()=>{const x=document.getElementById("mfa-code");if(x)x.focus()},0)}
+async function mfaStart(){
+  const m=S.modal;if(m.busy)return;
+  if(S.demo){toast("En la vista de ejemplo no se activa la verificación.",true);return}
+  m.busy=true;m.err="";renderModal();
+  try{m.setup=await window.appAuth.mfa.start();m.code=""}catch(e){m.err=e.message}
+  m.busy=false;renderModal();mfaFocus();
+}
+async function mfaConfirm(){
+  const m=S.modal;if(m.busy||!m.setup)return;
+  m.busy=true;m.err="";renderModal();
+  try{await window.appAuth.mfa.confirm(m.setup.id,m.code);S.mfa={on:true,since:Date.now()};Object.assign(m,{setup:null,on:true,since:Date.now(),code:""});toast("Verificación en dos pasos activada")}
+  catch(e){m.err=e.message;m.code=""}
+  m.busy=false;renderModal();if(m.err)mfaFocus();
+}
+async function mfaDisable(){
+  const m=S.modal;if(m.busy)return;
+  m.busy=true;m.err="";renderModal();
+  try{await window.appAuth.mfa.disable(m.code);S.mfa={on:false,since:null};Object.assign(m,{on:false,off:false,since:null,code:""});toast("Verificación en dos pasos desactivada")}
+  catch(e){m.err=e.message;m.code=""}
+  m.busy=false;renderModal();if(m.err)mfaFocus();
 }
 function gcalModal(){
   const ag=S.ag||{};
@@ -2210,7 +2336,7 @@ function renderModal(){
   const mo=root.querySelector(".modal"),msc=mo?mo.scrollTop:0,ov=root.querySelector(".overlay"),osc=ov?ov.scrollTop:0,had=!!ov;
   const cl=root.querySelector("#c-list"),csc=cl?cl.scrollTop:0;
   const f=document.activeElement&&root.contains(document.activeElement)&&document.activeElement.id?{id:document.activeElement.id,s:document.activeElement.selectionStart,e:document.activeElement.selectionEnd}:null;
-  let html=m.kind==="task"?taskModal():m.kind==="hito"?hitoModal():m.kind==="project"?projectModal():m.kind==="me"?meModal():m.kind==="ws"?wsModal():m.kind==="emp"?empModal():m.kind==="inv"?invModal():m.kind==="doc"?docModal():m.kind==="gcal"?gcalModal():memberModal();
+  let html=m.kind==="task"?taskModal():m.kind==="hito"?hitoModal():m.kind==="project"?projectModal():m.kind==="me"?meModal():m.kind==="ws"?wsModal():m.kind==="emp"?empModal():m.kind==="inv"?invModal():m.kind==="doc"?docModal():m.kind==="gcal"?gcalModal():m.kind==="mcp"?mcpModal():m.kind==="mfa"?mfaModal():memberModal();
   if(had)html=html.replace('class="overlay"','class="overlay still"');
   root.innerHTML=html;
   if(m.kind==="doc"){const ft=$("#d-title");if(ft)fitTitle(ft)}
@@ -2449,6 +2575,7 @@ function openMe(){
   const mem=S.members[S.me.id]||{};
   S.modal={kind:"me",id:S.me.id,draft:{name:nm(S.me.id)==="Alguien"?(S.me.name||""):nm(S.me.id),title:mem.title||"",pw1:"",pw2:""},err:""};
   renderModal();
+  if(!S.demo&&window.appAuth&&window.appAuth.mfa&&!S.mfa)window.appAuth.mfa.status().then(x=>{S.mfa=x;if(S.modal&&S.modal.kind==="me")renderModal()}).catch(()=>{});
 }
 function meModal(){
   const m=S.modal,d=m.draft;
@@ -2459,6 +2586,8 @@ function meModal(){
     <div class="field"><label for="me-name">Nombre</label><input id="me-name" type="text" data-mf="name" value="${esc(d.name)}" autocomplete="name"></div>
     ${S.isOwner?`<div class="field"><label for="me-title">Cargo</label><input id="me-title" type="text" data-mf="title" value="${esc(d.title)}" placeholder="Ej: Gerente"></div>`:d.title?`<div class="field"><span class="flabel">Cargo</span><span>${esc(d.title)}</span><span class="hint">Lo cambia la administradora de la empresa.</span></div>`:""}
     <div class="field"><span class="flabel">Correo</span><span>${esc(S.me.email||"")}</span></div>
+    <div class="field"><span class="flabel">Verificación en dos pasos ${S.mfa&&S.mfa.on?`<span class="pill-ok">Activa</span>`:""}</span><span class="hint">${S.mfa&&S.mfa.on?"Al entrar te pedimos tu contraseña y un código de tu app de autenticación.":"Opcional. Además de tu contraseña, al entrar te pedimos un código de tu celular. Así nadie entra solo con tu contraseña."}</span><div><button class="btn sm" data-act="mfa-open">${ico("shield","sm")}${S.mfa&&S.mfa.on?"Administrar":"Activar"}</button></div></div>
+    <div class="field"><span class="flabel">Conectar con Claude</span><span class="hint">Pregúntale a Claude en qué estado está una tarea o pídele la lista de tareas de tus proyectos. Solo ve lo que tú ves.</span><div><button class="btn sm" data-act="mcp-open">${ico("plug","sm")}Conectar con Claude</button></div></div>
     <div class="field"><span class="flabel">Cambiar contraseña</span><span class="hint">Déjalo vacío si no la quieres cambiar.</span>
       <input id="me-pw1" class="inp" type="password" data-mf="pw1" autocomplete="new-password" placeholder="Contraseña nueva (mínimo 8 caracteres)">
       <input id="me-pw2" class="inp" type="password" data-mf="pw2" autocomplete="new-password" placeholder="Repite la contraseña nueva"></div>
@@ -2766,6 +2895,18 @@ document.addEventListener("click",async e=>{
     case "modal-bg":if(e.target===el)closeModal(false);break;
     case "modal-close":closeModal(false);break;
     case "ag-day":{const v=+el.dataset.v;S.agOff=v?(S.agOff||0)+v:0;render();break}
+    case "mcp-open":mcpOpen();break;
+    case "mfa-open":mfaOpen();break;
+    case "mfa-start":mfaStart();break;
+    case "mfa-confirm":mfaConfirm();break;
+    case "mfa-cancel":m.setup=null;m.code="";m.err="";renderModal();break;
+    case "mfa-off":m.off=true;m.code="";m.err="";renderModal();mfaFocus();break;
+    case "mfa-off-no":m.off=false;m.code="";m.err="";renderModal();break;
+    case "mfa-off-yes":mfaDisable();break;
+    case "mcp-create":mcpCreate();break;
+    case "mcp-del":m.confirm=id;renderModal();break;
+    case "mcp-del-no":m.confirm=null;renderModal();break;
+    case "mcp-del-yes":mcpDelete(id);break;
     case "gcal-open":S.modal={kind:"gcal"};renderModal();break;
     case "gcal-connect":gcalConnect();break;
     case "gcal-off":gcalDisconnect();break;
@@ -2881,6 +3022,8 @@ document.addEventListener("input",e=>{
     if(t.dataset.d&&t.tagName!=="SELECT"){m.draft[t.dataset.d]=t.value;return}
     if(t.dataset.lf){m.link[t.dataset.lf]=t.value;return}
   }
+  if(m&&m.kind==="mcp"&&t.dataset.mcp){m[t.dataset.mcp]=t.value;return}
+  if(m&&m.kind==="mfa"&&t.dataset.mfa){m.code=t.value;if(t.value.replace(/\D/g,"").length===6&&!m.busy){m.setup?mfaConfirm():m.off&&mfaDisable()}return}
   if(m&&m.kind==="hito"&&t.dataset.h){m.draft[t.dataset.h]=t.value;return}
   if(m&&m.kind==="project"&&t.dataset.p){m.draft[t.dataset.p]=t.value;return}
   if(m&&m.kind==="member"&&t.dataset.mm){m.draft[t.dataset.mm]=t.value;return}
@@ -2936,6 +3079,8 @@ document.addEventListener("keydown",e=>{
   // Enter en un título o una cita sigue con texto normal.
   if(e.target.id==="d-content"&&e.key==="Enter"&&!e.shiftKey&&!e.isComposing){const b=edBlock();if(b&&/^(H2|H3|H4|BLOCKQUOTE)$/.test(b.tagName)){const sel=getSelection();const r=document.createRange();r.selectNodeContents(b);r.setStart(sel.anchorNode,sel.anchorOffset);if(!r.toString().trim()){e.preventDefault();const p=document.createElement("p");p.innerHTML="<br>";b.after(p);const rr=document.createRange();rr.setStart(p,0);rr.collapse(true);sel.removeAllRanges();sel.addRange(rr);edSync()}}}
   if(e.key==="Enter"&&(e.target.id==="f-title"||e.target.id==="d-title")){e.preventDefault();return}
+  if(e.key==="Enter"&&e.target.id==="mcp-name"){e.preventDefault();mcpCreate();return}
+  if(e.key==="Enter"&&e.target.id==="mfa-code"){e.preventDefault();const m=S.modal;if(m&&m.setup)mfaConfirm();else if(m&&m.off)mfaDisable();return}
   if(e.key==="Enter"&&e.target.id==="cl-new"){e.preventDefault();addClient();return}
   if(e.key==="Enter"&&e.target.classList&&e.target.classList.contains("card")){openTask(e.target.dataset.id)}
   if((e.key==="Enter"||e.key===" ")&&e.target.dataset&&(e.target.dataset.act==="sub-tog"||e.target.dataset.act==="grp-tog")){e.preventDefault();e.stopPropagation();e.target.click()}

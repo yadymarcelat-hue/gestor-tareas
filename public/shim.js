@@ -37,10 +37,44 @@
           location.replace("/login");
           return new Promise(() => {});
         }
+        // Verificación en dos pasos: si la persona la activó y aún no puso el código, vuelve al login a ponerlo.
+        if (await mfaNeedsCode(sb)) {
+          location.replace("/login");
+          return new Promise(() => {});
+        }
         return data.session;
       });
     }
     return sessionPromise;
+  }
+
+  // ¿La persona tiene la verificación en dos pasos activa y esta sesión todavía no pasó el código?
+  async function mfaNeedsCode(sb) {
+    try {
+      const { data, error } = await sb.auth.mfa.getAuthenticatorAssuranceLevel();
+      if (error || !data) return false;
+      return data.nextLevel === "aal2" && data.currentLevel !== "aal2";
+    } catch (e) { return false; }
+  }
+
+  // Factores de app de autenticación ya confirmados.
+  async function mfaFactors(sb) {
+    const { data, error } = await sb.auth.mfa.listFactors();
+    if (error) throw new Error("No pudimos revisar la verificación en dos pasos. Intenta de nuevo.");
+    return ((data && data.all) || []).filter((f) => f.factor_type === "totp" && f.status === "verified");
+  }
+
+  // Revisa el código de 6 dígitos contra el primer factor (o el indicado) y sube la sesión a nivel 2.
+  async function mfaCheck(sb, code, factorId) {
+    code = String(code || "").replace(/\D/g, "");
+    if (code.length !== 6) throw new Error("Escribe los 6 números que muestra tu app.");
+    if (!factorId) {
+      const f = await mfaFactors(sb);
+      if (!f.length) throw new Error("No encontramos tu verificación en dos pasos.");
+      factorId = f[0].id;
+    }
+    const { error } = await sb.auth.mfa.challengeAndVerify({ factorId, code });
+    if (error) throw new Error(/invalid|expired|code/i.test(error.message) ? "El código no coincide o ya venció. Escribe el que aparece ahora en tu app." : "No pudimos revisar el código: " + error.message);
   }
 
   // Empresas a las que pertenece la persona y cuál está activa.
@@ -369,6 +403,40 @@
       const stale = (old || []).map((f) => folder + "/" + f.name).filter((n) => !url || !url.endsWith(n));
       if (stale.length) await sb.storage.from("logos").remove(stale);
       return url;
+    },
+    // Verificación en dos pasos (código de una app como Google Authenticator, 1Password o Authy).
+    mfa: {
+      async needsCode() { return mfaNeedsCode(await client()); },
+      async verify(code) { return mfaCheck(await client(), code); },
+      // Estado: { on, since }
+      async status() {
+        const f = await mfaFactors(await client());
+        return { on: f.length > 0, since: f.length ? Date.parse(f[0].created_at) : null };
+      },
+      // Empieza la activación: devuelve el código QR y la clave para escribirla a mano.
+      async start() {
+        const sb = await client();
+        const { data: list } = await sb.auth.mfa.listFactors();
+        // Limpia intentos anteriores que quedaron sin confirmar.
+        for (const f of ((list && list.all) || []).filter((x) => x.status !== "verified")) await sb.auth.mfa.unenroll({ factorId: f.id }).catch(() => {});
+        const { data, error } = await sb.auth.mfa.enroll({ factorType: "totp", friendlyName: "App de autenticación " + Date.now(), issuer: "Proyectos" });
+        if (error) throw new Error(/disabled|not enabled/i.test(error.message) ? "La verificación en dos pasos no está habilitada en Supabase (Authentication › Multi-Factor › TOTP)." : "No pudimos empezar la activación: " + error.message);
+        return { id: data.id, qr: data.totp.qr_code, secret: data.totp.secret };
+      },
+      // Confirma la activación con el primer código de la app.
+      async confirm(factorId, code) { return mfaCheck(await client(), code, factorId); },
+      // Apaga la verificación. Pide un código vigente para que nadie con la sesión abierta la pueda quitar.
+      async disable(code) {
+        const sb = await client();
+        const f = await mfaFactors(sb);
+        if (!f.length) return;
+        await mfaCheck(sb, code, f[0].id);
+        for (const x of f) {
+          const { error } = await sb.auth.mfa.unenroll({ factorId: x.id });
+          if (error) throw new Error("No pudimos desactivarla: " + error.message);
+        }
+        await sb.auth.refreshSession().catch(() => {});
+      },
     },
     async signOut() {
       const sb = await client();

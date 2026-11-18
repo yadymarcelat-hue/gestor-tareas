@@ -39,6 +39,17 @@
       <a class="primary" href="/login" style="display:grid;place-items:center;text-decoration:none">Ir a ingresar</a>
     </div>
 
+    <div id="mfa-view" hidden>
+      <h1>Verificación en dos pasos</h1>
+      <p class="sub">Tu cuenta tiene la verificación en dos pasos activa. Escribe el código de 6 números de tu app de autenticación para crear la contraseña nueva.</p>
+      <form id="mfa-form" novalidate>
+        <label>Código<input id="mfa-code" class="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="7" placeholder="123 456" required></label>
+        <div id="mfa-msg" class="msg err" hidden></div>
+        <button class="primary" id="mfa-btn" type="submit">Verificar</button>
+      </form>
+      <p class="foot">¿Perdiste el celular? Pídele a la administradora que te quite la verificación en dos pasos.</p>
+    </div>
+
     <div id="form-view" hidden>
       <h1>Crea tu contraseña</h1>
       <p class="sub" id="who">Con esto entrarás a la plataforma.</p>
@@ -55,7 +66,7 @@
 <script>
 (async function () {
   const $ = (id) => document.getElementById(id);
-  const show = (id) => { ["loading", "other", "expired", "form-view"].forEach((v) => { $(v).hidden = v !== id; }); };
+  const show = (id) => { ["loading", "other", "expired", "mfa-view", "form-view"].forEach((v) => { $(v).hidden = v !== id; }); };
   const hashErr = /error/.test(location.hash) || /error/.test(location.search);
   let sb;
   try { sb = await window.appAuth.client(); } catch (e) { show("expired"); return; }
@@ -85,6 +96,22 @@
     });
   }
   if (!session) { show("expired"); return; }
+
+  // Si la persona tiene verificación en dos pasos, Supabase pide el código antes de cambiar la contraseña.
+  if (await window.appAuth.mfa.needsCode()) {
+    history.replaceState(null, "", "/aceptar");
+    show("mfa-view"); $("mfa-code").focus();
+    await new Promise((resolve) => {
+      $("mfa-form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const msg = $("mfa-msg"); msg.hidden = true;
+        $("mfa-btn").disabled = true; $("mfa-btn").textContent = "Verificando…";
+        try { await window.appAuth.mfa.verify($("mfa-code").value); resolve(); }
+        catch (err) { msg.textContent = err.message; msg.hidden = false; $("mfa-btn").disabled = false; $("mfa-btn").textContent = "Verificar"; $("mfa-code").select(); }
+      });
+    });
+    session = (await sb.auth.getSession()).data.session || session;
+  }
 
   const u = session.user;
   $("who").textContent = "Entrarás como " + u.email + ".";

@@ -36,3 +36,4 @@ button{font:inherit;cursor:pointer;border:0}
 .msg.ok{background:var(--ok-soft);color:var(--ok)}
 .foot{margin-top:18px;font-size:13px;color:var(--faint)}
 [hidden]{display:none!important}
+input.code{font-size:22px;letter-spacing:.3em;text-align:center;font-variant-numeric:tabular-nums}

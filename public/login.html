@@ -35,6 +35,18 @@
       </form>
     </div>
 
+    <div id="mfa-view" hidden>
+      <h1>Verificación en dos pasos</h1>
+      <p class="sub">Abre tu app de autenticación y escribe el código de 6 números de <b>Proyectos</b>.</p>
+      <form id="mfa-form" novalidate>
+        <label>Código<input id="mfa-code" class="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="7" pattern="[0-9 ]*" placeholder="123 456" required></label>
+        <div id="mfa-msg" class="msg err" hidden></div>
+        <button class="primary" id="mfa-btn" type="submit">Verificar</button>
+        <button class="link" type="button" id="mfa-out">Entrar con otra cuenta</button>
+      </form>
+      <p class="foot">¿Perdiste el celular? Pídele a la administradora que te quite la verificación en dos pasos.</p>
+    </div>
+
     <div id="reset-view" hidden>
       <h1>Recuperar contraseña</h1>
       <p class="sub">Te enviamos un correo con un enlace para crear una contraseña nueva.</p>
@@ -56,8 +68,33 @@
   try { sb = await window.appAuth.client(); }
   catch (e) { $("login-msg").textContent = "Falta configurar la conexión con Supabase."; $("login-msg").hidden = false; return; }
 
+  const showMfa = () => {
+    $("login-view").hidden = true; $("reset-view").hidden = true; $("mfa-view").hidden = false;
+    document.querySelector(".card > .foot").hidden = true;
+    $("mfa-code").focus();
+  };
   const { data } = await sb.auth.getSession();
-  if (data.session) { location.replace("/"); return; }
+  if (data.session) {
+    if (await window.appAuth.mfa.needsCode()) showMfa();
+    else { location.replace("/"); return; }
+  }
+
+  $("mfa-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const msg = $("mfa-msg"); msg.hidden = true;
+    $("mfa-btn").disabled = true; $("mfa-btn").textContent = "Verificando…";
+    try { await window.appAuth.mfa.verify($("mfa-code").value); location.replace("/"); }
+    catch (err) {
+      msg.textContent = err.message; msg.hidden = false;
+      $("mfa-btn").disabled = false; $("mfa-btn").textContent = "Verificar";
+      $("mfa-code").select();
+    }
+  });
+  // Cuando están los 6 números, verifica sola.
+  $("mfa-code").addEventListener("input", (e) => {
+    if (e.target.value.replace(/\D/g, "").length === 6 && !$("mfa-btn").disabled) $("mfa-form").requestSubmit();
+  });
+  $("mfa-out").onclick = async () => { await sb.auth.signOut().catch(() => {}); location.replace("/login"); };
 
   $("to-reset").onclick = () => { $("login-view").hidden = true; $("reset-view").hidden = false; $("reset-email").value = $("email").value; };
   $("to-login").onclick = () => { $("reset-view").hidden = true; $("login-view").hidden = false; };
@@ -74,6 +111,7 @@
       msg.hidden = false; $("login-btn").disabled = false; $("login-btn").textContent = "Ingresar";
       return;
     }
+    if (await window.appAuth.mfa.needsCode()) { showMfa(); return; }
     location.replace("/");
   });
 
