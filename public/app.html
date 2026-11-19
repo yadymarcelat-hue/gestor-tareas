@@ -608,6 +608,17 @@ a.btn{text-decoration:none}
 #toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(12px);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:10px;font-weight:500;font-size:14px;opacity:0;pointer-events:none;transition:opacity .18s,transform .18s;z-index:80;max-width:calc(100vw - 32px)}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 #toast.bad{background:var(--danger);color:#fff}
+/* Aviso de reunión: tarjeta fija abajo a la derecha (en celular, abajo a lo ancho) */
+#remind{position:fixed;right:24px;bottom:calc(24px + env(safe-area-inset-bottom,0px));z-index:85;display:flex;flex-direction:column;gap:10px;width:340px;max-width:calc(100vw - 32px)}
+#remind:empty{display:none}
+.rm-card{background:var(--surface);border:1px solid var(--line-2);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.12);padding:14px 14px 12px 16px;display:flex;flex-direction:column;gap:10px}
+.rm-top{display:flex;align-items:flex-start;gap:10px}
+.rm-top .badge-ic{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;background:var(--surface-2);flex:none}
+.rm-txt{flex:1;min-width:0}
+.rm-txt small{display:block;color:var(--muted);font-size:12px;font-weight:500}
+.rm-txt b{display:block;font-weight:500;font-size:15px;line-height:1.35;margin-top:2px;overflow-wrap:anywhere}
+.rm-acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+@media (max-width:600px){#remind{left:16px;right:16px;width:auto;bottom:calc(16px + env(safe-area-inset-bottom,0px))}}
 
 @media (max-width:1100px){
   .m-side{width:340px}
@@ -953,6 +964,7 @@ div.doc-edit a{cursor:text}
 <div id="app"></div>
 <div id="modal-root"></div>
 <div id="toast" role="status" aria-live="polite"></div>
+<div id="remind" role="alert" aria-live="assertive"></div>
 
 <script>
 (function(){
@@ -1215,6 +1227,8 @@ function projectPeople(){
   if(p.ownerId)ids.add(p.ownerId);
   return [...ids].filter(id=>S.members[id]||id===p.ownerId);
 }
+// "Como / Quiero / Para" en las tareas: activo por defecto; se apaga por proyecto.
+const storyOn=pid=>{const p=S.projects[pid];return !p||p.useStory!==false};
 const projHitosOn=(id,p)=>!!p&&(p.useHitos===true||(p.useHitos===undefined&&Object.values(S.milestones).some(m=>m.projectId===id)));
 const hitosOn=()=>projHitosOn(S.projectId,S.projects[S.projectId]);
 const projMilestones=()=>!hitosOn()?[]:Object.entries(S.milestones).map(([id,m])=>({id,...m})).filter(m=>m.projectId===S.projectId).sort((a,b)=>(a.date||"9").localeCompare(b.date||"9"));
@@ -1705,6 +1719,60 @@ async function notifyTask(taskId,before){
     if(!r.ok)console.warn("Aviso no enviado:",(await r.json().catch(()=>({}))).error||r.status);
   }catch(e){console.warn("Aviso no enviado:",e)}
 }
+
+/* ---------- aviso de reuniones (10 min antes) ---------- */
+// Usa el Google Calendar conectado. Funciona mientras la app esté abierta (en el navegador o instalada).
+const REMIND_MIN=10;
+let todayEv={day:"",at:0,events:null,loading:false};
+async function loadTodayEvents(){
+  const day=today();
+  if(S.ag&&S.ag.key===day&&S.ag.events&&!S.ag.loading){todayEv={day,at:S.ag.at,events:S.ag.events};return}
+  if(todayEv.loading||(todayEv.day===day&&Date.now()-todayEv.at<300000))return;
+  if(S.demo){todayEv={day,at:Date.now(),events:demoAgenda(day)};return}
+  if(!window.appAuth||!S.me.id)return;
+  todayEv.loading=true;
+  try{
+    const token=await window.appAuth.token();
+    const d0=parse(day),d1=parse(addDays(day,1));
+    const r=await fetch("/api/calendar",{method:"POST",headers:{"content-type":"application/json",authorization:"Bearer "+token},body:JSON.stringify({timeMin:d0.toISOString(),timeMax:d1.toISOString(),tz:Intl.DateTimeFormat().resolvedOptions().timeZone})});
+    const j=await r.json().catch(()=>({}));
+    todayEv={day,at:Date.now(),events:r.ok&&j.connected?j.events||[]:null};
+  }catch(e){todayEv={day,at:Date.now(),events:null}}
+}
+function remindedSet(){try{return JSON.parse(localStorage.getItem("pj-reminded")||"{}")}catch(e){return{}}}
+function markReminded(k){const o=remindedSet();o[k]=Date.now();const cut=Date.now()-2*864e5;Object.keys(o).forEach(x=>{if(o[x]<cut)delete o[x]});try{localStorage.setItem("pj-reminded",JSON.stringify(o))}catch(e){}}
+const S_rm=[];
+async function remindTick(){
+  if(S.boot)return;
+  await loadTodayEvents();
+  const evs=todayEv.events;if(!evs)return;
+  const now=Date.now(),done=remindedSet();
+  evs.filter(e=>!e.allDay).forEach(e=>{
+    const st=new Date(e.start).getTime(),k=(e.id||e.title)+"|"+e.start;
+    if(done[k]||st-now>REMIND_MIN*60000||st<now-60000)return;
+    markReminded(k);showReminder(e,st);
+  });
+}
+function showReminder(e,st){
+  S_rm.push({k:(e.id||e.title)+"|"+e.start,e,st});renderReminders();ding();
+  const mins=Math.max(0,Math.round((st-Date.now())/60000));
+  try{if("Notification" in window&&Notification.permission==="granted"){const n=new Notification(mins?`En ${mins} min: ${e.title||"Reunión"}`:`Empieza ahora: ${e.title||"Reunión"}`,{body:hm(new Date(st))+(e.link?" · Toca para unirte":""),tag:"rm-"+st,icon:"/icons/icon-192.png",silent:true});n.onclick=()=>{window.focus();if(e.link)window.open(e.link,"_blank","noopener");n.close()}}}catch(_){}
+}
+function renderReminders(){
+  const el=document.getElementById("remind");if(!el)return;
+  const canAsk="Notification" in window&&Notification.permission==="default";
+  el.innerHTML=S_rm.map((r,i)=>{const mins=Math.max(0,Math.round((r.st-Date.now())/60000));
+    return `<div class="rm-card"><div class="rm-top"><span class="badge-ic">${ico("cal","sm")}</span><span class="rm-txt"><small>${mins?`Tu reunión empieza en ${mins} min · ${hm(new Date(r.st))}`:`Tu reunión empieza ahora · ${hm(new Date(r.st))}`}</small><b>${esc(r.e.title||"Reunión")}</b></span><button class="icon-btn" data-rm="close" data-i="${i}" aria-label="Cerrar aviso">${ico("x","sm")}</button></div>
+    <div class="rm-acts">${canAsk&&i===0?`<button class="btn ghost sm" data-rm="perm">Avisarme también en el computador</button>`:""}${r.e.link?`<a class="btn primary sm" href="${esc(r.e.link)}" target="_blank" rel="noopener noreferrer" data-rm="join" data-i="${i}">${ico("video","sm")}Unirse</a>`:`<button class="btn sm" data-rm="close" data-i="${i}">Entendido</button>`}</div></div>`}).join("");
+}
+document.addEventListener("click",ev=>{
+  const b=ev.target.closest&&ev.target.closest("#remind [data-rm]");if(!b)return;
+  const i=+b.dataset.i;
+  if(b.dataset.rm==="perm"){try{Notification.requestPermission().then(()=>renderReminders())}catch(_){}return}
+  if(b.dataset.rm==="close"||b.dataset.rm==="join"){S_rm.splice(i,1);renderReminders()}
+});
+setInterval(()=>{remindTick();if(S_rm.length){const n=Date.now();for(let i=S_rm.length-1;i>=0;i--)if(S_rm[i].st<n-5*60000)S_rm.splice(i,1);renderReminders()}},30000);
+setTimeout(remindTick,4000);
 
 function viewHitos(){
   const can=canManageProj(curProject());
@@ -2492,11 +2560,11 @@ function taskModal(){
     <div class="m-head">${ico("tasks")}<h2 id="m-title">${m.isNew?"Nueva tarea":"Editar tarea"}</h2><button class="icon-btn" data-act="modal-close" aria-label="Cerrar">${ico("x")}</button></div>
     <div class="m-body">
       <textarea id="f-title" class="title-input" rows="1" placeholder="Título de la tarea" data-f="title" ${dis} aria-label="Título de la tarea">${esc(d.title)}</textarea>
-      <div class="story">
+      ${storyOn(S.projectId)?`<div class="story">
         <label><b>Como</b><textarea id="f-como" class="grow-ta" rows="1" data-f="como" placeholder="líder del equipo comercial" ${dis}>${esc(d.como)}</textarea></label>
         <label><b>Quiero</b><textarea id="f-quiero" class="grow-ta" rows="1" data-f="quiero" placeholder="ver el avance de cada hito" ${dis}>${esc(d.quiero)}</textarea></label>
         <label><b>Para</b><textarea id="f-para" class="grow-ta" rows="1" data-f="para" placeholder="decidir qué entra en la semana" ${dis}>${esc(d.para)}</textarea></label>
-      </div>
+      </div>`:""}
       <div class="field"><label for="f-desc">Descripción</label><textarea id="f-desc" class="grow-ta" data-min="84" data-f="description" rows="4" placeholder="Contexto, alcance y lo que no se debe tocar" ${dis}>${esc(d.description)}</textarea></div>
       <div class="fgrid">
         ${ms.length?`<div class="field"><label for="f-hito">Hito</label><select id="f-hito" class="pill-select ${m.err==="hito"?"req":""}" data-f="milestoneId" ${dis}><option value="">${ms.length?"Elegir hito (obligatorio)":"Sin hitos en el proyecto"}</option>${ms.map(x=>`<option value="${x.id}" ${d.milestoneId===x.id?"selected":""}>${esc(x.name)}</option>`).join("")}</select></div>`:""}
@@ -2662,6 +2730,7 @@ function openProject(id){
   src.clients=clientsOf(src);delete src.client;
   src.visibility=pvis(src);
   src.useHitos=id?projHitosOn(id,S.projects[id]):false;
+  src.useStory=src.useStory!==false;
   S.modal={kind:"project",id:id||uid(),isNew:!id,draft:src,err:"",confirmArch:false};
   renderModal();setTimeout(()=>{const el=$("#p-name");if(el)el.focus()},30);
 }
@@ -2676,6 +2745,7 @@ function projectModal(){
     <div class="field"><span class="flabel">Clientes</span>${clientBox(d.clients,uniqClients(clientList().concat(d.clients)))}
       <span class="hint">Opcional. Marca uno o varios, o escribe nuevos (puedes separarlos con coma). Al crear una tarea en este proyecto aparecen como etiquetas para elegir.</span></div>
     <div class="field"><span class="flabel">Fechas</span><div class="dates"><input id="p-start" type="date" data-p="start" value="${esc(d.start)}" aria-label="Inicio"><span class="hint">a</span><input id="p-end" type="date" data-p="end" value="${esc(d.noEnd?"":d.end)}" aria-label="Fin" ${d.noEnd?"disabled":""}></div><label class="inline-check"><input type="checkbox" class="cb" data-act="p-noend" ${d.noEnd?"checked":""}>Sin fecha de fin</label></div>
+    <div class="field"><span class="flabel">Historia de usuario</span><label class="inline-check"><input type="checkbox" class="cb" data-act="p-story" ${d.useStory?"checked":""}>Usar “Como / Quiero / Para” en las tareas</label><span class="hint">${d.useStory?"Cada tarea muestra los campos Como, Quiero y Para arriba de la descripción.":"Las tareas no muestran Como / Quiero / Para. Lo que ya estaba escrito se conserva oculto y vuelve a aparecer si activas esta opción."}</span></div>
     <div class="field"><span class="flabel">Hitos</span><label class="inline-check"><input type="checkbox" class="cb" data-act="p-hitos" ${d.useHitos?"checked":""}>Usar hitos en este proyecto</label><span class="hint">${d.useHitos?"Las tareas se agrupan por hito y cada tarea debe tener uno cuando el proyecto tenga hitos creados.":"El proyecto no mostrará hitos. Si ya tenía hitos, se conservan ocultos y vuelven a aparecer si activas esta opción."}</span></div>
     <div class="field"><span class="flabel">Quién lo ve</span><div class="vis-opts">
       ${[["private","Solo yo","Para tu propia gestión. Nadie más lo ve, ni las administradoras.","lock"],["members","Personas elegidas","Las personas que agregues abajo y las administradoras.","users"],["company","Toda la empresa","Todas las personas de "+wsName()+" lo ven y trabajan en sus tareas.","building"]].map(([k,l,h,ic])=>`<label class="vis-opt"><input type="radio" name="p-vis" data-act="p-vis" value="${k}" ${d.visibility===k?"checked":""}><span><b>${l}</b><small>${esc(h)}</small></span></label>`).join("")}
@@ -2697,7 +2767,7 @@ async function saveProject(){
   flushClients();
   if(!d.name.trim()){m.err="Escribe el nombre del proyecto.";renderModal();return}
   if(!d.noEnd&&d.start&&d.end&&d.end<d.start){m.err="La fecha de fin es anterior a la de inicio.";renderModal();return}
-  const body={name:d.name.trim(),description:d.description||"",clients:uniqClients(d.clients),start:d.start||"",end:d.noEnd?"":(d.end||""),noEnd:!!d.noEnd,useHitos:!!d.useHitos,visibility:pvis(d),memberIds:pvis(d)==="members"?d.memberIds:[],archived:!!d.archived,ownerId:d.ownerId||S.me.id,createdAt:d.createdAt||Date.now(),updatedAt:Date.now()};
+  const body={name:d.name.trim(),description:d.description||"",clients:uniqClients(d.clients),start:d.start||"",end:d.noEnd?"":(d.end||""),noEnd:!!d.noEnd,useHitos:!!d.useHitos,useStory:d.useStory!==false,visibility:pvis(d),memberIds:pvis(d)==="members"?d.memberIds:[],archived:!!d.archived,ownerId:d.ownerId||S.me.id,createdAt:d.createdAt||Date.now(),updatedAt:Date.now()};
   if(await safe(()=>wset("projects",m.id,body),m.isNew?"Proyecto creado":"Proyecto guardado")){
     if(m.isNew){S.projectId=m.id;ls.set("pj-project",m.id);subTasks();S.view="tablero"}
     closeModal(true);
@@ -3140,6 +3210,7 @@ document.addEventListener("change",e=>{
   if(t.id==="ws-logo"&&t.files&&t.files[0]){setLogo(t.files[0]);t.value="";return}
   if(t.dataset.act==="p-vis"&&m){m.draft.visibility=t.value;renderModal();return}
   if(t.dataset.act==="p-hitos"&&m){m.draft.useHitos=t.checked;renderModal();return}
+  if(t.dataset.act==="p-story"&&m){m.draft.useStory=t.checked;renderModal();return}
   if(t.dataset.act==="p-noend"&&m){m.draft.noEnd=t.checked;if(t.checked)m.draft.end="";renderModal();return}
   if(t.dataset.act==="p-mem"&&m){const a=m.draft.memberIds;t.checked?a.includes(t.value)||a.push(t.value):m.draft.memberIds=a.filter(x=>x!==t.value);return}
   if(t.dataset.act==="mm-proj"&&m){const a=m.draft.projects;t.checked?a.includes(t.value)||a.push(t.value):m.draft.projects=a.filter(x=>x!==t.value);return}
