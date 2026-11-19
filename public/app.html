@@ -171,6 +171,25 @@ h1,h2,h3{text-wrap:balance;margin:0}
 .bell-btn{position:relative}
 .bell-btn .nav-count{position:absolute;top:1px;right:1px;left:auto;margin:0;min-width:15px;height:15px;padding:0 3px;border-radius:8px;font-size:9.5px;font-weight:500;border:1.5px solid var(--surface);box-sizing:border-box;transform:translate(30%,-20%)}
 
+
+/* Docu: archivos subidos (PDF se ve, Word se convierte en documento editable) */
+.doc-list .li .ic.ft{font-size:10.5px;font-weight:600;letter-spacing:.02em;color:var(--fg);background:var(--surface-2)}
+.w-ic{display:inline-grid;place-items:center;width:18px;height:18px;border:1.6px solid currentColor;border-radius:4px;font-size:10px;font-weight:700;line-height:1;color:var(--fg)}
+.fview{display:flex;flex-direction:column;gap:10px}
+.fview-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.fview-bar .nm{flex:1;min-width:0;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fview-bar .nm small{display:block;color:var(--muted);font-weight:400;font-size:12.5px}
+.fview iframe{width:100%;height:min(70vh,820px);border:1px solid var(--line);border-radius:12px;background:var(--surface-2)}
+.fview img{max-width:100%;max-height:70vh;object-fit:contain;border:1px solid var(--line);border-radius:12px;align-self:flex-start;background:var(--surface-2)}
+.fview .fcard{display:flex;align-items:center;gap:12px;padding:18px;border:1px dashed var(--line-2);border-radius:12px;color:var(--muted)}
+@media (max-width:600px){
+  .fview iframe{height:62vh}
+  /* En celular la lista de Docu deja solo borrar; Word y PDF se descargan desde dentro del documento */
+  .doc-list .row-acts [data-act="doc-word"],.doc-list .row-acts [data-act="doc-pdf"]{display:none}
+  .m-foot .w-lbl{display:none}
+  .m-foot{flex-wrap:wrap;row-gap:8px}
+  .m-foot .btn{padding:0 14px}
+}
 /* Page head */
 .ph{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:16px max(24px,env(safe-area-inset-right,0px)) 16px max(24px,env(safe-area-inset-left,0px));background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
 .ph-title{display:flex;align-items:center;gap:10px;flex:1 1 150px;min-width:0}
@@ -414,6 +433,9 @@ button.tl-lab:hover .t{color:var(--accent)}
 .title-input{border:0;outline:0;background:none;font-size:22px;font-weight:600;letter-spacing:-.01em;width:100%;padding:2px 0;resize:none;overflow:hidden;line-height:1.3;display:block}
 .title-input::placeholder{color:var(--faint);font-weight:500}
 .story{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.story-h{display:flex;justify-content:flex-end;margin:-4px 0 -6px}
+.story-h .link-btn{font-size:12.5px;color:var(--muted);font-weight:500}
+.story-h .link-btn:hover{color:var(--fg)}
 .story label{display:grid;grid-template-columns:80px minmax(0,1fr);align-items:center;padding:12px 18px;border-bottom:1px solid var(--line);gap:10px}
 .story label:last-child{border-bottom:0}
 .story b{font-weight:600}
@@ -582,7 +604,9 @@ a.btn{text-decoration:none}
 .tag.cl .i{width:12px;height:12px}
 .cl-sel .ph{color:var(--muted);padding-left:4px;font-weight:500}
 .cl-sel:disabled{cursor:default}
-.cl-pop{min-width:260px;left:auto;right:0}
+.cl-pop{min-width:260px;max-width:min(340px,calc(100vw - 48px));left:auto;right:0}
+.cl-ppl .cl-pop{left:0;right:auto}
+.cl-ppl .cl-pop.flip{left:auto;right:0}
 .cl-pop .tag{pointer-events:none}
 .cl-new{display:flex;gap:6px;padding:4px;align-items:center}
 .cl-new .btn{flex:none;width:auto}
@@ -673,8 +697,11 @@ a.btn{text-decoration:none}
   .toolbar>.menu-wrap>.pill.sel>button:not(.x){flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;text-align:left;white-space:nowrap}
   .toolbar>.pill.sel{max-width:100%}
   .toolbar>.pill.sel>span{min-width:0;overflow:hidden;text-overflow:ellipsis}
-  .tabs{flex:1 1 100%;order:3;display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:6px}
-  .tabs .pill{justify-content:center;padding:0 6px;gap:5px;font-size:13.5px}
+  /* Pestañas en celular: cada una del ancho de su texto; si no caben, pasan a la siguiente línea (nunca se cortan) */
+  .tabs{flex:1 1 100%;order:3;display:flex;flex-wrap:wrap;gap:6px}
+  .tabs>.pill,.tabs>.menu-wrap{flex:1 1 auto;min-width:0}
+  .tabs>.menu-wrap>.pill{width:100%;justify-content:center}
+  .tabs .pill{justify-content:center;padding:0 12px;gap:5px;font-size:13.5px;white-space:nowrap}
   .tabs .pill .i{width:15px;height:15px}
   .subrow .sm-check{flex:1 1 100%}
   .search{order:4}
@@ -1036,10 +1063,12 @@ const P={
   logout:'<path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 16l-4-4 4-4M6 12h10"/>',
   lock:'<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
   doc:'<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 12h6M9 16h6"/>',
+  extl:'<path d="M14 4h6v6M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
   globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',
   eye:'<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
   image:'<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 9"/>',
   bell:'<path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/>',
+  eyeOff:'<path d="M3 3l18 18M10.6 5.1A10.4 10.4 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4.2M6.6 6.6C3.8 8.4 2 12 2 12s3.5 7 10 7c1.8 0 3.4-.5 4.8-1.3"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>',
   vol:'<path d="M4 9.5h3l4.5-4v13l-4.5-4H4z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/>',
   volOff:'<path d="M4 9.5h3l4.5-4v13l-4.5-4H4z"/><path d="m16 9.5 5 5M21 9.5l-5 5"/>'
 };
@@ -1189,7 +1218,7 @@ const canonClient=c=>clientList().find(x=>lc(x)===lc(c))||String(c||"").trim();
 // Clientes a los que cuenta una tarea: los suyos o, si no tiene y el proyecto tiene un solo cliente, ese.
 function clientNewRow(){
   const m=S.modal;
-  return `<div class="cl-new"><input id="cl-new" type="text" placeholder="Escribe un cliente nuevo y presiona Enter" value="${esc(m.clNew||"")}" autocomplete="off" aria-label="Nombre del cliente nuevo"><button type="button" class="btn sm" data-act="cl-add">${ico("plus","sm")}Agregar</button></div>`;
+  return `<div class="cl-new"><input id="cl-new" type="text" placeholder="Nombre del cliente nuevo" title="Escribe el nombre y presiona Enter o Agregar" value="${esc(m.clNew||"")}" autocomplete="off" aria-label="Nombre del cliente nuevo"><button type="button" class="btn sm" data-act="cl-add">${ico("plus","sm")}Agregar</button></div>`;
 }
 function clientPop(sel,opts,act){
   return `<div class="pop cl-pop" role="menu">${opts.map(c=>{const on=sel.some(x=>lc(x)===lc(c));return `<button type="button" class="${on?"on":""}" data-act="${act}" data-c="${esc(c)}">${clientTag(c)}${on?`<span class="ck">${ico("check","sm")}</span>`:""}</button>`}).join("")||`<div class="hint" style="padding:8px 10px">Todavía no hay clientes.</div>`}
@@ -1774,6 +1803,71 @@ document.addEventListener("click",ev=>{
 setInterval(()=>{remindTick();if(S_rm.length){const n=Date.now();for(let i=S_rm.length-1;i>=0;i--)if(S_rm[i].st<n-5*60000)S_rm.splice(i,1);renderReminders()}},30000);
 setTimeout(remindTick,4000);
 
+/* ---------- Docu: subir archivos ---------- */
+const extOf=n=>((String(n||"").split(".").pop()||"").slice(0,4)||"ARCH").toUpperCase();
+function fileKind(x){const n=String(x.name||"").toLowerCase(),t=x.type||"";
+  if(/\.pdf$/.test(n)||t==="application/pdf")return"pdf";
+  if(/\.(png|jpe?g|gif|webp|svg)$/.test(n)||/^image\//.test(t))return"img";
+  return"other"}
+const fileHref=x=>x.url||("/_blob/"+x.assetId);
+function docMain(d){if(!d||!d.mainFile)return null;const a=(d.docs||d.attachments||[]);return a.find(x=>x.id===d.mainFile)||null}
+function fileViewer(x){
+  const k=fileKind(x),href=fileHref(x);
+  const bar=`<div class="fview-bar"><span class="nm">${esc(x.name||"Archivo")}<small>${esc(extOf(x.name))}${x.size?" · "+fmtSize(x.size):""}${k==="pdf"?" · Solo lectura":""}</small></span><a class="btn sm" href="${esc(href)}" target="_blank" rel="noopener noreferrer">${ico("extl","sm")}Abrir en otra pestaña</a><a class="btn sm" href="${esc(href)}" download="${esc(x.name||"")}">${ico("download","sm")}Descargar</a></div>`;
+  if(k==="pdf")return `<div class="fview">${bar}<iframe src="${esc(href)}#view=FitH" title="${esc(x.name||"PDF")}" loading="lazy"></iframe></div>`;
+  if(k==="img")return `<div class="fview">${bar}<img src="${esc(href)}" alt="${esc(x.name||"")}"></div>`;
+  return `<div class="fview">${bar}<div class="fcard">${ico("doc")}<span>Este tipo de archivo no se puede ver aquí. Descárgalo para abrirlo.${/\.doc$/i.test(x.name||"")?" Si es un Word viejo (.doc), guárdalo como .docx y súbelo otra vez para poder editarlo aquí.":""}</span></div></div>`;
+}
+async function storeFile(file){
+  const ext=(file.name.split(".").pop()||"").toLowerCase();
+  const ctype=UPLOAD_TYPES[ext]||file.type||"application/octet-stream";
+  if(S.demo)return{att:{id:uid(),kind:"file",name:file.name,size:file.size,url:URL.createObjectURL(file),type:ctype,by:S.me.id,at:Date.now()},asset:null};
+  if(!S.assets)throw Object.assign(new Error("Aún no se puede subir archivos. Recarga la página."),{code:"friendly"});
+  const r=await S.assets.upload(file,{type:ctype});
+  return{att:{id:uid(),kind:"file",name:file.name,size:r.sizeBytes,assetId:r.id,url:r.url,type:r.contentType||ctype,by:S.me.id,at:Date.now()},asset:r.id};
+}
+function loadJs(src,test){if(test())return Promise.resolve();return new Promise((ok,ko)=>{const sc=document.createElement("script");sc.src=src;sc.onload=ok;sc.onerror=()=>ko(new Error("No se pudo cargar el convertidor de Word. Revisa tu conexión."));document.head.appendChild(sc)})}
+// Word (.docx) → documento editable. Se conservan títulos, párrafos, listas, negrita, cursiva y enlaces;
+// las tablas pasan a filas de texto y las imágenes no se importan. El .docx original queda adjunto.
+async function wordToMd(file){
+  await loadJs("https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.8.0/mammoth.browser.min.js",()=>!!window.mammoth);
+  const r=await window.mammoth.convertToHtml({arrayBuffer:await file.arrayBuffer()});
+  const box=document.createElement("div");box.innerHTML=r.value;
+  const imgs=box.querySelectorAll("img").length;box.querySelectorAll("img").forEach(i=>i.remove());
+  const tabs=box.querySelectorAll("table").length;
+  box.querySelectorAll("table").forEach(tb=>{const frag=document.createDocumentFragment();
+    tb.querySelectorAll("tr").forEach(tr=>{const cells=[...tr.children].map(c=>c.textContent.replace(/\s+/g," ").trim()).filter(Boolean);if(cells.length){const p=document.createElement("p");p.textContent=cells.join(" · ");frag.appendChild(p)}});
+    tb.replaceWith(frag)});
+  const notes=[];if(imgs)notes.push(imgs===1?"La imagen del Word no se importó.":`Las ${imgs} imágenes del Word no se importaron.`);if(tabs)notes.push(tabs===1?"La tabla quedó como filas de texto.":"Las tablas quedaron como filas de texto.");
+  return{content:htmlToMd(box),note:notes.join(" ")};
+}
+async function uploadToDocu(file){
+  if(!S.canWrite)return;
+  if(file.size>50*1048576){toast(`"${file.name}" pesa más de 50 MB.`,true);return}
+  const isWord=/\.docx$/i.test(file.name);
+  toast(isWord?"Convirtiendo el Word…":"Subiendo el archivo…");
+  let conv=null;
+  try{if(isWord)conv=await wordToMd(file)}catch(e){console.error(e);toast(e.message||"No se pudo leer el Word. ¿Está dañado o protegido con contraseña?",true);return}
+  let st;
+  try{st=await storeFile(file)}catch(e){console.error(e);toast(errMsg(e),true);return}
+  const title=file.name.replace(/\.[^.]+$/,"").replace(/[_]+/g," ").trim()||"Documento";
+  openDoc(null);
+  const m=S.modal;if(!m)return;
+  m.draft.title=title;m.draft.docs=[st.att];if(st.asset)m.newAssets.push(st.asset);
+  if(isWord){m.draft.content=conv.content;m.draft.wordFrom=file.name;m.importNote=conv.note}
+  else m.draft.mainFile=st.att.id;
+  renderModal();
+  toast(isWord?"Listo. Revisa el texto y guarda el documento.":"Archivo listo. Guarda para agregarlo a Docu.");
+}
+// Descarga el documento en un archivo que Word abre y deja editar (.doc).
+function docWord(id){
+  const live=S.modal&&S.modal.kind==="doc"&&S.modal.id===id?S.modal.draft:null;
+  const d=live||S.documents[id];if(!d)return;
+  const name=String(d.title||"documento").replace(/[\\/:*?"<>|]+/g,"").trim().slice(0,80)||"documento";
+  const html=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>${esc(d.title||"")}</title><style>body{font-family:Calibri,Arial,sans-serif;font-size:11pt;line-height:1.5;color:#141414}h1{font-size:20pt}h2{font-size:15pt}h3{font-size:13pt}blockquote{border-left:3px solid #ccc;margin-left:0;padding-left:10pt;color:#555}</style></head><body><h1>${esc(d.title||"")}</h1>${md(d.content||"")}</body></html>`;
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob(["﻿",html],{type:"application/msword"}));a.download=name+".doc";document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);
+}
+
 function viewHitos(){
   const can=canManageProj(curProject());
   const h=head("Tareas","tasks",curProject()&&can?`<button class="btn primary" data-act="new-hito">${ico("plus","sm")}Nuevo hito</button>`:"");
@@ -2016,13 +2110,14 @@ function md(src){
   flushP();flushL();return out.join("");
 }
 function viewDocumentos(){
-  const h=head("Docu","doc",S.canWrite?`<button class="btn primary" data-act="doc-new">${ico("plus","sm")}<span>Nuevo documento</span></button>`:"");
+  const h=head("Docu","doc",S.canWrite?`<label class="btn" for="docu-file" title="PDF, Word, imágenes u otros archivos">${ico("upload","sm")}<span>Subir archivo</span></label><input id="docu-file" type="file" hidden accept=".pdf,.docx,.doc,.png,.jpg,.jpeg,.gif,.webp,.xlsx,.xls,.csv,.pptx,.ppt,.txt,.md,application/pdf,image/*"><button class="btn primary" data-act="doc-new">${ico("plus","sm")}<span>Nuevo documento</span></button>`:"");
   const list=docList();
   const F=[["all","Todos"],["mine","Míos"],["company","De la empresa"],["public","Con enlace público"]];
-  const row=d=>{const snip=String(d.content||"").replace(/[#>*`\[\]()_-]/g," ").replace(/\s+/g," ").trim().slice(0,120);
+  const row=d=>{const _mf=docMain(d);const snip=_mf?("Archivo "+extOf(_mf.name)+(_mf.size?" · "+fmtSize(_mf.size):"")):String(d.content||"").replace(/[#>*`\[\]()_-]/g," ").replace(/\s+/g," ").trim().slice(0,120);
     const acts=S.docDel===d.id?`<span class="row-acts confirm"><span class="hint">¿Borrar?</span><button class="btn danger sm" data-act="doc-row-del-yes" data-id="${d.id}">Borrar</button><button class="btn ghost sm" data-act="doc-row-del-no">Cancelar</button></span>`
-      :`<span class="row-acts"><button class="icon-btn" data-act="doc-pdf" data-id="${d.id}" title="Descargar PDF" aria-label="Descargar PDF">${ico("download","sm")}</button>${canEditDoc(d)?`<button class="icon-btn del" data-act="doc-row-del" data-id="${d.id}" title="Eliminar" aria-label="Eliminar documento">${ico("trash","sm")}</button>`:""}</span>`;
-    return `<div class="doc-row"><button class="li" data-act="doc-open" data-id="${d.id}"><span class="ic">${ico("doc")}</span><span class="grow"><span class="t" style="display:block">${esc(d.title||"Sin título")}</span><span class="s">${snip?esc(snip)+" · ":""}${d.updatedAt?"Editado "+esc(fmtTime(d.updatedAt).split(",")[0]):""}${d.ownerId&&d.ownerId!==S.me.id?" · "+esc(first(d.ownerId)):""}</span></span><span class="tags">${d.share&&d.share.enabled?`<span class="tag pub">${ico("globe","sm")}<span>Enlace público</span></span>`:""}${dvisTag(d)}${(d.attachments||[]).length?`<span class="tag neutral">${ico("clip","sm")}<span>${(d.attachments||[]).length}</span></span>`:""}</span></button>${acts}</div>`};
+      :`<span class="row-acts">${docMain(d)?`<a class="icon-btn" href="${esc(fileHref(docMain(d)))}" download="${esc(docMain(d).name||"")}" target="_blank" rel="noopener noreferrer" title="Descargar archivo" aria-label="Descargar archivo">${ico("download","sm")}</a>`:`<button class="icon-btn" data-act="doc-word" data-id="${d.id}" title="Descargar en Word" aria-label="Descargar en Word"><span class="w-ic">W</span></button><button class="icon-btn" data-act="doc-pdf" data-id="${d.id}" title="Descargar PDF" aria-label="Descargar PDF">${ico("download","sm")}</button>`}${canEditDoc(d)?`<button class="icon-btn del" data-act="doc-row-del" data-id="${d.id}" title="Eliminar" aria-label="Eliminar documento">${ico("trash","sm")}</button>`:""}</span>`;
+    const mf=docMain(d),fk=mf?fileKind(mf):"";
+    return `<div class="doc-row"><button class="li" data-act="doc-open" data-id="${d.id}"><span class="ic ${fk?"ft":""}">${fk?esc(extOf(mf.name)):ico("doc")}</span><span class="grow"><span class="t" style="display:block">${esc(d.title||"Sin título")}</span><span class="s">${snip?esc(snip)+" · ":""}${d.updatedAt?"Editado "+esc(fmtTime(d.updatedAt).split(",")[0]):""}${d.ownerId&&d.ownerId!==S.me.id?" · "+esc(first(d.ownerId)):""}</span></span><span class="tags">${d.share&&d.share.enabled?`<span class="tag pub">${ico("globe","sm")}<span>Enlace público</span></span>`:""}${dvisTag(d)}${(d.attachments||[]).length?`<span class="tag neutral">${ico("clip","sm")}<span>${(d.attachments||[]).length}</span></span>`:""}</span></button>${acts}</div>`};
   return h+`<div class="content">
     <div class="toolbar"><label class="search">${ico("search","sm")}<input id="dq" type="text" placeholder="Buscar documentos" value="${esc(S.docQ)}" aria-label="Buscar documentos"></label>
       <div class="tabs dtabs" aria-label="Filtrar documentos">${F.map(([k,l])=>`<button class="pill ${S.docF===k?"cur":""}" data-act="doc-f" data-f="${k}">${l}</button>`).join("")}</div></div>
@@ -2221,10 +2316,11 @@ function docModal(){
     <div class="m-head">${ico("doc")}<h2 id="m-title">${m.isNew?"Nuevo documento":ro?"Documento":"Editar documento"}</h2><button class="icon-btn" data-act="modal-close" aria-label="Cerrar">${ico("x")}</button></div>
     <div class="m-body">
       <textarea id="d-title" class="title-input" rows="1" placeholder="Título del documento" data-d="title" ${dis} aria-label="Título">${esc(d.title)}</textarea>
-      ${ro?`<div class="md">${md(d.content)||`<p class="hint">Este documento está vacío.</p>`}</div>`
+      ${docMain(d)?fileViewer(docMain(d)):d.wordFrom?`<div class="notice">${ico("info","sm")}<span>Importado de <b>${esc(d.wordFrom)}</b>. ${ro?"":"Edítalo aquí y descárgalo otra vez en Word cuando quieras. "}El archivo original queda en Archivos.${m.importNote?" "+esc(m.importNote):""}</span></div>`:""}
+      ${docMain(d)?"":ro?`<div class="md">${md(d.content)||`<p class="hint">Este documento está vacío.</p>`}</div>`
         :`${fmtBar()}<div id="d-content" class="doc-edit md ${(d.content||"").trim()?"":"is-empty"}" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Contenido" data-ph="Escribe aquí… Selecciona texto y usa la barra de arriba para darle formato.">${md(d.content)}</div>`}
-      <div class="field"><div class="sec-h"><span class="flabel">${ico("clip","sm")}Archivos <span class="count">${docs.length}</span></span></div>
-        <div class="docs">${docs.map(x=>docRow(x,ro)).join("")}</div>
+      <div class="field"><div class="sec-h"><span class="flabel">${ico("clip","sm")}${docMain(d)?"Otros archivos":"Archivos"} <span class="count">${docs.filter(x=>x.id!==d.mainFile).length}</span></span></div>
+        <div class="docs">${docs.filter(x=>x.id!==d.mainFile).map(x=>docRow(x,ro)).join("")}</div>
         ${m.uploading?`<span class="hint">Subiendo ${m.uploading} ${m.uploading===1?"archivo":"archivos"}…</span>`:""}
         ${ro?"":`<div class="doc-actions">${S.assets||S.demo?`<label class="btn sm" for="f-file">${ico("upload","sm")}Subir archivo</label><input id="f-file" type="file" multiple hidden>`:""}<button class="btn sm" data-act="link-open">${ico("link","sm")}Agregar enlace</button></div>
         ${m.linkForm?`<div class="linkform"><input id="l-name" class="inp" type="text" placeholder="Nombre" value="${esc(m.link.name)}" data-lf="name"><input id="l-url" class="inp" type="url" placeholder="https://…" value="${esc(m.link.url)}" data-lf="url"><button class="btn primary sm" data-act="link-add">Agregar</button><button class="btn ghost sm" data-act="link-cancel">Cancelar</button></div>`:""}`}
@@ -2235,6 +2331,7 @@ function docModal(){
     <div class="m-foot">
       ${!m.isNew&&!ro?(m.confirmDel?`<span class="confirm">¿Borrar el documento? El enlace público deja de funcionar.<button class="btn danger sm" data-act="doc-del-yes">Borrar</button><button class="btn sm" data-act="doc-del-no">No</button></span>`:`<button class="btn danger-t" data-act="doc-del">Borrar</button>`):""}
       <span class="grow"></span>
+      ${!m.isNew&&!docMain(d)?`<button class="btn ghost" data-act="doc-word" data-id="${esc(m.id)}" title="Descargar en Word" aria-label="Descargar en Word"><span class="w-ic">W</span><span class="w-lbl">Word</span></button>`:""}
       ${ro?`<button class="btn" data-act="modal-close">Cerrar</button>`:`<button class="btn" data-act="modal-close">Cancelar</button><button class="btn primary" data-act="doc-save" ${m.uploading?"disabled":""}>${m.isNew?"Crear documento":"Guardar"}</button>`}
     </div>
   </div>
@@ -2263,6 +2360,7 @@ async function saveDoc(){
   if(d.visibility==="project"&&!d.projectId){m.err="proj";renderModal();toast("Elige el proyecto que puede ver el documento.",true);return}
   const now=Date.now();
   const body={title:d.title.trim(),content:d.content||"",visibility:d.visibility,projectId:d.visibility==="project"?d.projectId:"",memberIds:d.visibility==="people"?shareIds:[],attachments:d.docs||[],
+    mainFile:d.mainFile&&(d.docs||[]).some(x=>x.id===d.mainFile)?d.mainFile:"",wordFrom:d.wordFrom||"",
     share:{enabled:!!d.share.enabled,token:d.share.token||""},updatedAt:now,updatedBy:S.me.id};
   let ok;
   if(m.isNew){Object.assign(body,{ownerId:S.me.id,createdAt:now});ok=await safe(()=>wset("documents",m.id,body),"Documento creado")}
@@ -2521,6 +2619,18 @@ function subComments(tid){
     renderComments();
   },e=>console.error(e));
 }
+// Solo se cierra con clic en el fondo si el clic EMPEZÓ en el fondo: al seleccionar texto arrastrando
+// y soltar fuera de la ventana, el navegador lo contaba como clic en el fondo y se perdía el trabajo.
+let downOnBg=false;
+document.addEventListener("pointerdown",e=>{downOnBg=!!(e.target&&e.target.classList&&e.target.classList.contains("overlay"))},true);
+function modalDirty(){
+  const m=S.modal;if(!m||!m.draft||!m.orig||m.kind==="emp"||m.kind==="inv")return false;
+  try{return JSON.stringify(m.draft)!==JSON.stringify(m.orig)}catch(_){return false}
+}
+function tryCloseModal(){
+  if(modalDirty()&&!confirm("Tienes cambios sin guardar. ¿Cerrar y perderlos?"))return;
+  closeModal(false);
+}
 function closeModal(saved){
   const m=S.modal;if(!m)return;
   if((m.kind==="task"||m.kind==="doc")&&!saved&&m.newAssets.length&&S.assets){m.newAssets.forEach(a=>S.assets.delete(a).catch(()=>{}))}
@@ -2542,6 +2652,7 @@ function renderModal(){
   if(m.kind==="doc"){const ft=$("#d-title");if(ft)fitTitle(ft)}
   if(m.kind==="task"){const ft=$("#f-title");if(ft)fitTitle(ft);root.querySelectorAll(".grow-ta").forEach(x=>fitArea(x,Number(x.dataset.min)||0))}
   const nb=root.querySelector(".m-body");if(nb)nb.scrollTop=sc;
+  root.querySelectorAll(".cl-ppl .cl-pop").forEach(pp=>{const box=(pp.closest(".modal")||document.body).getBoundingClientRect(),r=pp.getBoundingClientRect();if(r.right>box.right-8)pp.classList.add("flip")});
   const nm2=root.querySelector(".modal");if(nm2)nm2.scrollTop=msc;
   const no=root.querySelector(".overlay");if(no)no.scrollTop=osc;
   if(f){const el=document.getElementById(f.id);if(el){el.focus({preventScroll:true});try{if(f.s!=null)el.setSelectionRange(f.s,f.e)}catch(e){}}}
@@ -2560,6 +2671,7 @@ function taskModal(){
     <div class="m-head">${ico("tasks")}<h2 id="m-title">${m.isNew?"Nueva tarea":"Editar tarea"}</h2><button class="icon-btn" data-act="modal-close" aria-label="Cerrar">${ico("x")}</button></div>
     <div class="m-body">
       <textarea id="f-title" class="title-input" rows="1" placeholder="Título de la tarea" data-f="title" ${dis} aria-label="Título de la tarea">${esc(d.title)}</textarea>
+      ${storyOn(S.projectId)&&!ro&&canManageProj(curProject())?`<div class="story-h"><button type="button" class="link-btn" data-act="story-off" title="Ocultar Como / Quiero / Para en todas las tareas de este proyecto">${ico("eyeOff","sm")}Quitar “Como / Quiero / Para” de este proyecto</button></div>`:""}
       ${storyOn(S.projectId)?`<div class="story">
         <label><b>Como</b><textarea id="f-como" class="grow-ta" rows="1" data-f="como" placeholder="líder del equipo comercial" ${dis}>${esc(d.como)}</textarea></label>
         <label><b>Quiero</b><textarea id="f-quiero" class="grow-ta" rows="1" data-f="quiero" placeholder="ver el avance de cada hito" ${dis}>${esc(d.quiero)}</textarea></label>
@@ -3056,6 +3168,10 @@ document.addEventListener("click",async e=>{
   switch(act){
     case "go":go(el.dataset.v);break;
     case "sound-toggle":toggleSound();break;
+    case "story-off":{const pid=S.projectId,p=S.projects[pid];if(!p)break;
+      p.useStory=false;renderModal();
+      if(S.demo){toast("Listo. Puedes volver a activarlo al editar el proyecto.");break}
+      safe(()=>wupd("projects",pid,{useStory:false,updatedAt:Date.now()}),"Listo: este proyecto ya no usa Como / Quiero / Para. Se vuelve a activar al editar el proyecto.").then(ok=>{if(!ok){p.useStory=true;renderModal()}});break}
     case "nt-filter":S.ntOnlyUnread=el.dataset.v==="unread";render();break;
     case "nt-open":{const n=S.notifs[id];if(!n)break;if(!n.read){if(S.demo)n.read=true;else safe(()=>wupd("notifications",id,{read:true}))}render();openTaskAnywhere(n.projectId,n.taskId);break}
     case "nt-all-read":{const ids=myNotifs().filter(n=>!n.read).map(n=>n.id);if(S.demo){ids.forEach(i=>S.notifs[i].read=true);render();break}
@@ -3066,6 +3182,7 @@ document.addEventListener("click",async e=>{
       if(S.sideCollapsed){go(el.dataset.v);break}
       if(!inside){S[k]=true;go(el.dataset.v)}else{S[k]=!S[k];render()}break}
     case "doc-pdf":docPdf(el.dataset.id);break;
+    case "doc-word":docWord(el.dataset.id);break;
     case "doc-row-del":S.docDel=el.dataset.id;render();break;
     case "doc-row-del-no":S.docDel=null;render();break;
     case "doc-row-del-yes":deleteDocById(el.dataset.id);break;
@@ -3073,7 +3190,7 @@ document.addEventListener("click",async e=>{
     case "doc-new":if(S.canWrite)openDoc(null);break;
     case "doc-open":openDoc(id);break;
     case "doc-save":saveDoc();break;
-    case "doc-del":m.confirmDel=true;renderModal();break;
+    case "doc-del":if(id){m.draft.docs=m.draft.docs.filter(x=>x.id!==id);if(m.draft.mainFile===id)m.draft.mainFile="";renderModal();break}m.confirmDel=true;renderModal();break;
     case "doc-del-no":m.confirmDel=false;renderModal();break;
     case "doc-del-yes":deleteDoc();break;
     case "d-share-new":m.draft.share.token=newToken();renderModal();toast("Enlace nuevo. Guarda para que el anterior deje de funcionar.");break;
@@ -3103,8 +3220,8 @@ document.addEventListener("click",async e=>{
     case "toggle-arch":S.showArchived=!S.showArchived;render();break;
     case "new-task":if(S.canWrite)openTask(null,el.dataset.col);break;
     case "open-task":if(S.dragId)return;openTask(id);break;
-    case "modal-bg":if(e.target===el)closeModal(false);break;
-    case "modal-close":closeModal(false);break;
+    case "modal-bg":if(e.target===el&&downOnBg)tryCloseModal();break;
+    case "modal-close":tryCloseModal();break;
     case "ag-day":{const v=+el.dataset.v;S.agOff=v?(S.agOff||0)+v:0;render();break}
     case "mcp-open":mcpOpen();break;
     case "mfa-open":mfaOpen();break;
@@ -3133,7 +3250,6 @@ document.addEventListener("click",async e=>{
     case "crit-add":{const nid=uid();m.draft.criteria.push({id:nid,text:"",done:false});renderModal();const x=document.getElementById("c-"+nid);if(x)x.focus();break}
     case "crit-del":m.draft.criteria=m.draft.criteria.filter(c=>c.id!==id);renderModal();break;
     case "crit-done":{const c=m.draft.criteria.find(x=>x.id===id);if(c)c.done=el.checked;const row=el.closest(".crow");if(row)row.classList.toggle("done",el.checked);break}
-    case "doc-del":m.draft.docs=m.draft.docs.filter(x=>x.id!==id);renderModal();break;
     case "fmt":applyFmt(el.dataset.fmt);break;
     case "link-open":m.linkForm=true;renderModal();{const x=$("#l-name");if(x)x.focus()}break;
     case "link-cancel":m.linkForm=false;m.link={name:"",url:""};renderModal();break;
@@ -3201,6 +3317,7 @@ document.addEventListener("click",async e=>{
 document.addEventListener("change",e=>{
   const t=e.target;const m=S.modal;
   if(t.id==="f-file"&&t.files&&t.files.length){uploadFiles([...t.files]);t.value="";return}
+  if(t.id==="docu-file"&&t.files&&t.files.length){const f=t.files[0];t.value="";uploadToDocu(f);return}
   if(t.id==="me-photo"&&t.files&&t.files[0]){setPhoto(t.files[0]);t.value="";return}
   if(t.id==="emp-me"){S.emp.form.includeMe=t.checked;return}
   if(t.dataset.act==="inv-proj"){const a=S.inv.projects;t.checked?a.includes(t.value)||a.push(t.value):S.inv.projects=a.filter(x=>x!==t.value);return}
@@ -3265,7 +3382,7 @@ document.addEventListener("keydown",e=>{
     if(S.chip){closeChip();return}
     if(S.menu){S.menu=null;render();return}
     if(S.modal&&S.modal.clOpen){S.modal.clOpen=false;renderModal();return}
-    if(S.modal){closeModal(false);return}
+    if(S.modal){tryCloseModal();return}
     if(S.navOpen){S.navOpen=false;render()}
   }
   if((e.metaKey||e.ctrlKey)&&(e.key==="b"||e.key==="B")&&!S.modal&&window.innerWidth>900){e.preventDefault();toggleSide();return}
