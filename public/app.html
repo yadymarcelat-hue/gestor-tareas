@@ -163,6 +163,8 @@ h1,h2,h3{text-wrap:balance;margin:0}
 .nt .dotu.off{background:transparent}
 .nt-grp{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);padding:14px 18px 6px;border-bottom:1px solid var(--line)}
 .nt-filter{display:flex;gap:6px}
+.me-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px 16px}
+.me-row input:disabled{background:var(--surface-2);color:var(--fg);opacity:1;-webkit-text-fill-color:var(--fg)}
 .mr-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:14.5px}
 .mr-row .pill-select{width:auto}
 .mr-num{width:84px!important;height:36px}
@@ -1758,7 +1760,7 @@ async function notifyTask(taskId,before){
 // Preferencias de avisos de reunión: se guardan en la cuenta (Supabase Auth, user_metadata.meetRemind),
 // así valen en todos los dispositivos. Copia local para que funcionen apenas abre la app.
 const MR_DEF={on:true,min:10};
-const mrNorm=p=>({on:!p||p.on!==false,min:Math.min(240,Math.max(1,parseInt(p&&p.min,10)||10))});
+const mrNorm=p=>({on:!p||p.on!==false,min:Math.min(1440,Math.max(1,parseInt(p&&p.min,10)||10))});
 S.mr=(()=>{try{return mrNorm(JSON.parse(localStorage.getItem("pj-meet")||"null")||MR_DEF)}catch(e){return{...MR_DEF}}})();
 async function loadMeetPrefs(){
   if(S.demo||!window.appAuth||!window.appAuth.client)return;
@@ -1768,33 +1770,36 @@ async function loadMeetPrefs(){
 async function saveMeetPrefs(patch){
   S.mr=mrNorm(Object.assign({},S.mr,patch));try{localStorage.setItem("pj-meet",JSON.stringify(S.mr))}catch(_){}
   renderModal();
-  const msg=S.mr.on?`Te avisaremos ${S.mr.min} ${S.mr.min===1?"minuto":"minutos"} antes de cada reunión`:"Avisos de reuniones desactivados";
+  const msg=S.mr.on?`Te avisaremos ${S.mr.min%60===0?mrTxt(S.mr.min):durTxt(S.mr.min*60000)} antes de cada reunión`:"Avisos de reuniones desactivados";
   if(S.demo||!window.appAuth||!window.appAuth.client){toast(msg);return}
   try{const sb=await window.appAuth.client();const {error}=await sb.auth.updateUser({data:{meetRemind:S.mr}});if(error)throw error;toast(msg)}
   catch(e){console.error(e);toast("Se guardó en este dispositivo, pero no en tu cuenta. Revisa tu conexión.",true)}
 }
-const MR_OPTS=[1,5,10,15,20,30,45,60];
+const MR_OPTS=[1,5,10,15,20,30,45,60,120,180];
+const mrTxt=n=>n>=60&&n%60===0?(n/60)+" "+(n===60?"hora":"horas"):n+" "+(n===1?"minuto":"minutos");
 function meetPrefsField(){
   const r=S.mr,custom=!MR_OPTS.includes(r.min)||S.mrCustom;
+  const unit=S.mrUnit||(r.min>=60&&r.min%60===0?"h":"min"),val=unit==="h"?+(r.min/60).toFixed(2):r.min;
   const perm="Notification" in window?Notification.permission:"na";
   const gcal=S.ag&&S.ag.on===false?`<span class="hint">${ico("info","sm")} Conecta tu Google Calendar en <b>Inicio › Mi día</b> para recibir estos avisos.</span>`:"";
   return `<div class="field"><span class="flabel">Avisos de reuniones</span>
     <label class="inline-check"><input type="checkbox" class="cb" data-act="mr-on" ${r.on?"checked":""}>Avisarme antes de mis reuniones de Google Calendar</label>
-    ${r.on?`<div class="mr-row"><span>Avisarme</span><select id="mr-min" class="pill-select" data-act="mr-min" aria-label="Minutos antes">${MR_OPTS.map(n=>`<option value="${n}" ${!custom&&r.min===n?"selected":""}>${n} ${n===1?"minuto":"minutos"}</option>`).join("")}<option value="otro" ${custom?"selected":""}>Otro…</option></select>${custom?`<input id="mr-custom" class="inp mr-num" type="number" min="1" max="240" step="1" inputmode="numeric" data-act="mr-custom" value="${r.min}" aria-label="Minutos antes"><span>minutos antes</span>`:`<span>antes</span>`}</div>
+    ${r.on?`<div class="mr-row"><span>Avisarme</span><select id="mr-min" class="pill-select" data-act="mr-min" aria-label="Minutos antes">${MR_OPTS.map(n=>`<option value="${n}" ${!custom&&r.min===n?"selected":""}>${mrTxt(n)}</option>`).join("")}<option value="otro" ${custom?"selected":""}>Otro…</option></select>${custom?`<input id="mr-custom" class="inp mr-num" type="number" min="${unit==="h"?"0.5":"1"}" max="${unit==="h"?"24":"1440"}" step="${unit==="h"?"0.5":"1"}" inputmode="decimal" data-act="mr-custom" value="${val}" aria-label="Cuánto tiempo antes"><select id="mr-unit" class="pill-select" data-act="mr-unit" aria-label="Unidad"><option value="min" ${unit==="min"?"selected":""}>minutos</option><option value="h" ${unit==="h"?"selected":""}>horas</option></select>`:""}<span>antes</span></div>
     <span class="hint">${perm==="granted"?"Avisos del computador: activados.":perm==="denied"?"Avisos del computador: bloqueados en este navegador. Para activarlos, permite las notificaciones de este sitio en la configuración del navegador.":perm==="default"?`Avisos del computador: apagados. <button type="button" class="link-btn mr-perm" data-act="mr-perm">Activarlos</button>`:""}</span>`:""}
     ${gcal}</div>`;
 }
 let todayEv={day:"",at:0,events:null,loading:false};
 async function loadTodayEvents(){
-  const day=today();
-  if(S.ag&&S.ag.key===day&&S.ag.events&&!S.ag.loading){todayEv={day,at:S.ag.at,events:S.ag.events};return}
+  // Con avisos de más de una hora también se leen las reuniones de mañana (una reunión de las 8 a. m. se avisa la noche anterior).
+  const two=S.mr.min>60,day=today()+(two?"+1":"");
+  if(!two&&S.ag&&S.ag.key===day&&S.ag.events&&!S.ag.loading){todayEv={day,at:S.ag.at,events:S.ag.events};return}
   if(todayEv.loading||(todayEv.day===day&&Date.now()-todayEv.at<300000))return;
-  if(S.demo){todayEv={day,at:Date.now(),events:demoAgenda(day)};return}
+  if(S.demo){todayEv={day,at:Date.now(),events:demoAgenda(today())};return}
   if(!window.appAuth||!S.me.id)return;
   todayEv.loading=true;
   try{
     const token=await window.appAuth.token();
-    const d0=parse(day),d1=parse(addDays(day,1));
+    const d0=parse(today()),d1=parse(addDays(today(),two?2:1));
     const r=await fetch("/api/calendar",{method:"POST",headers:{"content-type":"application/json",authorization:"Bearer "+token},body:JSON.stringify({timeMin:d0.toISOString(),timeMax:d1.toISOString(),tz:Intl.DateTimeFormat().resolvedOptions().timeZone})});
     const j=await r.json().catch(()=>({}));
     todayEv={day,at:Date.now(),events:r.ok&&j.connected?j.events||[]:null};
@@ -1817,13 +1822,13 @@ async function remindTick(){
 function showReminder(e,st){
   S_rm.push({k:(e.id||e.title)+"|"+e.start,e,st});renderReminders();ding();
   const mins=Math.max(0,Math.round((st-Date.now())/60000));
-  try{if("Notification" in window&&Notification.permission==="granted"){const n=new Notification(mins?`En ${mins} min: ${e.title||"Reunión"}`:`Empieza ahora: ${e.title||"Reunión"}`,{body:hm(new Date(st))+(e.link?" · Toca para unirte":""),tag:"rm-"+st,icon:"/icons/icon-192.png",silent:true});n.onclick=()=>{window.focus();if(e.link)window.open(e.link,"_blank","noopener");n.close()}}}catch(_){}
+  try{if("Notification" in window&&Notification.permission==="granted"){const n=new Notification(mins?`En ${durTxt(mins*60000)}: ${e.title||"Reunión"}`:`Empieza ahora: ${e.title||"Reunión"}`,{body:hm(new Date(st))+(e.link?" · Toca para unirte":""),tag:"rm-"+st,icon:"/icons/icon-192.png",silent:true});n.onclick=()=>{window.focus();if(e.link)window.open(e.link,"_blank","noopener");n.close()}}}catch(_){}
 }
 function renderReminders(){
   const el=document.getElementById("remind");if(!el)return;
   const canAsk="Notification" in window&&Notification.permission==="default";
   el.innerHTML=S_rm.map((r,i)=>{const mins=Math.max(0,Math.round((r.st-Date.now())/60000));
-    return `<div class="rm-card"><div class="rm-top"><span class="badge-ic">${ico("cal","sm")}</span><span class="rm-txt"><small>${mins?`Tu reunión empieza en ${mins} min · ${hm(new Date(r.st))}`:`Tu reunión empieza ahora · ${hm(new Date(r.st))}`}</small><b>${esc(r.e.title||"Reunión")}</b></span><button class="icon-btn" data-rm="close" data-i="${i}" aria-label="Cerrar aviso">${ico("x","sm")}</button></div>
+    return `<div class="rm-card"><div class="rm-top"><span class="badge-ic">${ico("cal","sm")}</span><span class="rm-txt"><small>${mins?`Tu reunión empieza en ${durTxt(mins*60000)} · ${new Date(r.st).toDateString()!==new Date().toDateString()?"mañana ":""}${hm(new Date(r.st))}`:`Tu reunión empieza ahora · ${hm(new Date(r.st))}`}</small><b>${esc(r.e.title||"Reunión")}</b></span><button class="icon-btn" data-rm="close" data-i="${i}" aria-label="Cerrar aviso">${ico("x","sm")}</button></div>
     <div class="rm-acts">${canAsk&&i===0?`<button class="btn ghost sm" data-rm="perm">Avisarme también en el computador</button>`:""}${r.e.link?`<a class="btn primary sm" href="${esc(r.e.link)}" target="_blank" rel="noopener noreferrer" data-rm="join" data-i="${i}">${ico("video","sm")}Unirse</a>`:`<button class="btn sm" data-rm="close" data-i="${i}">Entendido</button>`}</div></div>`}).join("");
 }
 document.addEventListener("click",ev=>{
@@ -2929,10 +2934,10 @@ function meModal(){
   return `<div class="overlay" data-act="modal-bg"><div class="modal narrow" role="dialog" aria-modal="true" aria-labelledby="m-title"><div class="m-main">
   <div class="m-head">${av(S.me.id,"md")}<h2 id="m-title">Mi perfil</h2><button class="icon-btn" data-act="modal-close" aria-label="Cerrar">${ico("x")}</button></div>
   <div class="m-body">
-    <div class="field"><span class="flabel">Foto</span><div class="photo-row">${av(S.me.id,"xl")}<div class="acts">${S.demo||window.appAuth?`<label class="btn sm" for="me-photo">${ico("upload","sm")}${prof(S.me.id)&&prof(S.me.id).avatarUrl?"Cambiar foto":"Subir foto"}</label><input id="me-photo" type="file" accept="image/*" hidden>${prof(S.me.id)&&prof(S.me.id).avatarUrl?`<button class="btn ghost sm" data-act="me-photo-del">Quitar foto</button>`:""}`:""}</div></div>${m.photoBusy?`<span class="hint">Subiendo foto…</span>`:`<span class="hint">Si no subes foto, se muestran tus iniciales.</span>`}</div>
+    <div class="field"><div class="photo-row">${av(S.me.id,"xl")}<div class="acts">${S.demo||window.appAuth?`<label class="btn sm" for="me-photo">${ico("upload","sm")}${prof(S.me.id)&&prof(S.me.id).avatarUrl?"Cambiar foto":"Subir foto"}</label><input id="me-photo" type="file" accept="image/*" hidden>${prof(S.me.id)&&prof(S.me.id).avatarUrl?`<button class="btn ghost sm" data-act="me-photo-del">Quitar foto</button>`:""}`:""}</div></div>${m.photoBusy?`<span class="hint">Subiendo foto…</span>`:""}</div>
     <div class="field"><label for="me-name">Nombre</label><input id="me-name" type="text" data-mf="name" value="${esc(d.name)}" autocomplete="name"></div>
-    ${S.isOwner?`<div class="field"><label for="me-title">Cargo</label><input id="me-title" type="text" data-mf="title" value="${esc(d.title)}" placeholder="Ej: Gerente"></div>`:d.title?`<div class="field"><span class="flabel">Cargo</span><span>${esc(d.title)}</span><span class="hint">Lo cambia la administradora de la empresa.</span></div>`:""}
-    <div class="field"><span class="flabel">Correo</span><span>${esc(S.me.email||"")}</span></div>
+    <div class="me-row">${S.isOwner?`<div class="field"><label for="me-title">Cargo</label><input id="me-title" type="text" data-mf="title" value="${esc(d.title)}" placeholder="Ej: Gerente"></div>`:d.title?`<div class="field"><span class="flabel">Cargo</span><input type="text" value="${esc(d.title)}" disabled title="Lo cambia la administradora de la empresa." aria-label="Cargo"></div>`:""}
+    <div class="field"><label for="me-email">Correo</label><input id="me-email" type="text" value="${esc(S.me.email||"")}" disabled title="Tu correo de acceso"></div></div>
     ${meetPrefsField()}
     <div class="field"><span class="flabel">Verificación en dos pasos ${S.mfa&&S.mfa.on?`<span class="pill-ok">Activa</span>`:""}</span><span class="hint">${S.mfa&&S.mfa.on?"Al entrar te pedimos tu contraseña y un código de tu app de autenticación.":"Opcional. Además de tu contraseña, al entrar te pedimos un código de tu celular. Así nadie entra solo con tu contraseña."}</span><div><button class="btn sm" data-act="mfa-open">${ico("shield","sm")}${S.mfa&&S.mfa.on?"Administrar":"Activar"}</button></div></div>
     <div class="field"><span class="flabel">Conectar con Claude</span><span class="hint">Pregúntale a Claude en qué estado está una tarea, pídele la lista de tareas o que cree tareas por ti. Solo ve y usa lo que tú ves.</span><div><button class="btn sm" data-act="mcp-open">${ico("plug","sm")}Conectar con Claude</button></div></div>
@@ -3363,8 +3368,12 @@ document.addEventListener("change",e=>{
   if(t.dataset.act==="p-hitos"&&m){m.draft.useHitos=t.checked;renderModal();return}
   if(t.dataset.act==="p-story"&&m){m.draft.useStory=t.checked;renderModal();return}
   if(t.dataset.act==="mr-on"){S.mrCustom=false;saveMeetPrefs({on:t.checked});return}
-  if(t.dataset.act==="mr-min"){if(t.value==="otro"){S.mrCustom=true;renderModal();const x=$("#mr-custom");if(x){x.focus();x.select()}return}S.mrCustom=false;saveMeetPrefs({min:+t.value});return}
-  if(t.dataset.act==="mr-custom"){const n=parseInt(t.value,10);if(!(n>=1&&n<=240)){toast("Escribe un número de minutos entre 1 y 240.",true);t.value=S.mr.min;return}saveMeetPrefs({min:n});return}
+  if(t.dataset.act==="mr-min"){S.mrUnit=null;if(t.value==="otro"){S.mrCustom=true;renderModal();const x=$("#mr-custom");if(x){x.focus();x.select()}return}S.mrCustom=false;saveMeetPrefs({min:+t.value});return}
+  if(t.dataset.act==="mr-custom"||t.dataset.act==="mr-unit"){
+    const box=$("#mr-custom"),u=($("#mr-unit")||{}).value||"min";S.mrUnit=u;
+    const v=parseFloat(String(box&&box.value||"").replace(",","."));const n=Math.round(u==="h"?v*60:v);
+    if(!(n>=1&&n<=1440)){toast("Escribe un tiempo entre 1 minuto y 24 horas.",true);renderModal();return}
+    S.mrCustom=true;saveMeetPrefs({min:n});return}
   if(t.dataset.act==="p-noend"&&m){m.draft.noEnd=t.checked;if(t.checked)m.draft.end="";renderModal();return}
   if(t.dataset.act==="p-mem"&&m){const a=m.draft.memberIds;t.checked?a.includes(t.value)||a.push(t.value):m.draft.memberIds=a.filter(x=>x!==t.value);return}
   if(t.dataset.act==="mm-proj"&&m){const a=m.draft.projects;t.checked?a.includes(t.value)||a.push(t.value):m.draft.projects=a.filter(x=>x!==t.value);return}
