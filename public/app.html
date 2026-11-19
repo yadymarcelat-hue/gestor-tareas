@@ -122,7 +122,10 @@ h1,h2,h3{text-wrap:balance;margin:0}
 .me{display:flex;align-items:center;gap:10px;padding:12px 8px 2px;border-top:1px solid var(--line);margin:8px -12px 0;padding-left:20px}
 .me .who{min-width:0}
 .me .who b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.me .who small{color:var(--muted);font-size:12.5px}
+.me .who b{font-size:14px;line-height:1.25}
+.me .who small{display:block;color:var(--muted);font-size:11px;line-height:1.3;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.me .me-btn{gap:8px}
+.me .me-btn .av.lg{width:32px;height:32px;font-size:12px;flex:none}
 .main{min-width:0;min-height:0;overflow:auto;display:flex;flex-direction:column}
 .shell{transition:grid-template-columns .18s ease}
 .side-tog{flex:none}
@@ -162,8 +165,8 @@ h1,h2,h3{text-wrap:balance;margin:0}
 .nt-filter{display:flex;gap:6px}
 .nt-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .nt-bar .nt-acts{display:flex;gap:6px;margin-left:auto;flex-wrap:wrap}
-.me-acts{display:flex;align-items:center;gap:2px;flex:none}
-.me-acts .icon-btn{width:32px;height:32px}
+.me-acts{display:flex;align-items:center;gap:0;flex:none}
+.me-acts .icon-btn{width:30px;height:30px}
 .me-acts .icon-btn.on{background:var(--surface-2)}
 .bell-btn{position:relative}
 .bell-btn .nav-count{position:absolute;top:1px;right:1px;left:auto;margin:0;min-width:15px;height:15px;padding:0 3px;border-radius:8px;font-size:9.5px;font-weight:500;border:1.5px solid var(--surface);box-sizing:border-box;transform:translate(30%,-20%)}
@@ -939,7 +942,10 @@ div.doc-edit a{cursor:text}
 .cl-sel{min-height:36px}
 .field>input[type=text],.field>input[type=url],.dates input{height:36px;padding-top:0;padding-bottom:0}
 /* Cliente con el mismo formato que Responsables; ícono cuadrado para no confundirlo con una persona */
-.cl-ppl .cl-ic{width:24px;height:24px;border-radius:6px;display:inline-grid;place-items:center;flex:none}
+.cl-ppl .cl-ic{width:18px;height:24px;border-radius:0;display:inline-grid;place-items:center;flex:none}
+/* En la tarea el cliente va sin cuadro de color: solo ícono y texto en Tinta, fondo blanco */
+.cl-ppl button .cl-ic[class*="cl-c"]{background:none!important;color:var(--fg)!important}
+.cl-ppl button:not(.cl-other){padding-left:11px}
 .cl-ppl .cl-other{border-style:dashed;color:var(--muted);padding:0 13px;gap:6px}
 .cl-ppl .menu-wrap{display:inline-flex}
 </style>
