@@ -138,9 +138,35 @@ h1,h2,h3{text-wrap:balance;margin:0}
   .side-collapsed .me{flex-direction:column;padding-left:0;padding-right:0;gap:6px;align-items:center}
   .side-collapsed .me-btn{flex:none;margin:0;justify-content:center}
   .side-collapsed .me-btn .who{display:none}
+  .side-collapsed .me-acts{flex-direction:column}
 }
 @media (max-width:900px){.side-tog{display:none}}
 .scrim{display:none}
+
+
+/* Notificaciones */
+.nav-count{margin-left:auto;min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:var(--accent);color:var(--accent-fg);font-size:11.5px;font-weight:600;display:inline-grid;place-items:center;line-height:1}
+.nt-list{display:flex;flex-direction:column}
+.nt{display:flex;align-items:flex-start;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line);width:100%;text-align:left;position:relative}
+.nt:last-child{border-bottom:0}
+.nt:hover{background:var(--hover)}
+.nt .grow{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.nt .msg{line-height:1.45;color:var(--muted)}
+.nt .msg b{color:var(--fg);font-weight:600}
+.nt.unread .msg{color:var(--fg)}
+.nt .meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;color:var(--muted);font-size:12.5px}
+.nt .st-move{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap}
+.nt .dotu{width:9px;height:9px;border-radius:50%;background:var(--accent);flex:none;margin-top:7px}
+.nt .dotu.off{background:transparent}
+.nt-grp{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);padding:14px 18px 6px;border-bottom:1px solid var(--line)}
+.nt-filter{display:flex;gap:6px}
+.nt-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.nt-bar .nt-acts{display:flex;gap:6px;margin-left:auto;flex-wrap:wrap}
+.me-acts{display:flex;align-items:center;gap:2px;flex:none}
+.me-acts .icon-btn{width:32px;height:32px}
+.me-acts .icon-btn.on{background:var(--surface-2)}
+.bell-btn{position:relative}
+.bell-btn .nav-count{position:absolute;top:1px;right:1px;left:auto;margin:0;min-width:15px;height:15px;padding:0 3px;border-radius:8px;font-size:9.5px;font-weight:500;border:1.5px solid var(--surface);box-sizing:border-box;transform:translate(30%,-20%)}
 
 /* Page head */
 .ph{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:16px max(24px,env(safe-area-inset-right,0px)) 16px max(24px,env(safe-area-inset-left,0px));background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
@@ -939,7 +965,7 @@ const PRINAME=Object.fromEntries(PRI);
 const MES=["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
 const DIA=["dom","lun","mar","mié","jue","vie","sáb"];
 const UPLOAD_TYPES={pdf:"application/pdf",png:"image/png",jpg:"image/jpeg",jpeg:"image/jpeg",gif:"image/gif",webp:"image/webp",svg:"image/svg+xml",mp4:"video/mp4",webm:"video/webm",csv:"text/csv",md:"text/markdown",json:"application/json",txt:"text/plain"};
-const VIEWS=["inicio","tablero","cronograma","hitos","reporte","documentos","equipo","proyectos","empresas"];
+const VIEWS=["inicio","notificaciones","tablero","cronograma","hitos","reporte","documentos","equipo","proyectos","empresas"];
 const TASKV=["tablero","cronograma","hitos","reporte"];
 
 /* ---------- icons ---------- */
@@ -994,10 +1020,14 @@ const P={
   doc:'<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 12h6M9 16h6"/>',
   globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',
   eye:'<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
-  image:'<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 9"/>'
+  image:'<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 9"/>',
+  bell:'<path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/>',
+  vol:'<path d="M4 9.5h3l4.5-4v13l-4.5-4H4z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/>',
+  volOff:'<path d="M4 9.5h3l4.5-4v13l-4.5-4H4z"/><path d="m16 9.5 5 5M21 9.5l-5 5"/>'
 };
 /* Íconos del menú lateral: lineales, trazo 1.8 (guía de marca) */
 const NAVI={
+  bell:'<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg>',
   home:'<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10.5 12 4l8 6.5V19a1.5 1.5 0 0 1-1.5 1.5H15v-5.5H9v5.5H5.5A1.5 1.5 0 0 1 4 19z"/></svg>',
   tasks:'<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><path d="m7.5 9 1.5 1.5L11.5 8M7.5 15l1.5 1.5 2.5-2.5M14 9.5h3M14 15.5h3"/></svg>',
   board:'<svg class="i sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4" width="4.5" height="16" rx="1.5"/><rect x="10" y="4" width="4.5" height="11" rx="1.5"/><rect x="16.5" y="4" width="4" height="7" rx="1.5"/></svg>',
@@ -1037,6 +1067,7 @@ const S={
   menu:null, navOpen:false, calStart:null, modal:null, inv:{email:"",name:"",title:"",projects:[],link:"",forName:"",err:"",busy:false},
   sideCollapsed:(()=>{try{return localStorage.getItem("pj-side")==="1"}catch(e){return false}})(),
   ws:null, emp:{list:null,loading:false,err:"",busy:false,result:null,form:{name:"",adminName:"",adminEmail:"",includeMe:false}},
+  notifs:{}, pendingOpen:null, sound:(()=>{try{return localStorage.getItem("pj-sound")!=="0"}catch(e){return true}})(),
   unTasks:null, unCom:null, pcom:{}, unPCom:null, subHidden:new Set((()=>{try{return JSON.parse(localStorage.getItem("pj-subhidden")||"[]")}catch(e){return[]}})())
 };
 function saveHidden(){ls.set("pj-subhidden",JSON.stringify([...S.subHidden]))}
@@ -1067,7 +1098,7 @@ async function loadProfiles(ids){
 }
 
 /* ---------- data access ---------- */
-const MAPS={members:"members",projects:"projects",milestones:"milestones",tasks:"tasks",comments:"comments",documents:"documents"};
+const MAPS={members:"members",projects:"projects",milestones:"milestones",tasks:"tasks",comments:"comments",documents:"documents",notifications:"notifs"};
 function errMsg(e){
   const c=e&&e.code;
   if(c==="invalid_argument")return"No tienes permiso para hacer este cambio.";
@@ -1261,7 +1292,7 @@ function sidebar(){
       ${a("proyectos","Proyectos",NAVI.proj)}
       ${S.ws&&S.ws.isSuperadmin?a("empresas","Empresas",NAVI.emp):""}
     </nav>
-    <div class="me"><button class="me-btn" data-act="my-profile" title="Editar mi perfil">${av(S.me.id,"lg")}<span class="who"><b>${esc(S.me.id?nm(S.me.id):(S.me.name||"Invitado"))}</b><small>${esc(S.demo?"Ejemplo":role)}</small></span></button><button class="icon-btn" data-act="logout" aria-label="Cerrar sesión" title="Cerrar sesión">${ico("logout")}</button></div>
+    <div class="me"><button class="me-btn" data-act="my-profile" title="Editar mi perfil">${av(S.me.id,"lg")}<span class="who"><b>${esc(S.me.id?nm(S.me.id):(S.me.name||"Invitado"))}</b><small>${esc(S.demo?"Ejemplo":role)}</small></span></button><span class="me-acts">${meBell()}<button class="icon-btn" data-act="sound-toggle" aria-pressed="${S.sound}" aria-label="${S.sound?"Silenciar notificaciones":"Activar sonido de notificaciones"}" title="${S.sound?"Sonido activado · clic para silenciar":"Sonido silenciado · clic para activar"}">${ico(S.sound?"vol":"volOff")}</button><button class="icon-btn" data-act="logout" aria-label="Cerrar sesión" title="Cerrar sesión">${ico("logout")}</button></span></div>
   </aside>`;
 }
 function head(title,ic,actions=""){
@@ -1306,6 +1337,7 @@ function noProject(){
 function view(){
   switch(S.view){
     case "inicio":return viewInicio();
+    case "notificaciones":return viewNotificaciones();
     case "cronograma":return viewCrono();
     case "reporte":return viewReporte();
     case "hitos":return hitosOn()||!curProject()?viewHitos():viewTablero();
@@ -1577,6 +1609,97 @@ function viewInicio(){
   </div>`;
 }
 
+/* ---------- notificaciones ---------- */
+const myNotifs=()=>Object.entries(S.notifs).map(([id,n])=>Object.assign({id},n)).filter(n=>n.userId===S.me.id).sort((a,b)=>(b.at||0)-(a.at||0));
+const unreadCount=()=>myNotifs().filter(n=>!n.read).length;
+function meBell(){
+  const n=unreadCount(),on=S.view==="notificaciones";
+  return `<button class="icon-btn bell-btn ${on?"on":""}" data-act="go" data-v="notificaciones" aria-label="Notificaciones${n?`, ${n} sin leer`:""}" title="Notificaciones">${ico("bell")}${n?`<span class="nav-count" aria-hidden="true">${n>99?"99+":n}</span>`:""}</button>`;
+}
+// Sonido corto y suave (dos notas) al llegar una notificación nueva, si está activado.
+let audioCtx=null;
+function ding(){
+  if(!S.sound)return;
+  try{
+    audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();
+    const t0=audioCtx.currentTime;
+    [[880,0],[1318.5,.12]].forEach(([f,d])=>{
+      const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+      o.type="sine";o.frequency.value=f;
+      g.gain.setValueAtTime(0,t0+d);g.gain.linearRampToValueAtTime(.12,t0+d+.015);g.gain.exponentialRampToValueAtTime(.0001,t0+d+.35);
+      o.connect(g);g.connect(audioCtx.destination);o.start(t0+d);o.stop(t0+d+.4);
+    });
+  }catch(e){}
+}
+function toggleSound(){
+  S.sound=!S.sound;try{localStorage.setItem("pj-sound",S.sound?"1":"0")}catch(e){}
+  render();toast(S.sound?"Sonido de notificaciones activado":"Notificaciones en silencio");
+  if(S.sound)ding();
+}
+function agoTxt(ms){
+  const d=Math.max(0,Date.now()-(ms||0)),m=Math.round(d/60000);
+  if(m<1)return"Ahora";if(m<60)return"Hace "+m+" min";
+  const h=Math.round(m/60);if(h<24)return"Hace "+h+" h";
+  const dt=new Date(ms);return dt.getDate()+" "+MES[dt.getMonth()]+(dt.getFullYear()!==new Date().getFullYear()?" "+dt.getFullYear():"");
+}
+function ntGroup(ms){
+  const d=new Date(ms),t=new Date();t.setHours(0,0,0,0);
+  if(d>=t)return"Hoy";const y=new Date(t);y.setDate(y.getDate()-1);if(d>=y)return"Ayer";
+  const w=new Date(t);w.setDate(w.getDate()-7);return d>=w?"Esta semana":"Anteriores";
+}
+const stChip=c=>`<span class="chip st ${esc(c)}"><i class="dot"></i><span>${esc(COLNAME[c]||c)}</span></span>`;
+function ntText(n){
+  const who=`<b>${esc(nm(n.by))}</b>`,task=`<b>${esc(n.taskTitle||"una tarea")}</b>`;
+  if(n.kind==="status")return `${who} movió ${task} <span class="st-move">${stChip(n.from)}→${stChip(n.to)}</span>`;
+  if(n.kind==="subtask")return `${who} te asignó la subtarea <b>${esc(n.subTitle||"")}</b> en ${task}`;
+  return `${who} te asignó la tarea ${task}`;
+}
+function viewNotificaciones(){
+  const all=myNotifs(),unread=all.filter(n=>!n.read).length;
+  const list=S.ntOnlyUnread?all.filter(n=>!n.read):all;
+  const acts=all.length?`${unread?`<button class="btn sm" data-act="nt-all-read">${ico("check","sm")}Marcar todas como leídas</button>`:""}${all.length>unread?`<button class="btn ghost sm" data-act="nt-clear">${ico("trash","sm")}Borrar leídas</button>`:""}`:"";
+  const h=head("Notificaciones","bell");
+  const filt=`<div class="toolbar nt-bar"><div class="nt-filter tabs"><button class="pill ${S.ntOnlyUnread?"":"cur"}" data-act="nt-filter" data-v="all">Todas</button><button class="pill ${S.ntOnlyUnread?"cur":""}" data-act="nt-filter" data-v="unread">Sin leer${unread?` · ${unread}`:""}</button></div>${acts?`<div class="nt-acts">${acts}</div>`:""}</div>`;
+  if(!list.length)return h+`<div class="content">${filt}<div class="panel"><div class="empty">${ico("bell","lg")}<h3>${S.ntOnlyUnread&&all.length?"Estás al día":"No tienes notificaciones"}</h3><p>Aquí verás cuando te asignen una tarea o una subtarea, y cuando una tarea tuya cambie de estado.</p></div></div></div>`;
+  let g="",rows="";
+  list.slice(0,200).forEach(n=>{
+    const gg=ntGroup(n.at);if(gg!==g){g=gg;rows+=`<div class="nt-grp">${gg}</div>`}
+    rows+=`<button class="nt ${n.read?"":"unread"}" data-act="nt-open" data-id="${esc(n.id)}"><span class="dotu ${n.read?"off":""}" aria-label="${n.read?"":"Sin leer"}"></span>${av(n.by)}<span class="grow"><span class="msg">${ntText(n)}</span><span class="meta">${esc(agoTxt(n.at))}${n.projectName?` · ${esc(n.projectName)}`:""}</span></span></button>`;
+  });
+  return h+`<div class="content">${filt}<div class="panel"><div class="nt-list">${rows}</div></div></div>`;
+}
+function subNotifs(){
+  if(S.demo||!S.db||!S.me.id)return;
+  S.db.collection("notifications").where("userId","==",S.me.id).onSnapshot(snap=>{
+    const prev=S.notifsReady?new Set(Object.keys(S.notifs)):null;
+    S.notifs=mapDocs(snap);S.notifsReady=true;
+    loadProfiles(Object.values(S.notifs).map(n=>n.by));
+    if(prev){const nw=myNotifs().filter(n=>!prev.has(n.id)&&!n.read);if(nw.length)ding();if(nw.length&&S.view!=="notificaciones")toast(nw.length===1?"Nueva notificación: "+(nw[0].taskTitle||""):nw.length+" notificaciones nuevas")}
+    render();
+  },onErr);
+}
+// Abre una tarea de cualquier proyecto: cambia de proyecto si hace falta y la abre cuando cargan sus tareas.
+function openTaskAnywhere(pid,tid){
+  if(!tid)return;
+  if(!pid||pid===S.projectId){if(S.tasks[tid])openTask(tid);else S.pendingOpen=tid;return}
+  if(!S.projects[pid]||!visibleProjects().some(p=>p.id===pid)){toast("Ya no tienes acceso a esa tarea.",true);return}
+  S.pendingOpen=tid;pickProject(pid);
+}
+function openPending(){
+  const t=S.pendingOpen;if(!t||S.modal)return;
+  if(S.tasks[t]){S.pendingOpen=null;setTimeout(()=>openTask(t),0)}
+}
+// Avisa al servidor que la tarea cambió; él decide a quién notificar (y manda el correo si está configurado).
+function taskSnap(t){t=t||{};const subs={};(t.subtasks||[]).forEach(x=>{if(x&&x.id)subs[x.id]=x.assignee||""});return{assignees:(t.assignees||[]).slice(),subs,column:t.column||"todo"}}
+async function notifyTask(taskId,before){
+  if(S.demo||!window.appAuth||!S.ws||!S.ws.current)return;
+  try{
+    const token=await window.appAuth.token();
+    const r=await fetch("/api/notify",{method:"POST",headers:{"content-type":"application/json",authorization:"Bearer "+token},body:JSON.stringify({workspaceId:S.ws.current.id,taskId,before})});
+    if(!r.ok)console.warn("Aviso no enviado:",(await r.json().catch(()=>({}))).error||r.status);
+  }catch(e){console.warn("Aviso no enviado:",e)}
+}
+
 function viewHitos(){
   const can=canManageProj(curProject());
   const h=head("Tareas","tasks",curProject()&&can?`<button class="btn primary" data-act="new-hito">${ico("plus","sm")}Nuevo hito</button>`:"");
@@ -1754,7 +1877,8 @@ function setChip(v){
     const same=Object.values(S.tasks).filter(x=>x.projectId===t.projectId&&(x.column||"todo")===v);
     const patch={column:v,order:same.reduce((a,x)=>Math.max(a,x.order||0),0)+1,doneAt:v==="done"?Date.now():null,updatedAt:Date.now()};
     if(S.demo){Object.assign(S.tasks[c.id]||{},patch);render();toast("Movida a "+COLNAME[v]);return}
-    safe(()=>wupd("tasks",c.id,patch),"Movida a "+COLNAME[v]);return;
+    const before=taskSnap(t);
+    safe(()=>wupd("tasks",c.id,patch),"Movida a "+COLNAME[v]).then(ok=>{if(ok)notifyTask(c.id,before)});return;
   }
   if(v!==t.milestoneId)safe(()=>wupd("tasks",c.id,{milestoneId:v,updatedAt:Date.now()}),"Hito: "+((S.milestones[v]||{}).name||""));
 }
@@ -2294,7 +2418,8 @@ function moveTask(id,col,beforeId){
   const patch={column:col,order,updatedAt:Date.now()};
   if(col==="done"&&t.column!=="done")patch.doneAt=Date.now();
   if(col!=="done")patch.doneAt=null;
-  safe(()=>wupd("tasks",id,patch),col!==(t.column||"todo")?"Movida a "+COLNAME[col]:"");
+  const before=taskSnap(t),moved=col!==(t.column||"todo");
+  safe(()=>wupd("tasks",id,patch),moved?"Movida a "+COLNAME[col]:"").then(ok=>{if(ok&&moved)notifyTask(id,before)});
 }
 
 /* ---------- task modal ---------- */
@@ -2444,6 +2569,7 @@ async function saveTask(){
   const extra=body.clients.filter(c=>!pcl.some(x=>lc(x)===lc(c)));
   if(extra.length&&canManageProj(curProject()))wupd("projects",S.projectId,{clients:pcl.concat(extra)}).catch(e=>console.error(e));
   let ok;
+  const before=m.isNew?{assignees:[],subs:{},column:""}:taskSnap(S.tasks[m.id]);
   if(m.isNew){
     const inCol=taskList().filter(t=>(t.column||"todo")===d.column);
     Object.assign(body,{projectId:S.projectId,column:d.column,order:inCol.reduce((a,t)=>Math.max(a,t.order||0),0)+1,createdAt:now,createdBy:S.me.id,doneAt:d.column==="done"?now:null});
@@ -2460,7 +2586,7 @@ async function saveTask(){
       (m.orig.docs||[]).filter(x=>x.assetId&&!keep.has(x.assetId)).forEach(x=>S.assets.delete(x.assetId).catch(()=>{}));
     }
   }
-  if(ok){m.newAssets=[];closeModal(true)}
+  if(ok){notifyTask(m.id,before);m.newAssets=[];closeModal(true)}
 }
 async function deleteTask(){
   const m=S.modal;const t=S.tasks[m.id];
@@ -2822,6 +2948,7 @@ function subTasks(){
     const ids=[];Object.values(S.tasks).forEach(t=>{ids.push(...(t.assignees||[]),t.createdBy);(t.subtasks||[]).forEach(s=>ids.push(s.assignee));(t.docs||[]).forEach(x=>ids.push(x.by))});
     loadProfiles(ids);
     render();
+    openPending();
   },onErr);
   // Comentarios del proyecto, solo para mostrar cuántos tiene cada tarjeta.
   S.unPCom=S.db.collection("comments").where("projectId","==",S.projectId).onSnapshot(snap=>{S.pcom=mapDocs(snap);render()},onErr);
@@ -2852,6 +2979,13 @@ document.addEventListener("click",async e=>{
   const m=S.modal;
   switch(act){
     case "go":go(el.dataset.v);break;
+    case "sound-toggle":toggleSound();break;
+    case "nt-filter":S.ntOnlyUnread=el.dataset.v==="unread";render();break;
+    case "nt-open":{const n=S.notifs[id];if(!n)break;if(!n.read){if(S.demo)n.read=true;else safe(()=>wupd("notifications",id,{read:true}))}render();openTaskAnywhere(n.projectId,n.taskId);break}
+    case "nt-all-read":{const ids=myNotifs().filter(n=>!n.read).map(n=>n.id);if(S.demo){ids.forEach(i=>S.notifs[i].read=true);render();break}
+      Promise.all(ids.map(i=>wupd("notifications",i,{read:true}))).then(()=>toast("Todas marcadas como leídas")).catch(e=>toast(errMsg(e),true));break}
+    case "nt-clear":{const ids=myNotifs().filter(n=>n.read).map(n=>n.id);if(S.demo){ids.forEach(i=>delete S.notifs[i]);render();break}
+      Promise.all(ids.map(i=>wdel("notifications",i))).then(()=>toast("Notificaciones leídas borradas")).catch(e=>toast(errMsg(e),true));break}
     case "nav-grp":{const k=el.dataset.k==="tasks"?"navTasks":"navDocs";const inside=el.dataset.k==="tasks"?TASKV.includes(S.view):S.view==="documentos";
       if(S.sideCollapsed){go(el.dataset.v);break}
       if(!inside){S[k]=true;go(el.dataset.v)}else{S[k]=!S[k];render()}break}
@@ -3117,6 +3251,12 @@ async function start(){
   if(!me.id){enterDemo("signin");return}
   S.db=db;S.user=user;S.me=me;S.isOwner=!!me.isOwner;
   if(window.appWorkspace)S.ws=await window.appWorkspace.info();
+  {const q=new URLSearchParams(location.search),lt=q.get("t");
+    if(lt){
+      const lw=q.get("ws");
+      if(lw&&S.ws&&S.ws.current&&S.ws.current.id!==lw&&S.ws.list.some(w=>w.id===lw)){window.appWorkspace.switchTo(lw,location.pathname+location.search);return}
+      S.linkOpen={p:q.get("p")||"",t:lt};history.replaceState(null,"",location.pathname+location.hash);
+    }}
   const cw=await user.can("data.write");S.canWrite=cw!==false;
   c.use("assets").then(a=>{S.assets=a;if(S.modal&&S.modal.kind==="task")renderModal()}).catch(()=>{});
   S.profiles[me.id]={id:me.id,name:me.name,avatarUrl:me.avatarUrl,color:me.color,email:me.email,isMe:true,guest:false};
@@ -3134,6 +3274,7 @@ async function start(){
   db.collection("projects").onSnapshot(snap=>{
     S.projects=mapDocs(snap);S.projectsReady=true;
     ensureProject();
+    if(S.linkOpen){const l=S.linkOpen;S.linkOpen=null;openTaskAnywhere(l.p,l.t)}
     const ids=[];Object.values(S.projects).forEach(p=>ids.push(...(p.memberIds||[])));loadProfiles(ids);
     render();
   },onErr);
@@ -3143,6 +3284,7 @@ async function start(){
     const ids=[];Object.values(S.documents).forEach(d=>ids.push(d.ownerId,d.updatedBy));loadProfiles(ids);
     render();
   },onErr);
+  subNotifs();
 }
 function enterDemo(reason){
   S.demo=true;S.demoReason=reason;S.boot=false;S.isOwner=true;S.canWrite=true;
@@ -3172,6 +3314,13 @@ function enterDemo(reason){
     T("t10",{projectId:"p2",title:"Checklist de la primera semana",column:"done",priority:"baja",assignees:["u3"],order:2})
   ]);
   S.comments={k1:{taskId:"t2",text:"Probado en staging: el inicio de sesión funciona con dos clientes de prueba. Falta el filtro por cliente.",by:"u3",at:Date.now()-36e5*20},k2:{taskId:"t2",text:"Perfecto, lo reviso mañana con el cliente piloto.",by:"u1",at:Date.now()-36e5*18,parentId:"k1"}};
+  const N=(id,mins,o)=>[id,Object.assign({userId:"u1",projectId:"p1",projectName:"Portal de clientes (ejemplo)",at:Date.now()-mins*60000,read:false},o)];
+  S.notifs=Object.fromEntries([
+    N("n1",4,{kind:"status",by:"u3",taskId:"t5",taskTitle:"Las reuniones agendadas aparecen en el portal con su fecha",from:"doing",to:"review"}),
+    N("n2",50,{kind:"assigned",by:"u2",taskId:"t3",taskTitle:"Cada campaña muestra invitaciones, aceptación y conversaciones de la semana"}),
+    N("n3",60*26,{kind:"subtask",by:"u3",taskId:"t2",taskTitle:"El cliente entra con su correo y ve solo sus campañas",subTitle:"Prueba con dos clientes",read:true}),
+    N("n4",60*24*4,{kind:"status",by:"u2",taskId:"t1",taskTitle:"Las pantallas del portal están en Figma y el cliente piloto las aprobó",from:"review",to:"done",read:true})
+  ]);
   S.projectId="p1";
   render();
 }

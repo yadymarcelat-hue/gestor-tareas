@@ -331,9 +331,9 @@
 
   window.appWorkspace = {
     info: workspace,
-    switchTo(id) {
+    switchTo(id, url) {
       try { localStorage.setItem(WS_KEY, id); } catch (e) {}
-      location.replace("/");
+      location.replace(url || "/");
     },
   };
 
