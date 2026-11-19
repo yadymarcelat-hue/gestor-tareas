@@ -1781,7 +1781,6 @@ function meetPrefsField(){
   return `<div class="field"><span class="flabel">Avisos de reuniones</span>
     <label class="inline-check"><input type="checkbox" class="cb" data-act="mr-on" ${r.on?"checked":""}>Avisarme antes de mis reuniones de Google Calendar</label>
     ${r.on?`<div class="mr-row"><span>Avisarme</span><select id="mr-min" class="pill-select" data-act="mr-min" aria-label="Minutos antes">${MR_OPTS.map(n=>`<option value="${n}" ${!custom&&r.min===n?"selected":""}>${n} ${n===1?"minuto":"minutos"}</option>`).join("")}<option value="otro" ${custom?"selected":""}>Otro…</option></select>${custom?`<input id="mr-custom" class="inp mr-num" type="number" min="1" max="240" step="1" inputmode="numeric" data-act="mr-custom" value="${r.min}" aria-label="Minutos antes"><span>minutos antes</span>`:`<span>antes</span>`}</div>
-    <span class="hint">Sale una tarjeta con el botón “Unirse” mientras tengas la app abierta. ${S.sound?"Suena un tono":"El tono está silenciado"} (lo cambias con el altavoz junto a tu nombre).</span>
     <span class="hint">${perm==="granted"?"Avisos del computador: activados.":perm==="denied"?"Avisos del computador: bloqueados en este navegador. Para activarlos, permite las notificaciones de este sitio en la configuración del navegador.":perm==="default"?`Avisos del computador: apagados. <button type="button" class="link-btn mr-perm" data-act="mr-perm">Activarlos</button>`:""}</span>`:""}
     ${gcal}</div>`;
 }
