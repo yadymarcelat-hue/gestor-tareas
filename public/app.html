@@ -163,6 +163,10 @@ h1,h2,h3{text-wrap:balance;margin:0}
 .nt .dotu.off{background:transparent}
 .nt-grp{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);padding:14px 18px 6px;border-bottom:1px solid var(--line)}
 .nt-filter{display:flex;gap:6px}
+.mr-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:14.5px}
+.mr-row .pill-select{width:auto}
+.mr-num{width:84px!important;height:36px}
+.link-btn.mr-perm{font-size:inherit}
 .nt-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .nt-bar .nt-acts{display:flex;gap:6px;margin-left:auto;flex-wrap:wrap}
 .me-acts{display:flex;align-items:center;gap:0;flex:none}
@@ -1751,7 +1755,36 @@ async function notifyTask(taskId,before){
 
 /* ---------- aviso de reuniones (10 min antes) ---------- */
 // Usa el Google Calendar conectado. Funciona mientras la app esté abierta (en el navegador o instalada).
-const REMIND_MIN=10;
+// Preferencias de avisos de reunión: se guardan en la cuenta (Supabase Auth, user_metadata.meetRemind),
+// así valen en todos los dispositivos. Copia local para que funcionen apenas abre la app.
+const MR_DEF={on:true,min:10};
+const mrNorm=p=>({on:!p||p.on!==false,min:Math.min(240,Math.max(1,parseInt(p&&p.min,10)||10))});
+S.mr=(()=>{try{return mrNorm(JSON.parse(localStorage.getItem("pj-meet")||"null")||MR_DEF)}catch(e){return{...MR_DEF}}})();
+async function loadMeetPrefs(){
+  if(S.demo||!window.appAuth||!window.appAuth.client)return;
+  try{const sb=await window.appAuth.client();const {data}=await sb.auth.getUser();const p=data&&data.user&&data.user.user_metadata&&data.user.user_metadata.meetRemind;
+    if(p){S.mr=mrNorm(p);try{localStorage.setItem("pj-meet",JSON.stringify(S.mr))}catch(_){}if(S.modal&&S.modal.kind==="me")renderModal()}}catch(e){}
+}
+async function saveMeetPrefs(patch){
+  S.mr=mrNorm(Object.assign({},S.mr,patch));try{localStorage.setItem("pj-meet",JSON.stringify(S.mr))}catch(_){}
+  renderModal();
+  const msg=S.mr.on?`Te avisaremos ${S.mr.min} ${S.mr.min===1?"minuto":"minutos"} antes de cada reunión`:"Avisos de reuniones desactivados";
+  if(S.demo||!window.appAuth||!window.appAuth.client){toast(msg);return}
+  try{const sb=await window.appAuth.client();const {error}=await sb.auth.updateUser({data:{meetRemind:S.mr}});if(error)throw error;toast(msg)}
+  catch(e){console.error(e);toast("Se guardó en este dispositivo, pero no en tu cuenta. Revisa tu conexión.",true)}
+}
+const MR_OPTS=[1,5,10,15,20,30,45,60];
+function meetPrefsField(){
+  const r=S.mr,custom=!MR_OPTS.includes(r.min)||S.mrCustom;
+  const perm="Notification" in window?Notification.permission:"na";
+  const gcal=S.ag&&S.ag.on===false?`<span class="hint">${ico("info","sm")} Conecta tu Google Calendar en <b>Inicio › Mi día</b> para recibir estos avisos.</span>`:"";
+  return `<div class="field"><span class="flabel">Avisos de reuniones</span>
+    <label class="inline-check"><input type="checkbox" class="cb" data-act="mr-on" ${r.on?"checked":""}>Avisarme antes de mis reuniones de Google Calendar</label>
+    ${r.on?`<div class="mr-row"><span>Avisarme</span><select id="mr-min" class="pill-select" data-act="mr-min" aria-label="Minutos antes">${MR_OPTS.map(n=>`<option value="${n}" ${!custom&&r.min===n?"selected":""}>${n} ${n===1?"minuto":"minutos"}</option>`).join("")}<option value="otro" ${custom?"selected":""}>Otro…</option></select>${custom?`<input id="mr-custom" class="inp mr-num" type="number" min="1" max="240" step="1" inputmode="numeric" data-act="mr-custom" value="${r.min}" aria-label="Minutos antes"><span>minutos antes</span>`:`<span>antes</span>`}</div>
+    <span class="hint">Sale una tarjeta con el botón “Unirse” mientras tengas la app abierta. ${S.sound?"Suena un tono":"El tono está silenciado"} (lo cambias con el altavoz junto a tu nombre).</span>
+    <span class="hint">${perm==="granted"?"Avisos del computador: activados.":perm==="denied"?"Avisos del computador: bloqueados en este navegador. Para activarlos, permite las notificaciones de este sitio en la configuración del navegador.":perm==="default"?`Avisos del computador: apagados. <button type="button" class="link-btn mr-perm" data-act="mr-perm">Activarlos</button>`:""}</span>`:""}
+    ${gcal}</div>`;
+}
 let todayEv={day:"",at:0,events:null,loading:false};
 async function loadTodayEvents(){
   const day=today();
@@ -1772,13 +1805,13 @@ function remindedSet(){try{return JSON.parse(localStorage.getItem("pj-reminded")
 function markReminded(k){const o=remindedSet();o[k]=Date.now();const cut=Date.now()-2*864e5;Object.keys(o).forEach(x=>{if(o[x]<cut)delete o[x]});try{localStorage.setItem("pj-reminded",JSON.stringify(o))}catch(e){}}
 const S_rm=[];
 async function remindTick(){
-  if(S.boot)return;
+  if(S.boot||!S.mr.on)return;
   await loadTodayEvents();
   const evs=todayEv.events;if(!evs)return;
   const now=Date.now(),done=remindedSet();
   evs.filter(e=>!e.allDay).forEach(e=>{
     const st=new Date(e.start).getTime(),k=(e.id||e.title)+"|"+e.start;
-    if(done[k]||st-now>REMIND_MIN*60000||st<now-60000)return;
+    if(done[k]||st-now>S.mr.min*60000||st<now-60000)return;
     markReminded(k);showReminder(e,st);
   });
 }
@@ -2901,6 +2934,7 @@ function meModal(){
     <div class="field"><label for="me-name">Nombre</label><input id="me-name" type="text" data-mf="name" value="${esc(d.name)}" autocomplete="name"></div>
     ${S.isOwner?`<div class="field"><label for="me-title">Cargo</label><input id="me-title" type="text" data-mf="title" value="${esc(d.title)}" placeholder="Ej: Gerente"></div>`:d.title?`<div class="field"><span class="flabel">Cargo</span><span>${esc(d.title)}</span><span class="hint">Lo cambia la administradora de la empresa.</span></div>`:""}
     <div class="field"><span class="flabel">Correo</span><span>${esc(S.me.email||"")}</span></div>
+    ${meetPrefsField()}
     <div class="field"><span class="flabel">Verificación en dos pasos ${S.mfa&&S.mfa.on?`<span class="pill-ok">Activa</span>`:""}</span><span class="hint">${S.mfa&&S.mfa.on?"Al entrar te pedimos tu contraseña y un código de tu app de autenticación.":"Opcional. Además de tu contraseña, al entrar te pedimos un código de tu celular. Así nadie entra solo con tu contraseña."}</span><div><button class="btn sm" data-act="mfa-open">${ico("shield","sm")}${S.mfa&&S.mfa.on?"Administrar":"Activar"}</button></div></div>
     <div class="field"><span class="flabel">Conectar con Claude</span><span class="hint">Pregúntale a Claude en qué estado está una tarea, pídele la lista de tareas o que cree tareas por ti. Solo ve y usa lo que tú ves.</span><div><button class="btn sm" data-act="mcp-open">${ico("plug","sm")}Conectar con Claude</button></div></div>
     <div class="field"><span class="flabel">Cambiar contraseña</span><span class="hint">Déjalo vacío si no la quieres cambiar.</span>
@@ -3168,6 +3202,7 @@ document.addEventListener("click",async e=>{
   switch(act){
     case "go":go(el.dataset.v);break;
     case "sound-toggle":toggleSound();break;
+    case "mr-perm":try{Notification.requestPermission().then(()=>{renderModal();renderReminders()})}catch(_){}break;
     case "story-off":{const pid=S.projectId,p=S.projects[pid];if(!p)break;
       p.useStory=false;renderModal();
       if(S.demo){toast("Listo. Puedes volver a activarlo al editar el proyecto.");break}
@@ -3328,6 +3363,9 @@ document.addEventListener("change",e=>{
   if(t.dataset.act==="p-vis"&&m){m.draft.visibility=t.value;renderModal();return}
   if(t.dataset.act==="p-hitos"&&m){m.draft.useHitos=t.checked;renderModal();return}
   if(t.dataset.act==="p-story"&&m){m.draft.useStory=t.checked;renderModal();return}
+  if(t.dataset.act==="mr-on"){S.mrCustom=false;saveMeetPrefs({on:t.checked});return}
+  if(t.dataset.act==="mr-min"){if(t.value==="otro"){S.mrCustom=true;renderModal();const x=$("#mr-custom");if(x){x.focus();x.select()}return}S.mrCustom=false;saveMeetPrefs({min:+t.value});return}
+  if(t.dataset.act==="mr-custom"){const n=parseInt(t.value,10);if(!(n>=1&&n<=240)){toast("Escribe un número de minutos entre 1 y 240.",true);t.value=S.mr.min;return}saveMeetPrefs({min:n});return}
   if(t.dataset.act==="p-noend"&&m){m.draft.noEnd=t.checked;if(t.checked)m.draft.end="";renderModal();return}
   if(t.dataset.act==="p-mem"&&m){const a=m.draft.memberIds;t.checked?a.includes(t.value)||a.push(t.value):m.draft.memberIds=a.filter(x=>x!==t.value);return}
   if(t.dataset.act==="mm-proj"&&m){const a=m.draft.projects;t.checked?a.includes(t.value)||a.push(t.value):m.draft.projects=a.filter(x=>x!==t.value);return}
@@ -3479,6 +3517,7 @@ async function start(){
     render();
   },onErr);
   subNotifs();
+  loadMeetPrefs();
 }
 function enterDemo(reason){
   S.demo=true;S.demoReason=reason;S.boot=false;S.isOwner=true;S.canWrite=true;
