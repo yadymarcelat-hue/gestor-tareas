@@ -455,6 +455,19 @@ button.tl-lab:hover .t{color:var(--accent)}
 .field textarea{resize:vertical;min-height:84px;line-height:1.5}
 .field input:focus,.field textarea:focus,.inp:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
 .fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px}
+/* Propiedades de la tarea en una sola fila: Hito · Estado · Prioridad · Fechas. Si no caben, las fechas bajan solas. */
+.props{display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 10px}
+.props>.field{flex:0 0 auto;min-width:0}
+.props .pill-select{width:auto;max-width:220px;padding:0 30px 0 13px;background-position:right 11px center;font-size:14.5px}
+.props .f-hito .pill-select{max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.props>.f-dates{flex:1 1 214px}
+.pill-dates{display:flex;align-items:center;gap:0;height:36px;border:1px solid var(--line-2);border-radius:999px;background:var(--surface);padding:0 8px 0 10px;min-width:0}
+.pill-dates:focus-within{border-color:var(--accent)}
+.pill-dates.req{border-color:var(--danger)}
+.pill-dates input,.field .pill-dates input{border:0!important;background:none!important;box-shadow:none!important;height:34px;padding:0 3px;flex:1 1 0;min-width:84px;width:auto;font-weight:500;font-size:14.5px;outline:0}
+.pill-dates .arr{color:var(--muted);flex:none;padding:0 3px}
+.pill-dates input::-webkit-calendar-picker-indicator{display:none}
+.pill-dates input{cursor:pointer;font-variant-numeric:tabular-nums}
 .dates{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .dates input{width:auto;flex:1;min-width:140px}
 .pill-select{appearance:none;-webkit-appearance:none;height:40px;border-radius:999px;border:1px solid var(--line-2);background:var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238a919d' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m7 9 5-5 5 5M7 15l5 5 5-5'/%3E%3C/svg%3E") no-repeat right 13px center;padding:0 36px 0 15px;font-weight:500;max-width:100%;width:fit-content;min-width:0;outline:0}
@@ -757,6 +770,9 @@ a.btn{text-decoration:none}
 }
 @media (max-width:560px){
   .fgrid{grid-template-columns:minmax(0,1fr)}
+  .props>.field{flex:1 1 calc(50% - 6px)}
+  .props>.f-hito,.props>.f-dates{flex:1 1 100%}
+  .props .pill-select,.props .f-hito .pill-select{max-width:none;width:100%}
   .m-body{padding:16px 16px 20px}
   .m-head,.m-foot{padding-left:16px;padding-right:16px}
   .story label{grid-template-columns:64px minmax(0,1fr);padding:11px 14px}
@@ -2659,6 +2675,7 @@ function subComments(tid){
 // Solo se cierra con clic en el fondo si el clic EMPEZÓ en el fondo: al seleccionar texto arrastrando
 // y soltar fuera de la ventana, el navegador lo contaba como clic en el fondo y se perdía el trabajo.
 let downOnBg=false;
+document.addEventListener("click",e=>{const x=e.target;if(x&&x.matches&&x.matches(".pill-dates input[type=date]:not(:disabled)")){try{x.showPicker()}catch(_){}}});
 document.addEventListener("pointerdown",e=>{downOnBg=!!(e.target&&e.target.classList&&e.target.classList.contains("overlay"))},true);
 function modalDirty(){
   const m=S.modal;if(!m||!m.draft||!m.orig||m.kind==="emp"||m.kind==="inv")return false;
@@ -2715,12 +2732,13 @@ function taskModal(){
         <label><b>Para</b><textarea id="f-para" class="grow-ta" rows="1" data-f="para" placeholder="decidir qué entra en la semana" ${dis}>${esc(d.para)}</textarea></label>
       </div>`:""}
       <div class="field"><label for="f-desc">Descripción</label><textarea id="f-desc" class="grow-ta" data-min="84" data-f="description" rows="4" placeholder="Contexto, alcance y lo que no se debe tocar" ${dis}>${esc(d.description)}</textarea></div>
-      <div class="fgrid">
-        ${ms.length?`<div class="field"><label for="f-hito">Hito</label><select id="f-hito" class="pill-select ${m.err==="hito"?"req":""}" data-f="milestoneId" ${dis}><option value="">${ms.length?"Elegir hito (obligatorio)":"Sin hitos en el proyecto"}</option>${ms.map(x=>`<option value="${x.id}" ${d.milestoneId===x.id?"selected":""}>${esc(x.name)}</option>`).join("")}</select></div>`:""}
-        <div class="field"><label for="f-col">Columna</label><select id="f-col" class="pill-select" data-f="column" ${dis}>${COLS.map(c=>`<option value="${c.id}" ${d.column===c.id?"selected":""}>${c.name}</option>`).join("")}</select></div>
+      <div class="props">
+        ${ms.length?`<div class="field f-hito"><label for="f-hito">Hito</label><select id="f-hito" class="pill-select ${m.err==="hito"?"req":""}" data-f="milestoneId" ${dis}><option value="">${ms.length?"Elegir hito":"Sin hitos en el proyecto"}</option>${ms.map(x=>`<option value="${x.id}" ${d.milestoneId===x.id?"selected":""}>${esc(x.name)}</option>`).join("")}</select></div>`:""}
+        <div class="field"><label for="f-col">Estado</label><select id="f-col" class="pill-select" data-f="column" ${dis}>${COLS.map(c=>`<option value="${c.id}" ${d.column===c.id?"selected":""}>${c.name}</option>`).join("")}</select></div>
         <div class="field"><label for="f-pri">Prioridad</label><select id="f-pri" class="pill-select" data-f="priority" ${dis}>${PRI.map(([k,v])=>`<option value="${k}" ${d.priority===k?"selected":""}>${v}</option>`).join("")}</select></div>
+        <div class="field f-dates"><label for="f-start">Fechas</label><div class="pill-dates ${m.err==="dates"?"req":""}"><input id="f-start" type="date" data-f="start" value="${esc(d.start)}" aria-label="Fecha de inicio" title="Inicio" ${dis}><span class="arr" aria-hidden="true">→</span><input id="f-end" type="date" data-f="end" value="${esc(d.end)}" aria-label="Fecha de fin" title="Fin" ${dis}></div></div>
       </div>
-      <div class="field"><span class="flabel">Fechas</span><div class="dates"><input id="f-start" type="date" data-f="start" value="${esc(d.start)}" aria-label="Fecha de inicio" ${dis}><span class="hint">a</span><input id="f-end" type="date" data-f="end" value="${esc(d.end)}" aria-label="Fecha de fin" ${dis}></div>${m.err==="dates"?`<span class="err">La fecha de fin es anterior a la de inicio.</span>`:""}</div>
+      ${m.err==="dates"?`<span class="err" style="margin-top:-10px">La fecha de fin es anterior a la de inicio.</span>`:""}
       <div class="field"><span class="flabel">Responsables</span><div class="ppl">${ppl.map(id=>`<button type="button" class="${d.assignees.includes(id)?"on":""}" data-act="toggle-assignee" data-id="${id}" ${dis} aria-pressed="${d.assignees.includes(id)}">${av(id)}${esc(first(id))}</button>`).join("")||`<span class="hint">Agrega personas al proyecto para asignarlas.</span>`}</div></div>
       <div class="field"><span class="flabel" id="f-cl-l">Cliente</span><div class="ppl cl-ppl" role="group" aria-labelledby="f-cl-l">${(()=>{const pc=clientsOf(S.projects[S.projectId]);const opts=uniqClients(pc.concat(d.clients));return opts.map(c=>{const on=d.clients.some(x=>lc(x)===lc(c));return `<button type="button" class="${on?"on":""}" data-act="cl-tog" data-c="${esc(c)}" ${dis} aria-pressed="${on}"><span class="cl-ic cl-c${clientColor(c)}">${ico("building","sm")}</span>${esc(c)}</button>`}).join("")+(ro?"":`<div class="menu-wrap"><button type="button" class="cl-other" data-act="cl-open" aria-expanded="${!!m.clOpen}">${ico("plus","sm")}${opts.length?"Otro cliente":"Agregar cliente"}</button>${m.clOpen?clientPop(d.clients,uniqClients(pc.length?clientList().filter(c=>!opts.some(x=>lc(x)===lc(c))):clientList()),"cl-tog"):""}</div>`)||(opts.length?"":`<span class="hint">Sin cliente</span>`)})()}</div></div>
 
