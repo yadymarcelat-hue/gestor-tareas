@@ -253,6 +253,16 @@ h1,h2,h3{text-wrap:balance;margin:0}
 .board-wrap{overflow-x:auto;margin:0 calc(-1*max(24px,env(safe-area-inset-right,0px))) 0 calc(-1*max(24px,env(safe-area-inset-left,0px)));padding:0 max(24px,env(safe-area-inset-right,0px)) 8px max(24px,env(safe-area-inset-left,0px))}
 .board{display:grid;grid-template-columns:repeat(4,minmax(190px,1fr));gap:14px;min-width:min-content;align-items:start}
 .col{display:flex;flex-direction:column;gap:10px;min-width:0}
+.colf{display:none}
+.card-mv,.people.mv-only{display:none}
+.colf .dot,.card-mv .dot{width:8px;height:8px;border-radius:50%;flex:none}
+.colf .cnt{color:var(--muted);font-weight:500;font-variant-numeric:tabular-nums}
+.colf .pill.cur{background:var(--fg);border-color:var(--fg);color:var(--surface)}
+.colf .pill.cur .cnt{color:inherit;opacity:.75}
+.mv-b{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 8px 0 10px;border:1px solid var(--line-2);border-radius:999px;background:var(--surface);color:var(--fg);font:inherit;font-size:12.5px;font-weight:500;white-space:nowrap;cursor:pointer}
+.mv-b .i{width:14px;height:14px;color:var(--muted)}
+.card-mv{margin-left:auto}
+.card-mv .pop{left:auto;right:0;min-width:200px}
 .col-h{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;font-weight:600;font-size:15px}
 .col-h .cnt{color:var(--muted);font-weight:500;font-size:13.5px;font-variant-numeric:tabular-nums}
 .col-h .dot{width:8px;height:8px;border-radius:50%}
@@ -695,6 +705,15 @@ a.btn{text-decoration:none}
   .board-wrap{overflow:visible;margin:0;padding:0}
   .board{grid-template-columns:repeat(2,minmax(0,1fr));min-width:0;scroll-snap-type:none}
   .col-body{min-height:60px}
+  /* Filtro por estado: una fila de chips que se desliza de lado; muestra una sola columna */
+  .colf{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 calc(-1*max(16px,env(safe-area-inset-right,0px))) 14px calc(-1*max(16px,env(safe-area-inset-left,0px)));padding:2px max(16px,env(safe-area-inset-right,0px)) 2px max(16px,env(safe-area-inset-left,0px))}
+  .colf::-webkit-scrollbar{display:none}
+  .colf .pill{flex:none;height:34px;padding:0 12px;gap:6px;font-size:13.5px}
+  .board.one{grid-template-columns:minmax(0,1fr)}
+  .board.one .col.off{display:none}
+  .board.one .col-h{display:none}
+  .card-mv{display:inline-flex}
+  .people.mv-only{display:flex}
 }
 @media (max-width:420px){
   .ph-actions .btn>span:not(.num){display:none}
@@ -1130,7 +1149,7 @@ const ls={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k
 const S={
   boot:true, demo:false, demoReason:"", db:null, user:null, assets:null,
   me:{id:null,name:"",avatarUrl:"",isOwner:false}, isOwner:false, canWrite:true,
-  members:{}, projects:{}, milestones:{}, tasks:{}, comments:{}, documents:{}, docQ:"", docF:"all", chip:null, tlMode:(()=>{try{return localStorage.getItem("pj-tlmode")||"tareas"}catch(e){return"tareas"}})(), calP:(()=>{try{return localStorage.getItem("pj-calp")==="m"?"m":"q"}catch(e){return"q"}})(), stOff:new Set(), lane:true, grpOpen:new Set(), navTasks:true, navDocs:false,
+  members:{}, projects:{}, milestones:{}, tasks:{}, comments:{}, documents:{}, docQ:"", docF:"all", chip:null, tlMode:(()=>{try{return localStorage.getItem("pj-tlmode")||"tareas"}catch(e){return"tareas"}})(), calP:(()=>{try{return localStorage.getItem("pj-calp")==="m"?"m":"q"}catch(e){return"q"}})(), colF:(()=>{try{const v=localStorage.getItem("pj-colf");return ["todo","doing","review","done"].includes(v)?v:"all"}catch(e){return"all"}})(), stOff:new Set(), lane:true, grpOpen:new Set(), navTasks:true, navDocs:false,
   membersReady:false, projectsReady:false, ownerWritten:false,
   profiles:{}, view:"tablero", projectId:null, person:null, q:"", showArchived:false,
   menu:null, navOpen:false, calStart:null, modal:null, inv:{email:"",name:"",title:"",projects:[],link:"",forName:"",err:"",busy:false},
@@ -1311,9 +1330,11 @@ function render(){
   if(noWs&&S.ws.isSuperadmin)S.view="empresas";
   if(!noWs&&!S.demo&&!S.isOwner&&S.membersReady&&!S.members[S.me.id]){app.innerHTML=gateNoAccess();return}
   {const ow=document.querySelector(".tl-wrap"),ot=ow&&ow.querySelector(".tl[data-start]");if(ot&&S.tlLeft)S.tlLeft=addDays(ot.dataset.start,Math.round(ow.scrollLeft/ +ot.dataset.dw))}
+  const cfx=(document.querySelector(".colf")||{}).scrollLeft||0;
   app.innerHTML=`<div class="shell ${S.navOpen?"nav-open":""} ${S.sideCollapsed?"side-collapsed":""}">${sidebar()}<main class="main" id="main">${S.demo?demoBanner():""}${view()}</main><div class="scrim" data-act="nav-close"></div></div>`;
   bindBoard();
   bindTimeline();
+  {const cf=document.querySelector(".colf"),cc=cf&&cf.querySelector(".pill.cur");if(cf){cf.scrollLeft=cfx;if(cc){const l=cc.offsetLeft-cf.offsetLeft,r=l+cc.offsetWidth;if(l<cf.scrollLeft||r>cf.scrollLeft+cf.clientWidth)cf.scrollLeft=l-16}}}
   if(S.chip)document.querySelectorAll(`.chip[data-k="${S.chip.k}"][data-id="${S.chip.id}"]`).forEach(x=>x.classList.add("open"));
   restoreFocus(f);
 }
@@ -1437,13 +1458,26 @@ function viewTablero(){
       <span class="grow"></span>
       ${archived?`<button class="btn ghost sm" data-act="toggle-arch">${ico("archive","sm")}${S.showArchived?"Ocultar archivadas":"Ver archivadas"} <span class="num">${archived}</span></button>`:""}
     </div>
-    <div class="board-wrap"><div class="board">${COLS.map(c=>{
+    ${colFilter(ts)}
+    <div class="board-wrap"><div class="board ${S.colF!=="all"?"one":""}">${COLS.map(c=>{
       // En "Hecho" la última tarea cerrada queda de primera.
       const list=ts.filter(t=>(t.column||"todo")===c.id).sort(c.id==="done"?byDone:byOrder);
-      return `<section class="col" aria-label="${c.name}"><div class="col-h c-${c.id}"><span class="dot"></span>${c.name} <span class="cnt">${list.length}</span></div>
+      return `<section class="col ${S.colF!=="all"&&S.colF!==c.id?"off":""}" aria-label="${c.name}"><div class="col-h c-${c.id}"><span class="dot"></span>${c.name} <span class="cnt">${list.length}</span></div>
       <div class="col-body" data-col="${c.id}">${list.map(card).join("")}
       ${S.canWrite?`<button class="add-card" data-act="new-task" data-col="${c.id}">${ico("plus","sm")}Nueva tarea</button>`:list.length?"":`<div class="empty-col">Sin tareas</div>`}</div></section>`;
     }).join("")}</div></div></div>`;
+}
+// Celular: filtro por estado (una columna a la vez) en vez de las 4 columnas apiladas.
+function colFilter(ts){
+  const n=id=>ts.filter(t=>(t.column||"todo")===id).length;
+  const b=(id,l,cnt,dot)=>`<button class="pill ${S.colF===id?"cur":""}" data-act="colf" data-v="${id}" aria-pressed="${S.colF===id}">${dot?`<span class="dot" style="background:var(--dot-${id})"></span>`:""}${l} <span class="cnt">${cnt}</span></button>`;
+  return `<div class="colf" role="group" aria-label="Filtrar por estado">${b("all","Todas",ts.length,0)}${COLS.map(c=>b(c.id,c.name,n(c.id),1)).join("")}</div>`;
+}
+// Celular: botón de estado en la tarjeta para moverla sin arrastrar.
+function cardMove(t){
+  if(!S.canWrite||t.archived)return"";
+  const cur=t.column||"todo",k="mv-"+t.id,open=S.menu===k;
+  return `<span class="menu-wrap card-mv"><button class="mv-b" data-act="menu" data-m="${k}" aria-haspopup="menu" aria-expanded="${open}" aria-label="Cambiar estado: ${COLNAME[cur]}"><span class="dot" style="background:var(--dot-${cur})"></span>${COLNAME[cur]}${ico("down","sm")}</button>${open?`<div class="pop" role="menu">${COLS.map(c=>`<button class="${c.id===cur?"on":""}" data-act="mv-to" data-id="${t.id}" data-v="${c.id}" role="menuitemradio" aria-checked="${c.id===cur}"><span class="dot" style="background:var(--dot-${c.id})"></span><span>${c.name}</span>${c.id===cur?`<span class="ck">${ico("check","sm")}</span>`:""}</button>`).join("")}</div>`:""}</span>`;
 }
 function card(t){
   const m=hitosOn()&&t.milestoneId&&S.milestones[t.milestoneId];
@@ -1453,11 +1487,12 @@ function card(t){
   const ppl=(t.assignees||[]);
   const late=isLate(t);
   const range=fmtRange(t.start,t.end);
+  const mv=cardMove(t);
   return `<article class="card ${t.column==="done"?"is-done":""} ${t.archived?"is-arch":""}" ${S.canWrite?'draggable="true"':""} data-id="${t.id}" data-act="open-task" tabindex="0" role="button" aria-label="${esc(t.title)}">
     <div class="card-t">${esc(t.title||"Sin título")}</div>
     <div class="tags">${m?`<span class="tag hito">${ico("flag","sm")}<span>${esc(m.name)}</span></span>`:""}${t.priority&&t.priority!=="none"?`<span class="tag p-${t.priority}">${PRINAME[t.priority]}</span>`:""}${clientsOf(t).map(clientTag).join("")}${t.archived?`<span class="tag neutral">Archivada</span>`:""}</div>
     ${range||subs.length||docs||nc?`<div class="meta">${range?`<span class="${late?"late":""}">${ico("cal","sm")}${esc(range)}${late?" · vencida":""}</span>`:""}${subs.length?`<span>${ico("sub","sm")}${sd}/${subs.length}</span>`:""}${docs?`<span>${ico("clip","sm")}${docs}</span>`:""}${nc?`<span title="Comentarios">${ico("comment","sm")}${nc}</span>`:""}</div>`:""}
-    ${ppl.length?`<div class="people">${ppl.slice(0,3).map(id=>`<span class="person">${av(id)}${esc(first(id))}</span>`).join("")}${ppl.length>3?`<span class="person">+${ppl.length-3}</span>`:""}</div>`:""}
+    ${ppl.length||mv?`<div class="people ${ppl.length?"":"mv-only"}">${ppl.slice(0,3).map(id=>`<span class="person">${av(id)}${esc(first(id))}</span>`).join("")}${ppl.length>3?`<span class="person">+${ppl.length-3}</span>`:""}${mv}</div>`:""}
   </article>`;
 }
 
@@ -3274,6 +3309,8 @@ document.addEventListener("click",async e=>{
     case "d-person":{const a=m.draft.memberIds=(m.draft.memberIds||[]).slice();const i=a.indexOf(id);i<0?a.push(id):a.splice(i,1);if(m.err==="ppl")m.err="";renderModal();break}
     case "person-clear":S.person=null;S.menu=null;render();break;
     case "rep-all":S.repAll=el.dataset.v==="1";S.menu=null;render();break;
+    case "colf":{const v=el.dataset.v;S.colF=["todo","doing","review","done"].includes(v)?v:"all";ls.set("pj-colf",S.colF);render();break}
+    case "mv-to":{S.menu=null;const v=el.dataset.v;if(COLNAME[v]&&S.tasks[id])moveTask(id,v);render();break}
     case "toggle-arch":S.showArchived=!S.showArchived;render();break;
     case "new-task":if(S.canWrite)openTask(null,el.dataset.col);break;
     case "open-task":if(S.dragId)return;openTask(id);break;
