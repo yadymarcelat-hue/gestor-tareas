@@ -470,14 +470,44 @@ button.tl-lab:hover .t{color:var(--accent)}
 .props>.field{flex:0 0 auto;min-width:0}
 .props .pill-select{width:auto;max-width:220px;padding:0 30px 0 13px;background-position:right 11px center;font-size:14.5px}
 .props .f-hito .pill-select{max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.props>.f-dates{flex:1 1 214px}
-.pill-dates{display:flex;align-items:center;gap:0;height:36px;border:1px solid var(--line-2);border-radius:999px;background:var(--surface);padding:0 8px 0 10px;min-width:0}
-.pill-dates:focus-within{border-color:var(--accent)}
-.pill-dates.req{border-color:var(--danger)}
-.pill-dates input,.field .pill-dates input{border:0!important;background:none!important;box-shadow:none!important;height:34px;padding:0 3px;flex:1 1 0;min-width:84px;width:auto;font-weight:500;font-size:14.5px;outline:0}
-.pill-dates .arr{color:var(--muted);flex:none;padding:0 3px}
-.pill-dates input::-webkit-calendar-picker-indicator{display:none}
-.pill-dates input{cursor:pointer;font-variant-numeric:tabular-nums}
+.props>.f-dates{flex:0 0 auto}
+/* Selector de fechas (estilo calendario en una sola casilla) */
+.dp-wrap{position:relative}
+.dp-btn{display:inline-flex;align-items:center;gap:7px;height:40px;padding:0 14px 0 12px;border-radius:999px;border:1px solid var(--line-2);background:var(--surface);font-weight:500;font-size:14.5px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.dp-btn:hover:not(:disabled){background:var(--hover)}
+.dp-btn[aria-expanded="true"]{border-color:var(--accent)}
+.dp-btn.req{border-color:var(--danger)}
+.dp-btn .ph{color:var(--muted);font-weight:400}
+.dp-btn svg{color:var(--muted)}
+.dp-pop{position:absolute;top:calc(100% + 6px);left:0;z-index:30;width:268px;max-width:calc(100vw - 32px);background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow-lg);padding:10px;display:flex;flex-direction:column;gap:8px;font-size:13.5px}
+.dp-ins{display:flex;gap:6px}
+.dp-ins input{flex:1 1 0;min-width:0;height:32px;border:1px solid var(--line-2);border-radius:8px;padding:0 8px;background:var(--surface-2);font:inherit;font-variant-numeric:tabular-nums;outline:0}
+.dp-ins input.on{border-color:var(--accent);background:var(--surface);box-shadow:0 0 0 2px var(--accent-soft)}
+.dp-head{display:flex;align-items:center;gap:2px;padding:2px 2px 0}
+.dp-head b{flex:1;font-weight:600;font-size:13.5px}
+.dp-head .link-btn{font-size:12.5px;color:var(--muted);padding:0 6px}
+.dp-head .icon-btn{width:26px;height:26px}
+.dp-grid{display:grid;grid-template-columns:repeat(7,1fr);row-gap:2px}
+.dp-grid .wd{font-size:11.5px;color:var(--faint);text-align:center;padding:2px 0 4px}
+.dp-day{height:30px;font-size:13px;font-variant-numeric:tabular-nums;display:grid;place-items:center;position:relative;color:var(--fg)}
+.dp-day.out{color:var(--faint)}
+.dp-day i{font-style:normal;width:28px;height:28px;display:grid;place-items:center;border-radius:8px;position:relative;z-index:1}
+.dp-day:hover i{background:var(--hover)}
+.dp-day.in{background:var(--accent-soft)}
+.dp-day.s{background:linear-gradient(90deg,transparent 50%,var(--accent-soft) 50%)}
+.dp-day.e{background:linear-gradient(90deg,var(--accent-soft) 50%,transparent 50%)}
+.dp-day.s.e{background:none}
+.dp-day.s i,.dp-day.e i{background:var(--accent);color:var(--accent-fg);font-weight:600}
+.dp-day.td i{box-shadow:inset 0 0 0 1.5px var(--accent);font-weight:600}
+.dp-day.td:not(.s):not(.e) i{color:var(--accent)}
+.dp-foot{border-top:1px solid var(--line);padding-top:8px;display:flex;flex-direction:column;gap:4px}
+.dp-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 2px;font-size:13.5px}
+.dp-sw{width:32px;height:18px;border-radius:9px;background:var(--line-2);position:relative;flex:none;transition:background .15s}
+.dp-sw:after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;transition:transform .15s}
+.dp-sw[aria-checked="true"]{background:var(--accent)}
+.dp-sw[aria-checked="true"]:after{transform:translateX(14px)}
+.dp-clear{color:var(--muted);font-size:13px;text-align:left;padding:4px 2px}
+.dp-clear:hover{color:var(--danger)}
 .dates{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .dates input{width:auto;flex:1;min-width:140px}
 .pill-select{appearance:none;-webkit-appearance:none;height:40px;border-radius:999px;border:1px solid var(--line-2);background:var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238a919d' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m7 9 5-5 5 5M7 15l5 5 5-5'/%3E%3C/svg%3E") no-repeat right 13px center;padding:0 36px 0 15px;font-weight:500;max-width:100%;width:fit-content;min-width:0;outline:0}
@@ -799,7 +829,7 @@ a.btn{text-decoration:none}
 @media (max-width:560px){
   .fgrid{grid-template-columns:minmax(0,1fr)}
   .props>.field{flex:1 1 calc(50% - 6px)}
-  .props>.f-hito,.props>.f-dates{flex:1 1 100%}
+  .props>.f-hito{flex:1 1 100%}
   .props .pill-select,.props .f-hito .pill-select{max-width:none;width:100%}
   .m-body{padding:16px 16px 20px}
   .m-head,.m-foot{padding-left:16px;padding-right:16px}
@@ -2745,7 +2775,6 @@ function subComments(tid){
 // Solo se cierra con clic en el fondo si el clic EMPEZÓ en el fondo: al seleccionar texto arrastrando
 // y soltar fuera de la ventana, el navegador lo contaba como clic en el fondo y se perdía el trabajo.
 let downOnBg=false;
-document.addEventListener("click",e=>{const x=e.target;if(x&&x.matches&&x.matches(".pill-dates input[type=date]:not(:disabled)")){try{x.showPicker()}catch(_){}}});
 document.addEventListener("pointerdown",e=>{downOnBg=!!(e.target&&e.target.classList&&e.target.classList.contains("overlay"))},true);
 function modalDirty(){
   const m=S.modal;if(!m||!m.draft||!m.orig||m.kind==="emp"||m.kind==="inv")return false;
@@ -2806,7 +2835,7 @@ function taskModal(){
         ${ms.length?`<div class="field f-hito"><label for="f-hito">Hito</label><select id="f-hito" class="pill-select ${m.err==="hito"?"req":""}" data-f="milestoneId" ${dis}><option value="">${ms.length?"Elegir hito":"Sin hitos en el proyecto"}</option>${ms.map(x=>`<option value="${x.id}" ${d.milestoneId===x.id?"selected":""}>${esc(x.name)}</option>`).join("")}</select></div>`:""}
         <div class="field"><label for="f-col">Estado</label><select id="f-col" class="pill-select" data-f="column" ${dis}>${COLS.map(c=>`<option value="${c.id}" ${d.column===c.id?"selected":""}>${c.name}</option>`).join("")}</select></div>
         <div class="field"><label for="f-pri">Prioridad</label><select id="f-pri" class="pill-select" data-f="priority" ${dis}>${PRI.map(([k,v])=>`<option value="${k}" ${d.priority===k?"selected":""}>${v}</option>`).join("")}</select></div>
-        <div class="field f-dates"><label for="f-start">Fechas</label><div class="pill-dates ${m.err==="dates"?"req":""}"><input id="f-start" type="date" data-f="start" value="${esc(d.start)}" aria-label="Fecha de inicio" title="Inicio" ${dis}><span class="arr" aria-hidden="true">→</span><input id="f-end" type="date" data-f="end" value="${esc(d.end)}" aria-label="Fecha de fin" title="Fin" ${dis}></div></div>
+        <div class="field f-dates"><label for="f-dates">Fechas</label>${datePicker(d,ro)}</div>
       </div>
       ${m.err==="dates"?`<span class="err" style="margin-top:-10px">La fecha de fin es anterior a la de inicio.</span>`:""}
       <div class="field"><span class="flabel">Responsables</span><div class="ppl">${ppl.map(id=>`<button type="button" class="${d.assignees.includes(id)?"on":""}" data-act="toggle-assignee" data-id="${id}" ${dis} aria-pressed="${d.assignees.includes(id)}">${av(id)}${esc(first(id))}</button>`).join("")||`<span class="hint">Agrega personas al proyecto para asignarlas.</span>`}</div></div>
@@ -2844,6 +2873,95 @@ function taskModal(){
     ${S.canWrite?`<div class="composer">${m.reply?`<span class="replying">${ico("reply","sm")}Respondiendo a ${esc(first(S.comments[m.reply]?S.comments[m.reply].by:""))}<button class="link-btn" data-act="reply-cancel">Cancelar</button></span>`:""}<div class="mn-wrap"><div class="mn-pop" id="mn-pop" role="listbox" aria-label="Personas para mencionar" hidden></div><textarea id="c-text" placeholder="Agregar comentario… escribe @ para mencionar a alguien" aria-label="Comentario" aria-autocomplete="list" aria-controls="mn-pop">${esc(m.cdraft)}</textarea></div><div class="row"><span class="hint">Escribe @ para mencionar: le llega un aviso.</span><button class="btn primary sm" data-act="comment-add">Comentar</button></div></div>`:""}</aside>`}
   </div></div>`;
 }
+/* ---------- selector de fechas ---------- */
+// Una sola casilla compacta; al abrirla muestra un calendario. Con "Fecha de fin" se elige un rango.
+// Sin fecha de fin, la tarea es de un día: se guarda end = start (así siguen funcionando "vencida" y "vence hoy").
+const DP_WD=["L","M","X","J","V","S","D"];
+const dpShort=v=>{if(!v)return"";const d=parse(v);return d.getDate()+" "+MES[d.getMonth()]+(d.getFullYear()!==new Date().getFullYear()?" "+d.getFullYear():"")};
+const dpInput=v=>{if(!v)return"";const [y,mo,da]=v.split("-");return da+"/"+mo+"/"+y};
+const dpEndOn=d=>!!d.end&&d.end!==d.start;
+function dpParse(txt){
+  const t=String(txt||"").trim();if(!t)return"";
+  const mm=t.match(/^(\d{1,2})[\/\-. ](\d{1,2})(?:[\/\-. ](\d{2,4}))?$/);
+  if(!mm)return null;
+  let y=mm[3]?Number(mm[3]):new Date().getFullYear();if(y<100)y+=2000;
+  const d=new Date(y,Number(mm[2])-1,Number(mm[1]));
+  if(d.getMonth()!==Number(mm[2])-1||d.getDate()!==Number(mm[1]))return null;
+  return iso(d);
+}
+function datePicker(d,ro){
+  const m=S.modal,dp=m.dp,on=dpEndOn(d);
+  const label=!d.start&&!d.end?`<span class="ph">Sin fechas</span>`:!d.start?"Hasta "+esc(dpShort(d.end)):on?`${esc(dpShort(d.start))} <span aria-hidden="true">→</span> ${esc(dpShort(d.end))}`:esc(dpShort(d.start));
+  const btn=`<button type="button" id="f-dates" class="dp-btn ${m.err==="dates"?"req":""}" data-act="dp-open" aria-haspopup="dialog" aria-expanded="${!!dp}" ${ro?"disabled":""}>${ico("cal","sm")}${label}</button>`;
+  if(!dp||ro)return `<div class="dp-wrap">${btn}</div>`;
+  const [Y,M]=dp.month.split("-").map(Number);
+  const first=new Date(Y,M-1,1),lead=(first.getDay()+6)%7,cur=new Date(Y,M-1,1-lead);
+  const td=today(),s=d.start,e=on?d.end:d.start;
+  let days="";
+  for(let i=0;i<42;i++){
+    const v=iso(cur),cls=["dp-day"];
+    if(cur.getMonth()!==M-1)cls.push("out");
+    if(v===td)cls.push("td");
+    if(s&&v===s)cls.push("s");
+    if(e&&v===e)cls.push("e");
+    if(on&&s&&e&&v>s&&v<e)cls.push("in");
+    days+=`<button type="button" class="${cls.join(" ")}" data-act="dp-day" data-v="${v}" aria-label="${cur.getDate()} ${MESES[cur.getMonth()]} ${cur.getFullYear()}" aria-pressed="${v===s||v===e}"><i>${cur.getDate()}</i></button>`;
+    cur.setDate(cur.getDate()+1);
+    if(i===34&&cur.getMonth()!==M-1)break;
+  }
+  return `<div class="dp-wrap">${btn}<div class="dp-pop" role="dialog" aria-label="Elegir fechas">
+    <div class="dp-ins"><input id="dp-start" type="text" inputmode="numeric" class="${dp.edit==="start"?"on":""}" data-dp="start" value="${esc(dpInput(d.start))}" placeholder="dd/mm/aaaa" aria-label="Fecha de inicio">${on?`<input id="dp-end" type="text" inputmode="numeric" class="${dp.edit==="end"?"on":""}" data-dp="end" value="${esc(dpInput(d.end))}" placeholder="dd/mm/aaaa" aria-label="Fecha de fin">`:""}</div>
+    <div class="dp-head"><b>${MESES[M-1]} ${Y}</b><button type="button" class="link-btn" data-act="dp-today">Hoy</button><button type="button" class="icon-btn" data-act="dp-nav" data-v="-1" aria-label="Mes anterior">${ico("left","sm")}</button><button type="button" class="icon-btn" data-act="dp-nav" data-v="1" aria-label="Mes siguiente">${ico("right","sm")}</button></div>
+    <div class="dp-grid">${DP_WD.map(w=>`<span class="wd" aria-hidden="true">${w}</span>`).join("")}${days}</div>
+    <div class="dp-foot"><label class="dp-row"><span>Fecha de fin</span><button type="button" class="dp-sw" role="switch" aria-checked="${on}" data-act="dp-end" aria-label="Fecha de fin"></button></label>${d.start||d.end?`<button type="button" class="dp-clear" data-act="dp-clear">Quitar fechas</button>`:""}</div>
+  </div></div>`;
+}
+function dpOpen(){
+  const m=S.modal,d=m.draft;if(m.dp){dpClose();return}
+  const v=d.start||d.end||today();
+  m.dp={month:v.slice(0,7),edit:"start"};renderModal();
+  const pop=document.querySelector(".dp-pop");if(pop)pop.scrollIntoView({block:"nearest"});
+}
+function dpClose(){const m=S.modal;if(!m||!m.dp)return;m.dp=null;renderModal();const b=$("#f-dates");if(b)b.focus({preventScroll:true})}
+// Elegir un día: con fecha de fin, el primer clic pone el inicio y el segundo el fin (como en Notion).
+function dpPick(v){
+  const m=S.modal,d=m.draft,dp=m.dp,on=dpEndOn(d);
+  if(!on){d.start=v;d.end=v}
+  else if(dp.edit==="start"){d.start=v;if(!d.end||d.end<v)d.end=v;dp.edit="end"}
+  else{if(d.start&&v<d.start){d.start=v}else{d.end=v;dp.edit="start"}}
+  if(m.err==="dates")m.err="";
+  dp.month=v.slice(0,7);renderModal();
+}
+function dpEndToggle(){
+  const m=S.modal,d=m.draft;
+  if(dpEndOn(d)){d.end=d.start||d.end;m.dp.edit="start"}
+  else{const st=d.start||today();d.start=st;d.end=addDays(st,1);m.dp.edit="end"}
+  if(m.err==="dates")m.err="";
+  renderModal();
+}
+let dpBusy=false;
+function dpTyped(el){
+  const m=S.modal;if(!m||!m.dp||dpBusy)return;const d=m.draft,k=el.dataset.dp;
+  if(el.value.trim()===dpInput(k==="start"?d.start:d.end))return;
+  dpBusy=true;try{dpApply(el,m,d,k)}finally{dpBusy=false}
+}
+function dpApply(el,m,d,k){
+  const v=dpParse(el.value);
+  if(v===null){toast("Escribe la fecha como dd/mm/aaaa.",true);renderModal();return}
+  const on=dpEndOn(d);
+  if(k==="start"){d.start=v;if(!on)d.end=v;else if(v&&d.end&&d.end<v)d.end=v}
+  else{d.end=v||d.start}
+  if(m.err==="dates")m.err="";
+  if(v)m.dp.month=v.slice(0,7);
+  renderModal();
+}
+document.addEventListener("change",e=>{if(e.target.dataset&&e.target.dataset.dp)dpTyped(e.target)});
+document.addEventListener("focusin",e=>{const k=e.target.dataset&&e.target.dataset.dp,m=S.modal;if(k&&m&&m.dp&&m.dp.edit!==k){m.dp.edit=k;document.querySelectorAll(".dp-ins input").forEach(x=>x.classList.toggle("on",x.dataset.dp===k))}});
+document.addEventListener("keydown",e=>{
+  const m=S.modal;if(!m||!m.dp)return;
+  if(e.key==="Escape"){e.preventDefault();e.stopImmediatePropagation();dpClose()}
+  else if(e.key==="Enter"&&e.target.dataset&&e.target.dataset.dp){e.preventDefault();e.stopImmediatePropagation();dpTyped(e.target)}
+},true);
 function docRow(x,ro){
   const ext=(x.name||"").split(".").pop().slice(0,4).toUpperCase();
   const href=x.kind==="file"?(x.url||("/_blob/"+x.assetId)):x.url;
@@ -3344,6 +3462,8 @@ document.addEventListener("click",async e=>{
   if(S.chip&&!e.target.closest(".fpop")&&!(el&&el.dataset.act==="chip"))closeChip();
   if(S.menu&&!e.target.closest(".menu-wrap")){S.menu=null;if(!el){render();return}}
   // El menú de clientes de la tarea se cierra al tocar fuera de él.
+  // El calendario de fechas se cierra al tocar fuera de él.
+  if(S.modal&&S.modal.dp&&!e.target.closest(".dp-wrap")){S.modal.dp=null;renderModal();if(!el||el.dataset.act==="modal-bg")return}
   if(S.modal&&S.modal.clOpen&&!e.target.closest(".cl-pop")&&!(el&&el.dataset.act==="cl-open")){S.modal.clOpen=false;renderModal();if(!el||el.dataset.act==="modal-bg")return}
   if(!el)return;
   const act=el.dataset.act,id=el.dataset.id;
@@ -3426,6 +3546,12 @@ document.addEventListener("click",async e=>{
     case "gcal-connect":gcalConnect();break;
     case "gcal-off":gcalDisconnect();break;
     case "ag-retry":loadAgenda(true);render();break;
+    case "dp-open":dpOpen();break;
+    case "dp-day":dpPick(el.dataset.v);break;
+    case "dp-nav":{const [y,mo]=m.dp.month.split("-").map(Number);const n=new Date(y,mo-1+Number(el.dataset.v),1);m.dp.month=iso(n).slice(0,7);renderModal();break}
+    case "dp-today":dpPick(today());break;
+    case "dp-end":e.preventDefault();dpEndToggle();break;
+    case "dp-clear":m.draft.start="";m.draft.end="";if(m.err==="dates")m.err="";m.dp.edit="start";renderModal();break;
     case "toggle-assignee":{const a=m.draft.assignees;const i=a.indexOf(id);i<0?a.push(id):a.splice(i,1);renderModal();break}
     case "sub-tog":{S.subHidden.has(id)?S.subHidden.delete(id):S.subHidden.add(id);saveHidden();render();break}
     case "sub-tog-all":{if(el.dataset.hide==="1")taskList().forEach(t=>S.subHidden.add(t.id));else S.subHidden.clear();saveHidden();render();break}
