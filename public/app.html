@@ -467,17 +467,18 @@ button.tl-lab:hover .t{color:var(--accent)}
 .fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px}
 /* Propiedades de la tarea en una sola fila: Hito · Estado · Prioridad · Fechas. Si no caben, las fechas bajan solas. */
 .props{display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 10px}
-.props>.field{flex:0 0 auto;min-width:0}
-.props .pill-select{width:auto;max-width:220px;padding:0 30px 0 13px;background-position:right 11px center;font-size:14.5px}
-.props .f-hito .pill-select{max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.props>.f-dates{flex:0 0 auto}
+.props>.field{flex:1 1 0;min-width:140px}
+.props .pill-select{width:100%;max-width:none;padding:0 30px 0 13px;background-position:right 11px center;font-size:14.5px}
+.props .f-hito .pill-select{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.props>.f-dates{flex:1.3 1 0;min-width:180px}
+.props .dp-btn{width:100%;height:36px}
 /* Selector de fechas (estilo calendario en una sola casilla) */
 .dp-wrap{position:relative}
-.dp-btn{display:inline-flex;align-items:center;gap:7px;height:40px;padding:0 14px 0 12px;border-radius:999px;border:1px solid var(--line-2);background:var(--surface);font-weight:500;font-size:14.5px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.dp-btn{display:flex;align-items:center;gap:7px;height:40px;padding:0 14px 0 12px;border-radius:999px;border:1px solid var(--line-2);background:var(--surface);font-weight:500;font-size:14.5px;white-space:nowrap;font-variant-numeric:tabular-nums}
 .dp-btn:hover:not(:disabled){background:var(--hover)}
 .dp-btn[aria-expanded="true"]{border-color:var(--accent)}
 .dp-btn.req{border-color:var(--danger)}
-.dp-btn .ph{color:var(--muted);font-weight:400}
+.dp-btn .dp-ph{color:var(--muted);font-weight:400}
 .dp-btn svg{color:var(--muted)}
 .dp-pop{position:absolute;top:calc(100% + 6px);left:0;z-index:30;width:268px;max-width:calc(100vw - 32px);background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow-lg);padding:10px;display:flex;flex-direction:column;gap:8px;font-size:13.5px}
 .dp-ins{display:flex;gap:6px}
@@ -2891,7 +2892,7 @@ function dpParse(txt){
 }
 function datePicker(d,ro){
   const m=S.modal,dp=m.dp,on=dpEndOn(d);
-  const label=!d.start&&!d.end?`<span class="ph">Sin fechas</span>`:!d.start?"Hasta "+esc(dpShort(d.end)):on?`${esc(dpShort(d.start))} <span aria-hidden="true">→</span> ${esc(dpShort(d.end))}`:esc(dpShort(d.start));
+  const label=!d.start&&!d.end?`<span class="dp-ph">Sin fechas</span>`:!d.start?"Hasta "+esc(dpShort(d.end)):on?`${esc(dpShort(d.start))} <span aria-hidden="true">→</span> ${esc(dpShort(d.end))}`:esc(dpShort(d.start));
   const btn=`<button type="button" id="f-dates" class="dp-btn ${m.err==="dates"?"req":""}" data-act="dp-open" aria-haspopup="dialog" aria-expanded="${!!dp}" ${ro?"disabled":""}>${ico("cal","sm")}${label}</button>`;
   if(!dp||ro)return `<div class="dp-wrap">${btn}</div>`;
   const [Y,M]=dp.month.split("-").map(Number);
