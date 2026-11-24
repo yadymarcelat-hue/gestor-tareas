@@ -27,6 +27,9 @@ Lo edita (nombre, hitos, personas, archivar) quien lo creó, o una administrador
 ### Docu (documentos)
 Documentos escritos con títulos, listas y pendientes, más archivos o enlaces. Cada uno puede ser **solo mío**, de **toda la empresa** o de las **personas de un proyecto**. Con **"Cualquiera con el enlace puede leerlo"** se comparte con personas de fuera: abren `https://TU-DOMINIO/d/<enlace>` sin cuenta y solo pueden leer. "Cambiar enlace" invalida el anterior.
 
+### Menciones y notificaciones
+En los comentarios de una tarea, escribe **@** y elige a la persona (o escribe su nombre completo después de @). Le llega un aviso en la campana, con sonido si lo tiene activado, y un correo si Gmail está configurado. Solo se puede mencionar a quien ve el proyecto. En **Notificaciones**, "Activar avisos" hace que también llegue un aviso del computador cuando la app está en otra pestaña. El sonido se activa o silencia con el ícono de parlante junto a la campana.
+
 ### Logo de la empresa
 La administradora lo sube en el menú de la empresa (arriba a la izquierda) > **Nombre y logo de la empresa**. Aparece en el menú lateral y en los documentos compartidos.
 

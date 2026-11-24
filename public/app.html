@@ -553,6 +553,15 @@ button.tl-lab:hover .t{color:var(--accent)}
 .composer textarea:focus{border-color:var(--accent)}
 .composer .row{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .replying{font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:6px}
+/* Menciones con @ en comentarios */
+.mn-wrap{position:relative}
+.mn-pop{position:absolute;left:0;right:0;bottom:calc(100% + 6px);background:var(--surface);border:1px solid var(--line-2);border-radius:12px;box-shadow:var(--shadow);padding:4px;z-index:20;max-height:240px;overflow:auto}
+.mn-pop[hidden]{display:none}
+.mn-pop button{display:flex;align-items:center;gap:8px;width:100%;padding:7px 8px;border-radius:8px;text-align:left;font-size:14px}
+.mn-pop button small{color:var(--muted);font-size:12px;margin-left:auto}
+.mn-pop button.on,.mn-pop button:hover{background:var(--hover)}
+.mention{color:var(--accent);background:var(--accent-soft);border-radius:5px;padding:0 3px;font-weight:600}
+.nt .quote{display:block;margin-top:2px;padding-left:10px;border-left:2px solid var(--line-2);color:var(--muted);font-size:13.5px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 
 /* Invite */
 .results{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:12px;overflow:hidden}
@@ -1723,12 +1732,19 @@ function meBell(){
   return `<button class="icon-btn bell-btn ${on?"on":""}" data-act="go" data-v="notificaciones" aria-label="Notificaciones${n?`, ${n} sin leer`:""}" title="Notificaciones">${ico("bell")}${n?`<span class="nav-count" aria-hidden="true">${n>99?"99+":n}</span>`:""}</button>`;
 }
 // Sonido corto y suave (dos notas) al llegar una notificación nueva, si está activado.
+// El navegador solo deja sonar audio después de que la persona toca la página: el audio se "desbloquea"
+// en el primer clic o tecla, así el sonido funciona cuando llega el aviso aunque no estés tocando nada.
 let audioCtx=null;
+function audioReady(){
+  try{audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==="suspended")audioCtx.resume().catch(()=>{})}catch(e){}
+  return audioCtx;
+}
+["pointerdown","keydown","touchstart"].forEach(ev=>document.addEventListener(ev,function un(){if(audioReady()&&audioCtx.state!=="suspended")["pointerdown","keydown","touchstart"].forEach(x=>document.removeEventListener(x,un,true))},true));
 function ding(){
   if(!S.sound)return;
   try{
-    audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();
-    const t0=audioCtx.currentTime;
+    if(!audioReady())return;
+    const t0=audioCtx.currentTime+.02;
     [[880,0],[1318.5,.12]].forEach(([f,d])=>{
       const o=audioCtx.createOscillator(),g=audioCtx.createGain();
       o.type="sine";o.frequency.value=f;
@@ -1757,6 +1773,7 @@ const stChip=c=>`<span class="chip st ${esc(c)}"><i class="dot"></i><span>${esc(
 function ntText(n){
   const who=`<b>${esc(nm(n.by))}</b>`,task=`<b>${esc(n.taskTitle||"una tarea")}</b>`;
   if(n.kind==="status")return `${who} movió ${task} <span class="st-move">${stChip(n.from)}→${stChip(n.to)}</span>`;
+  if(n.kind==="mention")return `${who} te mencionó en ${task}${n.excerpt?`<span class="quote">${esc(n.excerpt)}</span>`:""}`;
   if(n.kind==="subtask")return `${who} te asignó la subtarea <b>${esc(n.subTitle||"")}</b> en ${task}`;
   return `${who} te asignó la tarea ${task}`;
 }
@@ -1765,8 +1782,9 @@ function viewNotificaciones(){
   const list=S.ntOnlyUnread?all.filter(n=>!n.read):all;
   const acts=all.length?`${unread?`<button class="btn sm" data-act="nt-all-read">${ico("check","sm")}Marcar todas como leídas</button>`:""}${all.length>unread?`<button class="btn ghost sm" data-act="nt-clear">${ico("trash","sm")}Borrar leídas</button>`:""}`:"";
   const h=head("Notificaciones","bell");
-  const filt=`<div class="toolbar nt-bar"><div class="nt-filter tabs"><button class="pill ${S.ntOnlyUnread?"":"cur"}" data-act="nt-filter" data-v="all">Todas</button><button class="pill ${S.ntOnlyUnread?"cur":""}" data-act="nt-filter" data-v="unread">Sin leer${unread?` · ${unread}`:""}</button></div>${acts?`<div class="nt-acts">${acts}</div>`:""}</div>`;
-  if(!list.length)return h+`<div class="content">${filt}<div class="panel"><div class="empty">${ico("bell","lg")}<h3>${S.ntOnlyUnread&&all.length?"Estás al día":"No tienes notificaciones"}</h3><p>Aquí verás cuando te asignen una tarea o una subtarea, y cuando una tarea tuya cambie de estado.</p></div></div></div>`;
+  const canAsk="Notification" in window&&Notification.permission==="default";
+  const filt=`${canAsk?`<div class="panel" style="padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">${ico("bell","sm")}<span style="flex:1;min-width:200px">Activa los avisos del computador para enterarte (con sonido) aunque tengas la app en otra pestaña.</span><button class="btn sm primary" data-act="nt-perm">Activar avisos</button></div>`:""}<div class="toolbar nt-bar"><div class="nt-filter tabs"><button class="pill ${S.ntOnlyUnread?"":"cur"}" data-act="nt-filter" data-v="all">Todas</button><button class="pill ${S.ntOnlyUnread?"cur":""}" data-act="nt-filter" data-v="unread">Sin leer${unread?` · ${unread}`:""}</button></div>${acts?`<div class="nt-acts">${acts}</div>`:""}</div>`;
+  if(!list.length)return h+`<div class="content">${filt}<div class="panel"><div class="empty">${ico("bell","lg")}<h3>${S.ntOnlyUnread&&all.length?"Estás al día":"No tienes notificaciones"}</h3><p>Aquí verás cuando te asignen una tarea o una subtarea, cuando te mencionen con @ en un comentario y cuando una tarea tuya cambie de estado.</p></div></div></div>`;
   let g="",rows="";
   list.slice(0,200).forEach(n=>{
     const gg=ntGroup(n.at);if(gg!==g){g=gg;rows+=`<div class="nt-grp">${gg}</div>`}
@@ -1774,13 +1792,30 @@ function viewNotificaciones(){
   });
   return h+`<div class="content">${filt}<div class="panel"><div class="nt-list">${rows}</div></div></div>`;
 }
+// Texto corto de un aviso (para el mensaje emergente y el aviso del computador).
+function ntPlain(n){
+  const who=first(n.by),t="“"+(n.taskTitle||"una tarea")+"”";
+  if(n.kind==="mention")return who+" te mencionó en "+t;
+  if(n.kind==="subtask")return who+" te asignó la subtarea “"+(n.subTitle||"")+"”";
+  if(n.kind==="status")return who+" movió "+t+" a "+(COLNAME[n.to]||n.to);
+  return who+" te asignó "+t;
+}
+// Si la app está en otra pestaña o minimizada, avisa también con una notificación del computador (con su sonido).
+function sysNotify(list){
+  try{
+    if(!document.hidden||!("Notification" in window)||Notification.permission!=="granted")return;
+    const n=list[0];
+    const x=new Notification(list.length===1?ntPlain(n):list.length+" notificaciones nuevas",{body:list.length===1?(n.kind==="mention"&&n.excerpt?n.excerpt:(n.projectName||"")):list.map(ntPlain).slice(0,3).join("\n"),tag:"nt-"+n.id,icon:"/icons/icon-192.png",silent:!S.sound});
+    x.onclick=()=>{window.focus();x.close();if(list.length===1){if(!n.read)safe(()=>wupd("notifications",n.id,{read:true}));openTaskAnywhere(n.projectId,n.taskId)}else go("notificaciones")};
+  }catch(e){}
+}
 function subNotifs(){
   if(S.demo||!S.db||!S.me.id)return;
   S.db.collection("notifications").where("userId","==",S.me.id).onSnapshot(snap=>{
     const prev=S.notifsReady?new Set(Object.keys(S.notifs)):null;
     S.notifs=mapDocs(snap);S.notifsReady=true;
     loadProfiles(Object.values(S.notifs).map(n=>n.by));
-    if(prev){const nw=myNotifs().filter(n=>!prev.has(n.id)&&!n.read);if(nw.length)ding();if(nw.length&&S.view!=="notificaciones")toast(nw.length===1?"Nueva notificación: "+(nw[0].taskTitle||""):nw.length+" notificaciones nuevas")}
+    if(prev){const nw=myNotifs().filter(n=>!prev.has(n.id)&&!n.read);if(nw.length){ding();sysNotify(nw)}if(nw.length&&S.view!=="notificaciones")toast(nw.length===1?ntPlain(nw[0]):nw.length+" notificaciones nuevas")}
     render();
   },onErr);
 }
@@ -2806,7 +2841,7 @@ function taskModal(){
     </div>
   </div>
   ${m.isNew?"":`<aside class="m-side" aria-label="Comentarios"><h3>Comentarios</h3><div class="c-list" id="c-list"></div>
-    ${S.canWrite?`<div class="composer">${m.reply?`<span class="replying">${ico("reply","sm")}Respondiendo a ${esc(first(S.comments[m.reply]?S.comments[m.reply].by:""))}<button class="link-btn" data-act="reply-cancel">Cancelar</button></span>`:""}<textarea id="c-text" placeholder="Agregar comentario…" aria-label="Comentario">${esc(m.cdraft)}</textarea><div class="row"><span class="hint">Se guarda con tu nombre y la fecha.</span><button class="btn primary sm" data-act="comment-add">Comentar</button></div></div>`:""}</aside>`}
+    ${S.canWrite?`<div class="composer">${m.reply?`<span class="replying">${ico("reply","sm")}Respondiendo a ${esc(first(S.comments[m.reply]?S.comments[m.reply].by:""))}<button class="link-btn" data-act="reply-cancel">Cancelar</button></span>`:""}<div class="mn-wrap"><div class="mn-pop" id="mn-pop" role="listbox" aria-label="Personas para mencionar" hidden></div><textarea id="c-text" placeholder="Agregar comentario… escribe @ para mencionar a alguien" aria-label="Comentario" aria-autocomplete="list" aria-controls="mn-pop">${esc(m.cdraft)}</textarea></div><div class="row"><span class="hint">Escribe @ para mencionar: le llega un aviso.</span><button class="btn primary sm" data-act="comment-add">Comentar</button></div></div>`:""}</aside>`}
   </div></div>`;
 }
 function docRow(x,ro){
@@ -2814,12 +2849,69 @@ function docRow(x,ro){
   const href=x.kind==="file"?(x.url||("/_blob/"+x.assetId)):x.url;
   return `<div class="doc"><span class="ic">${x.kind==="link"?ico("link","sm"):esc(ext||"DOC")}</span><div class="grow"><a href="${esc(href)}" target="_blank" rel="noopener noreferrer">${esc(x.name||x.url)}</a><small>${x.kind==="link"?"Enlace":"Archivo"}${x.size?" · "+fmtSize(x.size):""}${x.by?" · "+esc(first(x.by)):""}</small></div>${ro?"":`<button class="icon-btn" data-act="doc-del" data-id="${x.id}" aria-label="Quitar documento">${ico("trash","sm")}</button>`}</div>`;
 }
+// Texto del comentario con las menciones (@Nombre) resaltadas.
+function cmtHtml(c){
+  const h=esc(c.text);
+  const tags=(Array.isArray(c.mentions)?c.mentions:[]).map(id=>esc("@"+nm(id))).sort((a,b)=>b.length-a.length);
+  if(!tags.length)return h;
+  const re=new RegExp(tags.map(t=>t.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")).join("|"),"g");
+  return h.replace(re,'<span class="mention">$&</span>');
+}
+/* ---------- menciones con @ ---------- */
+const fold=s=>String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+// Quién se puede mencionar: las personas que ven el proyecto (si no, no podrían abrir la tarea).
+const mentionable=()=>projectPeople().filter(id=>id!==S.me.id);
+// Busca "@texto" justo antes del cursor.
+function mnQuery(ta){
+  const before=ta.value.slice(0,ta.selectionStart);
+  const mm=before.match(/(?:^|\s)@([^\s@]{0,30}(?: [^\s@]{0,30})?)$/);
+  return mm?{q:mm[1],start:before.length-mm[1].length-1}:null;
+}
+function mnUpdate(ta){
+  const pop=$("#mn-pop"),m=S.modal;if(!pop||!m)return;
+  const hit=mnQuery(ta);
+  if(!hit){mnClose();return}
+  const q=fold(hit.q).trim();
+  const list=mentionable().filter(id=>{const n=fold(nm(id));return !q||n.startsWith(q)||n.split(/\s+/).some(w=>w.startsWith(q))}).slice(0,6);
+  if(!list.length){mnClose();return}
+  m.mn={start:hit.start,end:ta.selectionStart,list,idx:Math.min((m.mn&&m.mn.idx)||0,list.length-1)};
+  pop.innerHTML=list.map((id,i)=>`<button type="button" role="option" class="${i===m.mn.idx?"on":""}" aria-selected="${i===m.mn.idx}" data-mn="${esc(id)}">${av(id)}${esc(nm(id))}${S.members[id]&&S.members[id].title?`<small>${esc(S.members[id].title)}</small>`:""}</button>`).join("");
+  pop.hidden=false;
+}
+function mnClose(){const pop=$("#mn-pop");if(pop){pop.hidden=true;pop.innerHTML=""}if(S.modal)S.modal.mn=null}
+function mnPick(id){
+  const ta=$("#c-text"),m=S.modal;if(!ta||!m||!m.mn)return;
+  const tag="@"+nm(id)+" ";
+  ta.value=ta.value.slice(0,m.mn.start)+tag+ta.value.slice(m.mn.end);
+  const pos=m.mn.start+tag.length;ta.focus();ta.setSelectionRange(pos,pos);
+  m.cdraft=ta.value;mnClose();
+}
+// Al guardar: a quién menciona el texto (por su nombre completo después de @).
+const mentionsIn=txt=>mentionable().filter(id=>txt.includes("@"+nm(id)));
+document.addEventListener("mousedown",e=>{const b=e.target.closest&&e.target.closest("[data-mn]");if(b){e.preventDefault();mnPick(b.dataset.mn)}});
+document.addEventListener("keydown",e=>{
+  const m=S.modal;if(!m||!m.mn||e.target.id!=="c-text"||e.isComposing)return;
+  const n=m.mn.list.length;
+  if(e.key==="ArrowDown"||e.key==="ArrowUp"){e.preventDefault();m.mn.idx=(m.mn.idx+(e.key==="ArrowDown"?1:-1)+n)%n;mnUpdate(e.target)}
+  else if(e.key==="Enter"||e.key==="Tab"){e.preventDefault();e.stopImmediatePropagation();mnPick(m.mn.list[m.mn.idx])}
+  else if(e.key==="Escape"){e.preventDefault();e.stopImmediatePropagation();mnClose()}
+  else return;
+  e.stopPropagation();
+},true);
+async function notifyMention(taskId,commentId){
+  if(S.demo||!window.appAuth||!S.ws||!S.ws.current)return;
+  try{
+    const token=await window.appAuth.token();
+    const r=await fetch("/api/notify",{method:"POST",headers:{"content-type":"application/json",authorization:"Bearer "+token},body:JSON.stringify({workspaceId:S.ws.current.id,taskId,commentId})});
+    if(!r.ok)console.warn("Aviso de mención no enviado:",(await r.json().catch(()=>({}))).error||r.status);
+  }catch(e){console.warn("Aviso de mención no enviado:",e)}
+}
 function renderComments(){
   const box=$("#c-list");if(!box||!S.modal)return;
   const tid=S.modal.id;
   const all=Object.entries(S.comments).map(([id,c])=>({id,...c})).filter(c=>c.taskId===tid).sort((a,b)=>(a.at||0)-(b.at||0));
   const roots=all.filter(c=>!c.parentId||!all.some(p=>p.id===c.parentId));
-  const one=(c,rep)=>`<div class="cmt ${rep?"reply":""}"><div class="cmt-h">${av(c.by)}<b>${esc(nm(c.by))}</b><time>${esc(fmtTime(c.at))}</time></div><div class="cmt-t">${esc(c.text)}</div>
+  const one=(c,rep)=>`<div class="cmt ${rep?"reply":""}"><div class="cmt-h">${av(c.by)}<b>${esc(nm(c.by))}</b><time>${esc(fmtTime(c.at))}</time></div><div class="cmt-t">${cmtHtml(c)}</div>
     <div class="cmt-a">${S.canWrite&&!rep?`<button data-act="reply" data-id="${c.id}">${ico("reply","sm")}Responder</button>`:""}${c.by===S.me.id?`<button data-act="comment-del" data-id="${c.id}">${ico("trash","sm")}Borrar</button>`:""}</div></div>`;
   box.innerHTML=roots.map(c=>one(c,false)+all.filter(r=>r.parentId===c.id).map(r=>one(r,true)).join("")).join("")||`<p class="hint">Todavía no hay comentarios. Úsalos para contar avances, dudas o resultados de pruebas.</p>`;
 }
@@ -3266,6 +3358,7 @@ document.addEventListener("click",async e=>{
       safe(()=>wupd("projects",pid,{useStory:false,updatedAt:Date.now()}),"Listo: este proyecto ya no usa Como / Quiero / Para. Se vuelve a activar al editar el proyecto.").then(ok=>{if(!ok){p.useStory=true;renderModal()}});break}
     case "nt-filter":S.ntOnlyUnread=el.dataset.v==="unread";render();break;
     case "nt-open":{const n=S.notifs[id];if(!n)break;if(!n.read){if(S.demo)n.read=true;else safe(()=>wupd("notifications",id,{read:true}))}render();openTaskAnywhere(n.projectId,n.taskId);break}
+    case "nt-perm":try{Notification.requestPermission().then(p=>{render();if(p==="granted"){toast("Avisos del computador activados");ding()}})}catch(_){}break;
     case "nt-all-read":{const ids=myNotifs().filter(n=>!n.read).map(n=>n.id);if(S.demo){ids.forEach(i=>S.notifs[i].read=true);render();break}
       Promise.all(ids.map(i=>wupd("notifications",i,{read:true}))).then(()=>toast("Todas marcadas como leídas")).catch(e=>toast(errMsg(e),true));break}
     case "nt-clear":{const ids=myNotifs().filter(n=>n.read).map(n=>n.id);if(S.demo){ids.forEach(i=>delete S.notifs[i]);render();break}
@@ -3354,9 +3447,11 @@ document.addEventListener("click",async e=>{
     case "task-del-no":m.confirmDel=false;renderModal();break;
     case "task-del-yes":deleteTask();break;
     case "task-arch":m.draft.archived=!m.draft.archived;saveTask();break;
-    case "comment-add":{const txt=(m.cdraft||"").trim();if(!txt)break;const cid=uid();
-      const ok=await safe(()=>wset("comments",cid,{taskId:m.id,projectId:S.projectId,text:txt,by:S.me.id,at:Date.now(),parentId:m.reply||null}));
-      if(ok){m.cdraft="";m.reply=null;if(S.demo)renderComments();renderModal()}break}
+    case "comment-add":{const txt=(m.cdraft||"").trim();if(!txt)break;const cid=uid(),tid=m.id;
+      const mentions=mentionsIn(txt);
+      const ok=await safe(()=>wset("comments",cid,{taskId:tid,projectId:S.projectId,text:txt,by:S.me.id,at:Date.now(),parentId:m.reply||null,mentions}));
+      if(ok){m.cdraft="";m.reply=null;mnClose();if(S.demo)renderComments();renderModal();
+        if(mentions.length){notifyMention(tid,cid);toast(mentions.length===1?"Le avisamos a "+first(mentions[0]):"Les avisamos a "+mentions.map(first).join(", "))}}break}
     case "comment-del":await safe(()=>wdel("comments",id));if(S.demo)renderComments();break;
     case "reply":m.reply=id;renderModal();{const x=$("#c-text");if(x)x.focus()}break;
     case "reply-cancel":m.reply=null;renderModal();break;
@@ -3444,7 +3539,7 @@ document.addEventListener("input",e=>{
     if(t.classList.contains("grow-ta"))fitArea(t,Number(t.dataset.min)||0);
     if(t.dataset.f&&t.tagName!=="SELECT"){setDraftField(t.dataset.f,t.value);return}
     if(t.dataset.lf){m.link[t.dataset.lf]=t.value;return}
-    if(t.id==="c-text"){m.cdraft=t.value;return}
+    if(t.id==="c-text"){m.cdraft=t.value;mnUpdate(t);return}
   }
   if(m&&m.kind==="doc"){
     if(t.id==="d-title"){if(/\n/.test(t.value))t.value=t.value.replace(/\s*\n\s*/g," ");fitTitle(t)}
@@ -3609,10 +3704,11 @@ function enterDemo(reason){
     T("t9",{projectId:"p2",title:"Correo de bienvenida para clientes nuevos",column:"doing",priority:"media",assignees:["u2"],order:1}),
     T("t10",{projectId:"p2",title:"Checklist de la primera semana",column:"done",priority:"baja",assignees:["u3"],order:2})
   ]);
-  S.comments={k1:{taskId:"t2",text:"Probado en staging: el inicio de sesión funciona con dos clientes de prueba. Falta el filtro por cliente.",by:"u3",at:Date.now()-36e5*20},k2:{taskId:"t2",text:"Perfecto, lo reviso mañana con el cliente piloto.",by:"u1",at:Date.now()-36e5*18,parentId:"k1"}};
+  S.comments={k1:{taskId:"t2",text:"Probado en staging: el inicio de sesión funciona con dos clientes de prueba. Falta el filtro por cliente. @Marcela Tarazona ¿lo revisas?",by:"u3",at:Date.now()-36e5*20,mentions:["u1"]},k2:{taskId:"t2",text:"Perfecto, lo reviso mañana con el cliente piloto.",by:"u1",at:Date.now()-36e5*18,parentId:"k1"}};
   const N=(id,mins,o)=>[id,Object.assign({userId:"u1",projectId:"p1",projectName:"Portal de clientes (ejemplo)",at:Date.now()-mins*60000,read:false},o)];
   S.notifs=Object.fromEntries([
     N("n1",4,{kind:"status",by:"u3",taskId:"t5",taskTitle:"Las reuniones agendadas aparecen en el portal con su fecha",from:"doing",to:"review"}),
+    N("n5",20,{kind:"mention",by:"u3",taskId:"t2",taskTitle:"El cliente entra con su correo y ve solo sus campañas",excerpt:"Probado en staging: el inicio de sesión funciona con dos clientes de prueba. Falta el filtro por cliente. @Marcela Tarazona ¿lo revisas?"}),
     N("n2",50,{kind:"assigned",by:"u2",taskId:"t3",taskTitle:"Cada campaña muestra invitaciones, aceptación y conversaciones de la semana"}),
     N("n3",60*26,{kind:"subtask",by:"u3",taskId:"t2",taskTitle:"El cliente entra con su correo y ve solo sus campañas",subTitle:"Prueba con dos clientes",read:true}),
     N("n4",60*24*4,{kind:"status",by:"u2",taskId:"t1",taskTitle:"Las pantallas del portal están en Figma y el cliente piloto las aprobó",from:"review",to:"done",read:true})

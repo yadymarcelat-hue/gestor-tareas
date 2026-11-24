@@ -1,10 +1,11 @@
-// Avisos de tareas: cuando asignas a alguien una tarea o subtarea, o cuando una tarea cambia de estado.
+// Avisos de tareas: cuando asignas a alguien una tarea o subtarea, cuando una tarea cambia de estado,
+// o cuando mencionas a alguien con @ en un comentario (se manda commentId).
 // La app llama a esta ruta después de guardar, con cómo estaba la tarea ANTES del cambio.
 // El servidor lee la tarea como quedó (con los permisos de quien llama) y decide a quién avisar
 // (lib/notify.js): así nadie puede inventar avisos de cosas que no pasaron.
 import { createClient } from "@supabase/supabase-js";
 import { adminClient, appOrigin, caller, fail } from "../../../lib/server";
-import { notifyTaskChange } from "../../../lib/notify";
+import { notifyTaskChange, notifyMentions } from "../../../lib/notify";
 
 export const dynamic = "force-dynamic";
 
@@ -42,6 +43,26 @@ export async function POST(req) {
     .eq("id", taskId)
     .maybeSingle();
   if (!row) return fail(404, "No encontramos la tarea.");
+
+  const commentId = String(body.commentId || "");
+  if (commentId) {
+    // Menciones: el comentario se lee con los permisos de quien llama y debe ser suyo y de esta tarea.
+    const { data: crow } = await sb
+      .from("docs")
+      .select("data")
+      .eq("workspace_id", workspaceId)
+      .eq("collection", "comments")
+      .eq("id", commentId)
+      .maybeSingle();
+    const c = (crow && crow.data) || null;
+    if (!c || c.taskId !== taskId || c.by !== who.user.id) return fail(404, "No encontramos el comentario.");
+    try {
+      const r = await notifyMentions(admin, { workspaceId, taskId, commentId, comment: c, task: row.data || {}, me: who.user.id, origin: appOrigin(req) });
+      return Response.json(r);
+    } catch (e) {
+      return fail(500, e.message);
+    }
+  }
 
   try {
     const r = await notifyTaskChange(admin, { workspaceId, taskId, task: row.data || {}, before: body.before, me: who.user.id, origin: appOrigin(req) });
