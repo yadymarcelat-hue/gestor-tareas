@@ -1882,7 +1882,8 @@ function audioReady(){
 }
 // Se mantiene escuchando: Safari vuelve a pausar el audio cuando la pestaña queda en segundo plano.
 ["pointerdown","keydown","touchstart"].forEach(ev=>document.addEventListener(ev,()=>{if(!audioCtx||audioCtx.state!=="running")audioReady()},true));
-// Sonido de aviso: tres notas cortas y claras (más fuerte que antes), con un compresor para que no distorsione.
+// Sonido de aviso: tres notas brillantes que se repiten dos veces, al volumen máximo que permite el navegador
+// sin distorsionar (un limitador corta los picos). Onda cuadrada suavizada: se oye bien en parlantes de portátil.
 async function ding(){
   if(!S.sound)return;
   try{
@@ -1890,16 +1891,16 @@ async function ding(){
     if(ctx.state!=="running"){try{await ctx.resume()}catch(_){}}
     if(ctx.state!=="running")return;
     const t0=ctx.currentTime+.02;
-    const comp=ctx.createDynamicsCompressor();comp.threshold.value=-10;comp.ratio.value=4;comp.connect(ctx.destination);
-    const out=ctx.createGain();out.gain.value=.9;out.connect(comp);
-    [[987.77,0],[1318.51,.11],[1975.53,.22]].forEach(([f,d])=>{
-      [["triangle",1],["sine",.5]].forEach(([type,lvl])=>{
-        const o=ctx.createOscillator(),g=ctx.createGain();
-        o.type=type;o.frequency.value=type==="sine"?f*2:f;
-        g.gain.setValueAtTime(0,t0+d);g.gain.linearRampToValueAtTime(.55*lvl,t0+d+.008);g.gain.exponentialRampToValueAtTime(.0001,t0+d+.42);
-        o.connect(g);g.connect(out);o.start(t0+d);o.stop(t0+d+.45);
+    const lim=ctx.createDynamicsCompressor();lim.threshold.value=-2;lim.knee.value=0;lim.ratio.value=20;lim.attack.value=.001;lim.release.value=.05;lim.connect(ctx.destination);
+    const lp=ctx.createBiquadFilter();lp.type="lowpass";lp.frequency.value=5000;lp.connect(lim);
+    [0,.5].forEach(rep=>[[1046.5,0],[1318.51,.12],[1567.98,.24]].forEach(([f,d])=>{
+      [["square",.42],["sine",.5]].forEach(([type,lvl])=>{
+        const o=ctx.createOscillator(),g=ctx.createGain(),st=t0+rep+d;
+        o.type=type;o.frequency.value=f;
+        g.gain.setValueAtTime(0,st);g.gain.linearRampToValueAtTime(lvl,st+.006);g.gain.setValueAtTime(lvl,st+.06);g.gain.exponentialRampToValueAtTime(.0001,st+.38);
+        o.connect(g);g.connect(lp);o.start(st);o.stop(st+.4);
       });
-    });
+    }));
   }catch(e){}
 }
 function toggleSound(){
