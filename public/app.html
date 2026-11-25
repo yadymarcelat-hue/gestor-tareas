@@ -1880,17 +1880,25 @@ function audioReady(){
   try{audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==="suspended")audioCtx.resume().catch(()=>{})}catch(e){}
   return audioCtx;
 }
-["pointerdown","keydown","touchstart"].forEach(ev=>document.addEventListener(ev,function un(){if(audioReady()&&audioCtx.state!=="suspended")["pointerdown","keydown","touchstart"].forEach(x=>document.removeEventListener(x,un,true))},true));
-function ding(){
+// Se mantiene escuchando: Safari vuelve a pausar el audio cuando la pestaña queda en segundo plano.
+["pointerdown","keydown","touchstart"].forEach(ev=>document.addEventListener(ev,()=>{if(!audioCtx||audioCtx.state!=="running")audioReady()},true));
+// Sonido de aviso: tres notas cortas y claras (más fuerte que antes), con un compresor para que no distorsione.
+async function ding(){
   if(!S.sound)return;
   try{
-    if(!audioReady())return;
-    const t0=audioCtx.currentTime+.02;
-    [[880,0],[1318.5,.12]].forEach(([f,d])=>{
-      const o=audioCtx.createOscillator(),g=audioCtx.createGain();
-      o.type="sine";o.frequency.value=f;
-      g.gain.setValueAtTime(0,t0+d);g.gain.linearRampToValueAtTime(.12,t0+d+.015);g.gain.exponentialRampToValueAtTime(.0001,t0+d+.35);
-      o.connect(g);g.connect(audioCtx.destination);o.start(t0+d);o.stop(t0+d+.4);
+    const ctx=audioReady();if(!ctx)return;
+    if(ctx.state!=="running"){try{await ctx.resume()}catch(_){}}
+    if(ctx.state!=="running")return;
+    const t0=ctx.currentTime+.02;
+    const comp=ctx.createDynamicsCompressor();comp.threshold.value=-10;comp.ratio.value=4;comp.connect(ctx.destination);
+    const out=ctx.createGain();out.gain.value=.9;out.connect(comp);
+    [[987.77,0],[1318.51,.11],[1975.53,.22]].forEach(([f,d])=>{
+      [["triangle",1],["sine",.5]].forEach(([type,lvl])=>{
+        const o=ctx.createOscillator(),g=ctx.createGain();
+        o.type=type;o.frequency.value=type==="sine"?f*2:f;
+        g.gain.setValueAtTime(0,t0+d);g.gain.linearRampToValueAtTime(.55*lvl,t0+d+.008);g.gain.exponentialRampToValueAtTime(.0001,t0+d+.42);
+        o.connect(g);g.connect(out);o.start(t0+d);o.stop(t0+d+.45);
+      });
     });
   }catch(e){}
 }
@@ -1921,7 +1929,8 @@ function ntText(n){
 function viewNotificaciones(){
   const all=myNotifs(),unread=all.filter(n=>!n.read).length;
   const list=S.ntOnlyUnread?all.filter(n=>!n.read):all;
-  const acts=all.length?`${unread?`<button class="btn sm" data-act="nt-all-read">${ico("check","sm")}Marcar todas como leídas</button>`:""}${all.length>unread?`<button class="btn ghost sm" data-act="nt-clear">${ico("trash","sm")}Borrar leídas</button>`:""}`:"";
+  const test=`<button class="btn ghost sm" data-act="nt-test" title="Escucha cómo suena un aviso">${ico(S.sound?"vol":"volOff","sm")}${S.sound?"Probar sonido":"Sonido silenciado"}</button>`;
+  const acts=`${test}`+(all.length?`${unread?`<button class="btn sm" data-act="nt-all-read">${ico("check","sm")}Marcar todas como leídas</button>`:""}${all.length>unread?`<button class="btn ghost sm" data-act="nt-clear">${ico("trash","sm")}Borrar leídas</button>`:""}`:"");
   const h=head("Notificaciones","bell");
   const canAsk="Notification" in window&&Notification.permission==="default";
   const filt=`${canAsk?`<div class="panel" style="padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">${ico("bell","sm")}<span style="flex:1;min-width:200px">Activa los avisos del computador para enterarte (con sonido) aunque tengas la app en otra pestaña.</span><button class="btn sm primary" data-act="nt-perm">Activar avisos</button></div>`:""}<div class="toolbar nt-bar"><div class="nt-filter tabs"><button class="pill ${S.ntOnlyUnread?"":"cur"}" data-act="nt-filter" data-v="all">Todas</button><button class="pill ${S.ntOnlyUnread?"cur":""}" data-act="nt-filter" data-v="unread">Sin leer${unread?` · ${unread}`:""}</button></div>${acts?`<div class="nt-acts">${acts}</div>`:""}</div>`;
@@ -1950,15 +1959,28 @@ function sysNotify(list){
     x.onclick=()=>{window.focus();x.close();if(list.length===1){if(!n.read)safe(()=>wupd("notifications",n.id,{read:true}));openTaskAnywhere(n.projectId,n.taskId)}else go("notificaciones")};
   }catch(e){}
 }
+// Los avisos llegan al instante por la conexión en vivo de Supabase. Si esa conexión se cae
+// (el computador se durmió, cambió la red, la pestaña estuvo mucho tiempo en segundo plano),
+// la app vuelve a revisar cada 30 segundos y al volver a la pestaña, así el aviso y su sonido igual llegan.
 function subNotifs(){
   if(S.demo||!S.db||!S.me.id)return;
-  S.db.collection("notifications").where("userId","==",S.me.id).onSnapshot(snap=>{
+  const q=S.db.collection("notifications").where("userId","==",S.me.id);
+  q.onSnapshot(gotNotifs,onErr);
+  const recheck=()=>{if(S.notifsReady)q.get().then(gotNotifs).catch(()=>{})};
+  setInterval(recheck,30000);
+  document.addEventListener("visibilitychange",()=>{if(!document.hidden)recheck()});
+  window.addEventListener("focus",recheck);window.addEventListener("online",recheck);
+}
+function gotNotifs(snap){
+  {
     const prev=S.notifsReady?new Set(Object.keys(S.notifs)):null;
-    S.notifs=mapDocs(snap);S.notifsReady=true;
+    const nextN=mapDocs(snap);
+    if(prev&&Object.keys(nextN).length===prev.size&&Object.keys(nextN).every(k=>prev.has(k)&&!!nextN[k].read===!!S.notifs[k].read))return;
+    S.notifs=nextN;S.notifsReady=true;
     loadProfiles(Object.values(S.notifs).map(n=>n.by));
     if(prev){const nw=myNotifs().filter(n=>!prev.has(n.id)&&!n.read);if(nw.length){ding();sysNotify(nw)}if(nw.length&&S.view!=="notificaciones")toast(nw.length===1?ntPlain(nw[0]):nw.length+" notificaciones nuevas")}
     render();
-  },onErr);
+  }
 }
 // Abre una tarea de cualquier proyecto: cambia de proyecto si hace falta y la abre cuando cargan sus tareas.
 function openTaskAnywhere(pid,tid){
@@ -3591,6 +3613,7 @@ document.addEventListener("click",async e=>{
       safe(()=>wupd("projects",pid,{useStory:false,updatedAt:Date.now()}),"Listo: este proyecto ya no usa Como / Quiero / Para. Se vuelve a activar al editar el proyecto.").then(ok=>{if(!ok){p.useStory=true;renderModal()}});break}
     case "nt-filter":S.ntOnlyUnread=el.dataset.v==="unread";render();break;
     case "nt-open":{const n=S.notifs[id];if(!n)break;if(!n.read){if(S.demo)n.read=true;else safe(()=>wupd("notifications",id,{read:true}))}render();openTaskAnywhere(n.projectId,n.taskId);break}
+    case "nt-test":if(!S.sound){toggleSound()}else{ding();toast("Así suena un aviso nuevo")}break;
     case "nt-perm":try{Notification.requestPermission().then(p=>{render();if(p==="granted"){toast("Avisos del computador activados");ding()}})}catch(_){}break;
     case "nt-all-read":{const ids=myNotifs().filter(n=>!n.read).map(n=>n.id);if(S.demo){ids.forEach(i=>S.notifs[i].read=true);render();break}
       Promise.all(ids.map(i=>wupd("notifications",i,{read:true}))).then(()=>toast("Todas marcadas como leídas")).catch(e=>toast(errMsg(e),true));break}
